@@ -6,14 +6,15 @@ from typing import List
 import numpy as np
 from numpy.typing import NDArray
 
-def log_likelihood_NB(observation,particle_observation:NDArray[np.int_],var:float)->NDArray: 
+def log_likelihood_NB(observation,particle_observation:NDArray[np.int_],std:float)->NDArray: 
     '''a wrapper for the logpmf of the negative binomial distribution, modified to use the parameterization aobut a known mean 
-    and variance, r and p solved accordingly'''
-    return nbinom.logpmf(observation, n = (particle_observation)**2 / (var  - particle_observation), p = particle_observation / var)
+    and standard deviation, r and p solved accordingly'''
+    return nbinom.logpmf(observation, n = (particle_observation)**2 / (std**2  - particle_observation), p = particle_observation / std**2)
 
 
 class LogNBinomResample(Resampler): 
-  
+    '''Resampler using a negative binomial likelihood function with estimated variance and log resampling step from 
+    C. Gentner, S. Zhang, and T. Jost, “Log-PF: particle filtering in logarithm domain,” Journal of Electrical and Computer Engineering, vol. 2018, Article ID 5763461, 11 pages, 2018.'''
     def __init__(self) -> None:
         super().__init__(log_likelihood_NB)
 
@@ -24,14 +25,15 @@ class LogNBinomResample(Resampler):
             for j in range(len(particle.observation)): 
                 weights[i] += (self.likelihood(observation=observation[j],
                                                particle_observations=particle.observation[j],
-                                               var=particle.param['variance']))
+                                               var=particle.param['std']))
 
-        weights = weights-np.max(weights)
-        weights = log_norm(weights)
+        weights = weights-np.max(weights) #normalize the weights wrt their maximum, improves numerical stability
+        weights = log_norm(weights) #normalize the weights using the jacobian logarithm
         
         return weights
     
     def resample(self, ctx: Context,particleArray:List[Particle],weights:NDArray) -> List[Particle]:
+        '''The actual resampling algorithm, the log variant of systematic resampling'''
         
         log_cdf = jacob(weights)
         

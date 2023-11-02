@@ -14,13 +14,13 @@ algo = TimeDependentAlgo(integrator = PoissonSolver(),
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
 "gamma":ESTIMATION.STATIC,
-"variance":ESTIMATION.VARIABLE, 
+"std":ESTIMATION.VARIABLE, 
 "hosp":5.3,
 "L":90.0,
 "D":10.0}
 ,priors={"beta":partial(algo.ctx.rng.uniform,0.,1.),
           "gamma":partial(algo.ctx.rng.uniform,0.,1.),
-          "variance":partial(algo.ctx.rng.uniform,20.,30.)
+          "std":partial(algo.ctx.rng.uniform,20.,30.)
           })
 
             

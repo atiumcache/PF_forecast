@@ -7,8 +7,9 @@ from typing import Dict,List
 from functools import wraps
 from time import perf_counter
 
-'''Internal clock for keeping track of the time the algorithm is at in the observation data'''
 class Clock: 
+    '''Internal clock for keeping track of the time the algorithm is at in the observation data'''
+
     time: int
     def __init__(self) -> None:
         self.time = 0
@@ -20,6 +21,7 @@ class Clock:
         self.time = 0
 
 class ESTIMATION(Enum): 
+    '''Enum which flags a parameter for estimation'''
     STATIC = -1
     VARIABLE = -2
 

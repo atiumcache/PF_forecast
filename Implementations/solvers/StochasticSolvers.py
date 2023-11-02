@@ -9,8 +9,10 @@ import numpy as np
 
 
 class PoissonSolver(Integrator): 
-    '''This class uses the tau-leaping? method to compute the next state of the particle and the observations'''
+    '''This class uses the tau-leaping method to compute the next state of the particle and the observations, 
+    i.e. a poisson stochastic propagation model'''
     def propagate(self, particleArray: List[Particle],ctx:Context) -> List[Particle]:
+        '''Implementation of the one step propagation function from t to t+1'''
         for j,particle in enumerate(particleArray): 
             S,I,R,H = particle.state
             N = S+I+R+H
