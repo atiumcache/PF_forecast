@@ -3,8 +3,8 @@ from enum import Enum
 import numpy as np
 from numpy.typing import NDArray
 from numpy import random
-from typing import Dict,List,Callable
-from functools import wraps,partial
+from typing import Dict,List
+from functools import wraps
 from time import perf_counter
 
 '''Internal clock for keeping track of the time the algorithm is at in the observation data'''
@@ -61,6 +61,24 @@ def quantiles(items:List)->List:
         '''Returns 23 quantiles of the List passed in'''
         qtlMark = 1.00*np.array([0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990])
         return list(np.quantile(items, qtlMark))
+
+
+def jacob(δ:NDArray)->NDArray:
+    '''The jacobian logarithm, used in log likelihood normalization and resampling processes
+    δ will be an array of log-probabilities '''
+    n = len(δ)
+    Δ = np.zeros(n)
+    Δ[0] = δ[0]
+    for i in range(1,n):
+        Δ[i] = max(δ[i],Δ[i-1]) + np.log(1 + np.exp(-1*np.abs(δ[i] - Δ[i-1])))
+    return(Δ)
+
+
+def log_norm(log_weights:NDArray): 
+    '''normalizes the probability space using the jacobian logarithm as defined in jacob() '''
+    norm = (jacob(log_weights)[-1])
+    log_weights -= norm
+    return log_weights
 
 
 

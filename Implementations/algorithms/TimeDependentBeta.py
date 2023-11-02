@@ -4,13 +4,14 @@ from Abstract.Integrator import Integrator
 from Abstract.Perturb import Perturb
 from Abstract.Resampler import Resampler
 from utilities.Utils import *
-from typing import Dict
+from typing import Dict,Callable
 
 from utilities.Utils import Context
 
 class TimeDependentAlgo(Algorithm): 
     '''Main particle filtering algorithm as described in Calvetti et. al. '''
     def __init__(self, integrator: Integrator, perturb: Perturb, resampler: Resampler,ctx:Context) -> None:
+        '''Constructor passes back to the parent, nothing fancy here'''
         super().__init__(integrator, perturb, resampler,ctx)
         
     def initialize(self,params:Dict[str,int],priors:Dict[str,Callable]) -> None:
