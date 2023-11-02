@@ -10,4 +10,10 @@ The code is structured in a class hierarchy, abstract base classes(ABC) are used
 Abstract/Algorithm: 
 This ABC is the template for the entrypoint of the algorithm, it has 5 fields, 3 of which all also ABC's templating subfunctionality required for running the algorithm. 
 
+Abstract/Perturb: 
+This ABC is one of the fields of Algorithm, it templates a class which perturbs the particles according to some distribution. This class templates only one method, "randomly_perturb", and one field, 
+hyperparameters, which is a dictionary of hyperparameters for the perturbation. 
+
+
+
 
