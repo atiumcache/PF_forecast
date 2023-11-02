@@ -22,7 +22,9 @@ class LogNBinomResample(Resampler):
         weights = np.zeros(len(p_obvs))
         for i,particle in enumerate(particleArray):
             for j in range(len(particle.observation)): 
-                weights[i] += (self.likelihood(observation=observation[j],particle_observations=particle.observation[j]))
+                weights[i] += (self.likelihood(observation=observation[j],
+                                               particle_observations=particle.observation[j],
+                                               var=particle.param['variance']))
 
         weights = weights-np.max(weights)
         weights = log_norm(weights)
