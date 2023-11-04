@@ -42,7 +42,9 @@ class Context:
     clock: Clock = field(default_factory=lambda: Clock())
     rng:random.Generator = field(default_factory=lambda: np.random.default_rng())
     seed_size: float = 0.01 #estimate of initial percentage of infected out of the total population
+    state_size: int = 4 #number of state variables in the model
     population: int = 100000 #estimate of the total population 
+    weights: NDArray[np.float] = np.zeros(particle_count)
     estimated_params: Dict[str,int] = field(default_factory=lambda: dict()) #number of estimated parameters in the model 
 
 

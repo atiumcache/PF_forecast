@@ -18,7 +18,7 @@ class LogNBinomResample(Resampler):
     def __init__(self) -> None:
         super().__init__(log_likelihood_NB)
 
-    def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> float:
+    def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float]:
         p_obvs = np.array([particle.observation for particle in particleArray])
         weights = np.zeros(len(p_obvs))
         for i,particle in enumerate(particleArray):
@@ -34,7 +34,7 @@ class LogNBinomResample(Resampler):
     
     def resample(self, ctx: Context,particleArray:List[Particle],weights:NDArray) -> List[Particle]:
         '''The actual resampling algorithm, the log variant of systematic resampling'''
-        
+        ctx.weights = weights
         log_cdf = jacob(weights)
         
         i = 0
