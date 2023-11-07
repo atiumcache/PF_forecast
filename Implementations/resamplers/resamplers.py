@@ -1,7 +1,7 @@
 from utilities.Utils import Particle,Context
 from Abstract.Resampler import Resampler
 from utilities.Utils import log_norm,jacob
-from scipy.stats import nbinom
+from scipy.stats import nbinom,poisson
 from typing import List
 import numpy as np
 from numpy.typing import NDArray
@@ -9,33 +9,48 @@ from numpy.typing import NDArray
 def log_likelihood_NB(observation,particle_observation:NDArray[np.int_],std:float)->NDArray: 
     '''a wrapper for the logpmf of the negative binomial distribution, modified to use the parameterization aobut a known mean 
     and standard deviation, r and p solved accordingly'''
-    return nbinom.logpmf(observation, n = (particle_observation)**2 / (std**2  - particle_observation), p = particle_observation / std**2)
+    return nbinom.pmf(observation, n = (particle_observation)**2 / (std**2  - particle_observation), p = particle_observation / std**2)
+
+def log_likelihood_poisson(observation,particle_observation):
+    return poisson.pmf(observation,particle_observation)
 
 class NBinomResample(Resampler): 
     def __init__(self) -> None:
         super().__init__(log_likelihood_NB)
 
+    '''weights[i] += (self.likelihood(observation=observation[j],
+                                               particle_observation=particle.observation[j],
+                                               std=particle.param['std']))'''
     def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
-        p_obvs = np.array([particle.observation for particle in particleArray])
-        weights = np.zeros(len(p_obvs))
-        for i,particle in enumerate(particleArray):
-            for j in range(len(particle.observation)): 
-                weights[i] += (self.likelihood(observation=observation[j],
-                                               particle_observations=particle.observation[j],
-                                               var=particle.param['std']))
+        weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
+        for i in range(len(particleArray)): 
+            weights[i] = self.likelihood(observation,particleArray[i].observation,std=particleArray[i].param['std'])
+            '''iterate over the particles and call the likelihood function for each one '''
 
-        weights = weights-np.max(weights) #normalize the weights wrt their maximum, improves numerical stability
-        weights = log_norm(weights) #normalize the weights using the jacobian logarithm
+
+        #weights = np.array(self.likelihood(np.round(observation),[particle.observation for particle in particleArray],[particle.dispersion for particle in particleArray]))
+
+        '''This loop sets all weights that are out of bounds to a very small non-zero number'''
+        for j in range(len(particleArray)):  
+            if(weights[j] == 0):
+                weights[j] = 10**-300 
+            elif(np.isnan(weights[j])):
+                weights[j] = 10**-300
+            elif(np.isinf(weights[j])):
+                weights[j] = 10**-300
+
+        weights = weights/np.sum(weights)#normalize the weights
+
         
-        return np.exp(weights)
+        return np.squeeze(weights)
     
-    def resample(self, ctx: Context,particleArray:List[Particle],weights:NDArray) -> List[Particle]:
+    def resample(self, ctx: Context,particleArray:List[Particle]) -> List[Particle]:
         '''This is a basic resampling method, more advanced methods like systematic resampling need to override this'''    
     
         indexes = np.arange(ctx.particle_count) #create a cumulative ndarray from 0 to particle_count
 
         #The numpy resampling algorithm, see jupyter notebnook resampling.ipynb for more details
-        new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=weights)
+        new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.weights)
 
         particleCopy = particleArray.copy()#copy the particle array refs to ensure we don't overwrite particles
 

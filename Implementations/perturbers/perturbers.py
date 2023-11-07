@@ -31,7 +31,7 @@ class MultivariatePerturbations(Perturb):
 
                     if(ctx.estimated_params[key] == ESTIMATION.STATIC):
                         static_names.append(key)
-                        static_params.append(np.array([val]))
+                        static_params.append(val)
 
                     elif(ctx.estimated_params[key] == ESTIMATION.VARIABLE): 
                         var_names.append(key)
@@ -43,8 +43,10 @@ class MultivariatePerturbations(Perturb):
         var_names = OrderedSet(var_names)
         static_names = OrderedSet(static_names)
 
-        static_param_mat = np.log(np.array(static_param_mat).squeeze(axis=2))
-        #var_param_mat = np.log(np.array(var_param_mat).squeeze(axis=2))
+        static_param_mat = np.log(np.array(static_param_mat))
+
+        var_param_mat = np.log(np.array(var_param_mat))
+
 
         '''Computes the log_mean as defined in Calvetti et.al. '''
         log_mean = 0
@@ -67,6 +69,26 @@ class MultivariatePerturbations(Perturb):
             '''puts the perturbed static parameters back in the particle field'''
             for j,static in enumerate(new_statics): 
                 particleArray[i].param[static_names[j]] = np.exp(static)
+
+
+        '''Perturb the variable parameters '''
+
+        C = np.diag([(self.hyperparameters['sigma1']/ctx.population) ** 2,
+                     self.hyperparameters['sigma1'] ** 2,
+                     self.hyperparameters['sigma1'] ** 2,
+                     self.hyperparameters['sigma1'] **2,
+                     self.hyperparameters['sigma2'] ** 2,
+                     self.hyperparameters['sigma2'] ** 2]).astype(float)
+
+        for i in range(len(particleArray)): 
+            log_state = np.log(particleArray[i].state)
+            td_vec = (np.concatenate((log_state,var_param_mat[i])))
+            perturbed = np.exp(ctx.rng.multivariate_normal(td_vec,C))
+            print(perturbed)
+            particleArray[i].state = perturbed[:ctx.state_size]
+            # for j,name in enumerate(var_names): 
+            #     print(name)
+            #     print(perturbed[ctx.state_size:j])
 
         
    

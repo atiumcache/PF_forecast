@@ -31,7 +31,7 @@ class PoissonSolver(Integrator):
             state[3] = max(0.,H + new_hospitalized - new_recovered_from_H)
 
             particleArray[j].state = state
-            particleArray[j].observation = new_hospitalized
+            particleArray[j].observation = np.array([new_hospitalized])
 
         return particleArray
     

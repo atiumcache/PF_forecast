@@ -21,7 +21,7 @@ class Resampler(ABC):
         pass
 
     @abstractmethod
-    def resample(self,weights:NDArray[float_],ctx:Context,particleArray:List[Particle]) ->List[Particle]:
+    def resample(self,ctx:Context,particleArray:List[Particle]) ->List[Particle]:
         '''Takes in the context and the weights computed from compute weights and performs the resampling'''
         pass
 

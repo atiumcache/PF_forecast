@@ -16,7 +16,7 @@ class EulerSolver(Integrator):
         for particle in particleArray: 
             particle.observation = 0
 
-        for _ in range(1/dt): 
+        for _ in range(int(1/dt)): 
 
             for j,particle in enumerate(particleArray): 
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
