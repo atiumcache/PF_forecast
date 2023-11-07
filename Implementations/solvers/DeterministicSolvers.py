@@ -45,3 +45,33 @@ class EulerSolver(Integrator):
 
         return np.array([dS,dI,dR,dH]),new_H
     
+class Rk45Solver(Integrator): 
+    '''Runge Kutta algorithm for computing the t->t+1 transition'''
+    def __init__(self) -> None:
+        super().__init__()
+
+    '''Elements of particleArray are of Particle class in utilities/Utils.py'''
+    def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
+
+        '''code here, you can call RHS_H or change it'''
+
+        return particleArray
+
+
+    def RHS_H(self,particle:Particle):
+    #params has all the parameters – beta, gamma
+    #state is a numpy array
+
+        S,I,R,H = particle.state #unpack the state variables
+        N = S + I + R + H #compute the total population
+
+        new_H = ((1/particle.param['D'])*particle.param['gamma']) * I #our observation value for the particle  
+
+        '''The state transitions of the ODE model is below'''
+        dS = -particle.param['beta']*(S*I)/N + (1/particle.param['L'])*R 
+        dI = particle.param['beta']*S*I/N-(1/particle.param['D'])*I
+        dR = (1/particle.param['hosp']) * H + ((1/particle.param['D'])*(1-(particle.param['gamma']))*I)-(1/particle.param['L'])*R 
+        dH = (1/particle.param['D'])*(particle.param['gamma']) * I - (1/particle.param['hosp']) * H 
+
+        return np.array([dS,dI,dR,dH]),new_H
+    
