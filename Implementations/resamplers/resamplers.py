@@ -6,17 +6,19 @@ from typing import List
 import numpy as np
 from numpy.typing import NDArray
 
-def log_likelihood_NB(observation,particle_observation:NDArray[np.int_],std:float)->NDArray: 
-    '''a wrapper for the logpmf of the negative binomial distribution, modified to use the parameterization aobut a known mean 
-    and standard deviation, r and p solved accordingly'''
-    return nbinom.pmf(observation, n = (particle_observation)**2 / (std**2  - particle_observation), p = particle_observation / std**2)
+''''''
+def likelihood_NB(observation,particle_observation:NDArray[np.int_],var:float)->NDArray: 
+    '''a wrapper for the pmf of the negative binomial distribution, modified to use the parameterization aobut a known mean 
+    and variance, r and p solved accordingly'''
+    X = nbinom.pmf(observation, n = (particle_observation)**2 / (var  - particle_observation), p = particle_observation / var)
 
+    return X
 def log_likelihood_poisson(observation,particle_observation):
     return poisson.pmf(observation,particle_observation)
 
 class NBinomResample(Resampler): 
     def __init__(self) -> None:
-        super().__init__(log_likelihood_NB)
+        super().__init__(likelihood=likelihood_NB)
 
     '''weights[i] += (self.likelihood(observation=observation[j],
                                                particle_observation=particle.observation[j],
@@ -24,7 +26,7 @@ class NBinomResample(Resampler):
     def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
         for i in range(len(particleArray)): 
-            weights[i] = self.likelihood(observation,particleArray[i].observation,std=particleArray[i].param['std'])
+            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,var=(particleArray[i].param['std'])**2)
             '''iterate over the particles and call the likelihood function for each one '''
 
 
@@ -46,7 +48,7 @@ class NBinomResample(Resampler):
     
     def resample(self, ctx: Context,particleArray:List[Particle]) -> List[Particle]:
         '''This is a basic resampling method, more advanced methods like systematic resampling need to override this'''    
-    
+
         indexes = np.arange(ctx.particle_count) #create a cumulative ndarray from 0 to particle_count
 
         #The numpy resampling algorithm, see jupyter notebnook resampling.ipynb for more details

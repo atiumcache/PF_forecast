@@ -12,17 +12,19 @@ class EulerSolver(Integrator):
     '''Propagates the state forward one step and returns an array of states and observations across the the integration period'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        dt = 0.01
+        dt = 1
         for particle in particleArray: 
             particle.observation = 0
 
-        for _ in range(int(1/dt)): 
-
-            for j,particle in enumerate(particleArray): 
+        
+        for j,_ in enumerate(particleArray): 
+            for _ in range(int(1/dt)): 
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
-                d_RHS,sim_obv =self.RHS_H(particle)
+                d_RHS,sim_obv =self.RHS_H(particleArray[j])
 
                 particleArray[j].state += d_RHS*dt
+                if(np.any(np.isnan(particleArray[j].state))): 
+                    print(f"NaN state at particle: {j}")
                 particleArray[j].observation += np.array([sim_obv])
 
         return particleArray

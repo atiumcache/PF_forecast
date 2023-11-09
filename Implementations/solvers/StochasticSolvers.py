@@ -14,6 +14,7 @@ class PoissonSolver(Integrator):
     def propagate(self, particleArray: List[Particle],ctx:Context) -> List[Particle]:
         '''Implementation of the one step propagation function from t to t+1'''
         for j,particle in enumerate(particleArray): 
+            
             S,I,R,H = particle.state
             N = S+I+R+H
             new_susceptibles = ctx.rng.poisson((1/particle.param['L'])*R)

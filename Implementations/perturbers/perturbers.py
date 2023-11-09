@@ -59,12 +59,13 @@ class MultivariatePerturbations(Perturb):
             cov += ctx.weights[i] * (param_vec-log_mean) * (param_vec - log_mean).T
 
         '''Holds the hyperparameter a, defined in terms of h'''
-        a = np.sqrt(1-self.hyperparameters["h"]**2)
+        a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
         
-        '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
+        # '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
         for i in range(len(particleArray)): 
             new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+        #     new_statics = ctx.rng.normal(static_param_mat[i])
 
             '''puts the perturbed static parameters back in the particle field'''
             for j,static in enumerate(new_statics): 
@@ -73,6 +74,10 @@ class MultivariatePerturbations(Perturb):
 
         '''Perturb the variable parameters '''
 
+        #TODO Need a more flexible solution here, covariance meatrix shouldn't be hard coded
+
+        
+
         C = np.diag([(self.hyperparameters['sigma1']/ctx.population) ** 2,
                      self.hyperparameters['sigma1'] ** 2,
                      self.hyperparameters['sigma1'] ** 2,
@@ -80,15 +85,23 @@ class MultivariatePerturbations(Perturb):
                      self.hyperparameters['sigma2'] ** 2,
                      self.hyperparameters['sigma2'] ** 2]).astype(float)
 
+        '''Main perturbation loop'''
         for i in range(len(particleArray)): 
             log_state = np.log(particleArray[i].state)
             td_vec = (np.concatenate((log_state,var_param_mat[i])))
             perturbed = np.exp(ctx.rng.multivariate_normal(td_vec,C))
-            print(perturbed)
+
+            '''Normalization'''
+            perturbed[0:ctx.state_size] /= np.sum(perturbed[0:ctx.state_size])
+            perturbed[0:ctx.state_size] *= ctx.population
+
+
             particleArray[i].state = perturbed[:ctx.state_size]
-            # for j,name in enumerate(var_names): 
-            #     print(name)
-            #     print(perturbed[ctx.state_size:j])
+            for j,name in enumerate(var_names): 
+                particleArray[i].param[name] = perturbed[ctx.state_size+j:ctx.state_size+j+1][0]
+
+        return particleArray
+
 
         
    

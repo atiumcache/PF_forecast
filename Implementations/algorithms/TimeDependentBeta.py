@@ -32,20 +32,12 @@ class TimeDependentAlgo(Algorithm):
             initial_infected = self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population)
             state = np.concatenate((np.array([self.ctx.population-initial_infected,initial_infected]),[0 for _ in range(self.ctx.state_size-2)])) 
             
-            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0])))
+            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0])))    
 
 
-        
-
-
-        
-
-        
-            
-
-        
     @timing
     def run(self) ->None:
+        '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''
         pass
 
     #     '''field initializations for Output'''
