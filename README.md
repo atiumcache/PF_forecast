@@ -14,6 +14,9 @@ Abstract/Perturb:
 This ABC is one of the fields of Algorithm, it templates a class which perturbs the particles according to some distribution. This class templates only one method, "randomly_perturb", and one field, 
 hyperparameters, which is a dictionary of hyperparameters for the perturbation. 
 
+Abstract/Resampler: 
+This ABC is one of the fields of Algorithm, it performs the resampling step of the particle filter and templates two functions, "compute_weights" to compute the particle weights using the likelihood function, and "resample" to perform the actual resampling. 
+
 
 
 
