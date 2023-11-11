@@ -78,7 +78,6 @@ class MultivariatePerturbations(Perturb):
 
         state1 = np.array([self.hyperparameters['sigma1']/ctx.population]) ** 2
         otherstates = np.array([self.hyperparameters['sigma1']**2 for _ in range(ctx.state_size-1)])
-        print(otherstates)
         C = np.diag([(self.hyperparameters['sigma1']/ctx.population) ** 2,
                      self.hyperparameters['sigma1'] ** 2,
                      self.hyperparameters['sigma1'] ** 2,
@@ -86,7 +85,6 @@ class MultivariatePerturbations(Perturb):
                      self.hyperparameters['sigma2'] ** 2,
                      self.hyperparameters['sigma2'] ** 2]).astype(float)
 
-        print(C)
 
         '''Main perturbation loop'''
         for i in range(len(particleArray)): 
