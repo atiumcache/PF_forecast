@@ -25,13 +25,13 @@ algo.initialize(params={
 "gamma":0.1,
 "std":ESTIMATION.VARIABLE, 
 "hosp":5.3,
-"L":90,
+"L":ESTIMATION.STATIC,
 "D":ESTIMATION.STATIC}
 ,priors={"beta":partial(algo.ctx.rng.uniform,0.,1.),
-          "D":partial(algo.ctx.rng.normal,8.714812267362937,1),
+          "D":partial(algo.ctx.rng.normal,10,3),
           "std":partial(algo.ctx.rng.uniform,20.,30.),
-          "L":partial(algo.ctx.rng.uniform,25.,50.),
-          "hosp":partial(algo.ctx.rng.uniform,5,10)
+          "gamma":partial(algo.ctx.rng.uniform,0.7,1),
+          "L":partial(algo.ctx.rng.uniform,1,75)
           })
 data = pd.read_csv('./datasets/COVID_ADMISSIONS_CA.csv').to_numpy()
 data = np.delete(data,0,1)
@@ -55,6 +55,8 @@ for t in range(200):
     #  print(data[t])
      beta.append(np.mean([particle.param['beta'] for particle in algo.particles]))
      D.append(np.mean([particle.param['D'] for particle in algo.particles]))
+     L.append(np.mean([particle.param['L'] for particle in algo.particles]))
+     print(L[-1])
      print(D[-1])
 
      # #algo.print_particles()
@@ -68,7 +70,9 @@ plt.yscale('log')
 plt.plot(state)
 plt.show()
 
-
+plt.title("Estimate of D over time")
+plt.xlabel("Time")
+plt.ylabel("Value")
 plt.plot(D)
 plt.show()
 
