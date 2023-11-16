@@ -2,6 +2,7 @@ from utilities.Utils import Particle,Context
 from Abstract.Resampler import Resampler
 from utilities.Utils import log_norm,jacob
 from scipy.stats import nbinom,poisson
+from scipy.special import loggamma
 from typing import List
 import numpy as np
 from numpy.typing import NDArray
@@ -21,6 +22,17 @@ def likelihood_NB_R(observation,particle_observation:NDArray[np.int_],R:float)->
 def log_likelihood_poisson(observation,particle_observation,var):
     return poisson.pmf(observation,particle_observation)
 
+def likelihood_NB_r(observation,particle_observation:NDArray[np.int_],R:float)->NDArray: 
+
+    prob = R/(R+particle_observation)
+    prob[prob<=1e-10] = 1e-10
+    prob[prob>=1-1e-10] = 1-1e-10
+    v1 = prob[observation>=0] #do not include the days if observation is negative
+    v2 = observation[observation>=0]
+    x = loggamma(v2+R)-loggamma(v2+1)-loggamma(R)+R*np.log(v1)+v2*np.log(1-v1)
+
+    return np.exp(x)
+
 class NBinomResample(Resampler): 
     def __init__(self) -> None:
         super().__init__(likelihood=likelihood_NB)
@@ -30,12 +42,14 @@ class NBinomResample(Resampler):
                                                std=particle.param['std']))'''
     def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
-
+        R = 0
         for i in range(len(particleArray)): 
             weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,var=(particleArray[i].param['std'])**2)
             '''iterate over the particles and call the likelihood function for each one '''
 
+        max_particle = particleArray[np.argmax(weights)]
 
+        # R = (max_particle.observation)**2 / (  - max_particle.observation)
         #weights = np.array(self.likelihood(np.round(observation),[particle.observation for particle in particleArray],[particle.dispersion for particle in particleArray]))
 
         '''This loop sets all weights that are out of bounds to a very small non-zero number'''
@@ -75,7 +89,7 @@ class NBinomResample(Resampler):
 
 class NBinomResampleR(Resampler):
     def __init__(self) -> None:
-        super().__init__(likelihood=likelihood_NB_R)
+        super().__init__(likelihood=likelihood_NB_r)
 
     def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
