@@ -82,7 +82,7 @@ class MultivariatePerturbations(Perturb):
                      self.hyperparameters['sigma1'] ** 2,
                      self.hyperparameters['sigma1'] ** 2,
                      self.hyperparameters['sigma1'] **2,
-                     self.hyperparameters['sigma1'] **2,
+                     self.hyperparameters['sigma2'] ** 2,
                      self.hyperparameters['sigma2'] ** 2]).astype(float)
 
 

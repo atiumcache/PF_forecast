@@ -5,6 +5,8 @@ from Abstract.Perturb import Perturb
 from Abstract.Resampler import Resampler
 from utilities.Utils import *
 from typing import Dict,Callable
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from utilities.Utils import Context
 
@@ -36,48 +38,77 @@ class TimeDependentAlgo(Algorithm):
 
 
     @timing
-    def run(self) ->None:
+    def run(self,data_path:str) ->None:
         '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''
-        pass
 
-    #     '''field initializations for Output'''
-    #     self.output = Output(observation_data=info.observation_data)
-    #     self.output_flags = info.output_flags
+        data = pd.read_csv(data_path).to_numpy()
+        data = np.delete(data,0,1)
 
-    #     '''Create a list to store the dispersion param-hacked in, theres probably a better solution here'''
-    #     dispersion = []; 
+        beta = []
+        D = []
+        R = []
+        state = []
+        LL = []
+        ESS = []
 
-    #     while self.context.clock.time < len(info.observation_data): 
-    #         '''This loop contains all the algorithm steps '''
-            
-    #         self.particles = self.integrator.propagate(self.particles,self.context)
-            
-    #         '''hacked in solution for forecasting, more robust solution could be useful'''
-    #         if(self.context.clock.time < len(info.observation_data)): 
-    #             weights = self.resampler.compute_weights(info.observation_data[self.context.clock.time],self.particles)
-    #             self.particles = self.resampler.resample(weights=weights,ctx=self.context,particleArray=self.particles)
-    #             self.particles = self.perturb.randomly_perturb(ctx=self.context,particleArray=self.particles)
-            
-    #         dispersion.append(np.mean([particle.dispersion for particle in self.particles])) 
-            
-    #         '''output updates, not part of the main algorithm'''
-    #         self.output.beta_qtls[:,self.context.clock.time] = quantiles([particle.param['beta'] for _,particle in enumerate(self.particles)])
-    #         self.output.observation_qtls[:,self.context.clock.time] = quantiles([particle.observation for _,particle in enumerate(self.particles)])
-    #         self.output.average_beta[self.context.clock.time] = np.mean([particle.param['beta'] for _,particle in enumerate(self.particles)])
-    #         self.output.average_state[self.context.clock.time,:]=np.mean([particle.state for particle in self.particles],axis=0)
+        while(self.ctx.clock.time < len(data)): 
+            self.integrator.propagate(self.particles,self.ctx)
 
-    #         self.context.clock.tick()
-    #         print(f"iteration: {self.context.clock.time}")
+            self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
+
+            self.particles = self.resampler.resample(self.ctx,self.particles)
+            self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
+
+            particle_max = self.particles[np.argmax(self.ctx.weights)]
 
 
-    #     plt.show()
+            LL.append(np.log((max(self.ctx.weights))))
 
-    #     plt.plot(np.arange(self.output.time_series),dispersion)
-    #     plt.show()
+            beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
+            R.append(particle_max.param['R'])
+            D.append(particle_max.param['D'])
 
-    #     self.clean_up()
-    #     return self.output
-    
+            ESS.append(1/np.sum(self.ctx.weights **2))
 
 
-    
+            state.append(np.mean([particle.observation for particle in self.particles],axis=0))
+
+            print(f"Iteration: {self.ctx.clock.time}")
+            self.ctx.clock.tick()
+
+        rowN = 3
+        N = 5
+
+        fig = plt.clf()
+        fig = plt.figure()
+        fig.set_size_inches(10,5)
+        ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
+
+        ax[0].plot(beta,label='Beta')
+        ax[0].title.set_text('Beta')
+
+        ax[1].plot(state,label='New Hospitalizations')
+        ax[1].plot(data[:140])
+        ax[1].title.set_text('New Hospitalizations')
+
+        ax[2].plot(R,label='NB(r,p)')
+        ax[2].title.set_text('NB(r,p)')
+
+        ax[3].plot(LL,label='Log Likelihood')
+        total_LL = np.sum(LL)
+        ax[3].title.set_text(f'Log Likelihood = {total_LL}')
+
+        ax[4].plot(ESS,label='Effective Sample Size')
+        ax[4].title.set_text('Effective Sample Size')
+
+        fig.tight_layout()
+        h = self.perturb.hyperparameters['h']
+        fig.savefig(f'figuresBigRh{h}.png',dpi=300)
+
+                
+
+
+
+
+
+        
