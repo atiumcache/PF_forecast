@@ -17,14 +17,14 @@ algo = TimeDependentAlgo(integrator = EulerSolver(),
                         resampler = NBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
-                                    weights=np.zeros(10000),
+                                    weights=np.zeros(1000),
                                     rng=np.random.default_rng(),
-                        particle_count=10000))
+                        particle_count=1000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
 "gamma":0.1,
-"std":ESTIMATION.VARIABLE,
+"std":10,
 "R":0,
 "hosp":ESTIMATION.STATIC,
 "L":90,
@@ -32,7 +32,7 @@ algo.initialize(params={
 ,priors={"beta":partial(algo.ctx.rng.uniform,0.,1.),
           "D":partial(algo.ctx.rng.uniform,1,20),
           "std":partial(algo.ctx.rng.uniform,20.,30.),
-          "hosp":partial(algo.ctx.rng.uniform,1,30),
+          "hosp":partial(algo.ctx.rng.normal,17.21147833,5),
           "L":partial(algo.ctx.rng.uniform,1,75),
           "R":partial(algo.ctx.rng.uniform,0.,1.)
           })

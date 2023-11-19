@@ -59,6 +59,9 @@ class TimeDependentAlgo(Algorithm):
         while(self.ctx.clock.time < runtime): 
             self.integrator.propagate(self.particles,self.ctx)
 
+            # for particle in self.particles: 
+            #     particle.param['beta'] = particle.param['beta'] * np.exp(self.ctx.rng.standard_normal() * 0.01)
+
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
 
             self.particles = self.resampler.resample(self.ctx,self.particles)
