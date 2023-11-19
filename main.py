@@ -6,6 +6,7 @@ from Implementations.perturbers.perturbers import MultivariatePerturbations
 from utilities.Utils import Context,ESTIMATION
 from functools import partial
 import matplotlib.pyplot as plt
+
 import pandas as pd
 import numpy as np
 
@@ -33,7 +34,7 @@ algo.initialize(params={
           "std":partial(algo.ctx.rng.uniform,20.,30.),
           "gamma":partial(algo.ctx.rng.normal,0.18687750960396116,0.1),
           "L":partial(algo.ctx.rng.uniform,1,75),
-          "R":partial(algo.ctx.rng.uniform,10000,1000000)
+          "R":partial(algo.ctx.rng.uniform,0.,1.)
           })
 data = pd.read_csv('./datasets/FLU_HOSPITALIZATIONS.csv').to_numpy()
 data = np.delete(data,0,1)

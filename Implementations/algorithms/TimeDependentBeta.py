@@ -7,6 +7,7 @@ from utilities.Utils import *
 from typing import Dict,Callable
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 from utilities.Utils import Context
 
@@ -50,6 +51,9 @@ class TimeDependentAlgo(Algorithm):
         state = []
         LL = []
         ESS = []
+        R_quantiles = []
+        state_quantiles = []
+        beta_quantiles = []
 
         while(self.ctx.clock.time < len(data)): 
             self.integrator.propagate(self.particles,self.ctx)
@@ -66,6 +70,9 @@ class TimeDependentAlgo(Algorithm):
 
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
             R.append(particle_max.param['R'])
+            R_quantiles.append(quantiles([particle.param['R'] for particle in self.particles]))
+            state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
+            beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
 
             ESS.append(1/np.sum(self.ctx.weights **2))
@@ -77,18 +84,28 @@ class TimeDependentAlgo(Algorithm):
             self.ctx.clock.tick()
 
         rowN = 3
-        N = 5
+        N = 6
+
+        R_quantiles = np.array(R_quantiles)
+        state_quantiles = np.array(state_quantiles)
+        beta_quantiles = np.array(beta_quantiles)
+
+        colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
         fig = plt.clf()
         fig = plt.figure()
         fig.set_size_inches(10,5)
         ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
 
-        ax[0].plot(beta,label='Beta')
+        ax[0].plot(beta,label='Beta',zorder=12)
+        for i in range(11):
+            ax[0].fill_between(np.arange(223), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[0].title.set_text('Beta')
 
-        ax[1].plot(state,label='New Hospitalizations')
-        ax[1].plot(data[:140])
+        #ax[1].plot(state,label='New Hospitalizations')
+        for i in range(11):
+            ax[1].fill_between(np.arange(223), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+        ax[1].plot(data)
         ax[1].title.set_text('New Hospitalizations')
 
         ax[2].plot(R,label='NB(r,p)')
@@ -100,6 +117,10 @@ class TimeDependentAlgo(Algorithm):
 
         ax[4].plot(ESS,label='Effective Sample Size')
         ax[4].title.set_text('Effective Sample Size')
+
+        
+        for i in range(11):
+            ax[5].fill_between(np.arange(223), R_quantiles[:,i], R_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
 
         fig.tight_layout()
         h = self.perturb.hyperparameters['h']

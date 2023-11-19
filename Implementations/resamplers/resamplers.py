@@ -94,7 +94,7 @@ class NBinomResampleR(Resampler):
     def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
         for i in range(len(particleArray)): 
-            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,R=(particleArray[i].param['R']))
+            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,R=1/(particleArray[i].param['R']))
             '''iterate over the particles and call the likelihood function for each one '''
 
 
