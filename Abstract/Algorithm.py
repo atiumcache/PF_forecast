@@ -35,7 +35,7 @@ class Algorithm(ABC):
 
         
     @abstractmethod
-    def run(self) ->None:
+    def run(self,data_path:str,runtime:int) ->None:
         '''No base implementation, defined in child class implementations'''
         pass
         

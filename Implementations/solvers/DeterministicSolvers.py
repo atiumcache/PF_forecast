@@ -1,7 +1,27 @@
 from utilities.Utils import Particle,Context
 from Abstract.Integrator import Integrator
+from scipy.integrate import solve_ivp,odeint
 from typing import List
 import numpy as np
+
+
+def RHS_H(t, state, param):
+    #params has all the parameters – beta, gamma
+    #state is a numpy array
+
+    S,I,R,H,old_H = state #unpack the state variables
+    N = S + I + R + H #compute the total population
+
+    new_H = ((1/param['D'])*param['gamma']) * I #our observation value for the particle  
+
+    '''The state transitions of the ODE model is below'''
+    dS = -param['beta']*(S*I)/N + (1/param['L'])*R 
+    dI = param['beta']*S*I/N-(1/param['D'])*I
+    dR = (1/param['hosp']) * H + ((1/param['D'])*(1-(param['gamma']))*I)-(1/param['L'])*R 
+    dH = (1/param['D'])*(param['gamma']) * I - (1/param['hosp']) * H 
+
+    return np.array([dS,dI,dR,dH,new_H])
+    
 
 
 class EulerSolver(Integrator): 
@@ -16,7 +36,6 @@ class EulerSolver(Integrator):
         for particle in particleArray: 
             particle.observation = 0
 
-        
         for j,_ in enumerate(particleArray): 
             for _ in range(int(1/dt)): 
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
@@ -26,6 +45,7 @@ class EulerSolver(Integrator):
                 if(np.any(np.isnan(particleArray[j].state))): 
                     print(f"NaN state at particle: {j}")
                 particleArray[j].observation += np.array([sim_obv])
+
 
         return particleArray
     
@@ -55,25 +75,21 @@ class Rk45Solver(Integrator):
     '''Elements of particleArray are of Particle class in utilities/Utils.py'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        '''code here, you can call RHS_H or change it'''
+
+        for i,particle in enumerate(particleArray): 
+
+            y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
+            
+            t_span = (0.0, 1.0)
+            result_solve_ivp = solve_ivp(RHS_H, t_span, y0, args=(particle.param,))
+
+            particleArray[i].state = np.array(result_solve_ivp.y[0:ctx.state_size,-1])
+            particleArray[i].observation = np.array([result_solve_ivp.y[-1,-1]])
+
+
+            if(np.any(np.isnan(particleArray[i].state))): 
+                    print(f"NaN state at particle: {i}")
+
 
         return particleArray
 
-
-    def RHS_H(self,particle:Particle):
-    #params has all the parameters – beta, gamma
-    #state is a numpy array
-
-        S,I,R,H = particle.state #unpack the state variables
-        N = S + I + R + H #compute the total population
-
-        new_H = ((1/particle.param['D'])*particle.param['gamma']) * I #our observation value for the particle  
-
-        '''The state transitions of the ODE model is below'''
-        dS = -particle.param['beta']*(S*I)/N + (1/particle.param['L'])*R 
-        dI = particle.param['beta']*S*I/N-(1/particle.param['D'])*I
-        dR = (1/particle.param['hosp']) * H + ((1/particle.param['D'])*(1-(particle.param['gamma']))*I)-(1/particle.param['L'])*R 
-        dH = (1/particle.param['D'])*(particle.param['gamma']) * I - (1/particle.param['hosp']) * H 
-
-        return np.array([dS,dI,dR,dH]),new_H
-    

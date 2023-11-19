@@ -39,7 +39,7 @@ class TimeDependentAlgo(Algorithm):
 
 
     @timing
-    def run(self,data_path:str) ->None:
+    def run(self,data_path:str,runtime:int) ->None:
         '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''
 
         data = pd.read_csv(data_path).to_numpy()
@@ -51,11 +51,12 @@ class TimeDependentAlgo(Algorithm):
         state = []
         LL = []
         ESS = []
+        gamma = []
         R_quantiles = []
         state_quantiles = []
         beta_quantiles = []
 
-        while(self.ctx.clock.time < len(data)): 
+        while(self.ctx.clock.time < runtime): 
             self.integrator.propagate(self.particles,self.ctx)
 
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
@@ -69,16 +70,16 @@ class TimeDependentAlgo(Algorithm):
             LL.append(np.log((max(self.ctx.weights))))
 
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
-            R.append(particle_max.param['R'])
-            R_quantiles.append(quantiles([particle.param['R'] for particle in self.particles]))
+            R.append(particle_max.param['hosp'])
+            R_quantiles.append(quantiles([particle.param['hosp'] for particle in self.particles]))
             state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
-
             ESS.append(1/np.sum(self.ctx.weights **2))
 
 
             state.append(np.mean([particle.observation for particle in self.particles],axis=0))
+
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
@@ -99,17 +100,17 @@ class TimeDependentAlgo(Algorithm):
 
         ax[0].plot(beta,label='Beta',zorder=12)
         for i in range(11):
-            ax[0].fill_between(np.arange(223), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+            ax[0].fill_between(np.arange(self.ctx.clock.time), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[0].title.set_text('Beta')
 
         #ax[1].plot(state,label='New Hospitalizations')
         for i in range(11):
-            ax[1].fill_between(np.arange(223), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+            ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[1].plot(data)
         ax[1].title.set_text('New Hospitalizations')
 
-        ax[2].plot(R,label='NB(r,p)')
-        ax[2].title.set_text('NB(r,p)')
+        ax[2].plot(R,label='hosp')
+        ax[2].title.set_text('hosp')
 
         ax[3].plot(LL,label='Log Likelihood')
         total_LL = np.sum(LL)
@@ -120,11 +121,11 @@ class TimeDependentAlgo(Algorithm):
 
         
         for i in range(11):
-            ax[5].fill_between(np.arange(223), R_quantiles[:,i], R_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+            ax[5].fill_between(np.arange(self.ctx.clock.time), R_quantiles[:,i], R_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
 
         fig.tight_layout()
         h = self.perturb.hyperparameters['h']
-        fig.savefig(f'figuresBigRh{h}.png',dpi=300)
+        fig.savefig(f'figuresh{h}.png',dpi=300)
 
                 
 

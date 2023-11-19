@@ -53,6 +53,8 @@ class MultivariatePerturbations(Perturb):
         for i,param_vec in enumerate(static_param_mat): 
             log_mean += ctx.weights[i] * (param_vec)
 
+        print(np.exp(log_mean))
+
         '''Computes the covariance of the logarithms of the particles'''
         cov = 0
         for i,param_vec in enumerate(static_param_mat): 
@@ -74,16 +76,14 @@ class MultivariatePerturbations(Perturb):
 
         '''Perturb the variable parameters '''
 
-        #TODO Need a more flexible solution here, covariance meatrix shouldn't be hard coded
 
         state1 = np.array([self.hyperparameters['sigma1']/ctx.population]) ** 2
         otherstates = np.array([self.hyperparameters['sigma1']**2 for _ in range(ctx.state_size-1)])
-        C = np.diag([(self.hyperparameters['sigma1']/ctx.population) ** 2,
-                     self.hyperparameters['sigma1'] ** 2,
-                     self.hyperparameters['sigma1'] ** 2,
-                     self.hyperparameters['sigma1'] **2,
-                     self.hyperparameters['sigma2'] ** 2,
-                     self.hyperparameters['sigma2'] ** 2]).astype(float)
+        param_variance = np.array([self.hyperparameters['sigma2']**2 for _ in range(len(var_names))])
+
+        C = np.concatenate((state1,otherstates,param_variance))
+
+        C = np.diag(C).astype(float)
 
 
         '''Main perturbation loop'''
