@@ -58,7 +58,7 @@ class TimeDependentAlgo(Algorithm):
         state_quantiles = []
         beta_quantiles = []
 
-        while(self.ctx.clock.time < runtime if (runtime != -1) else len(data)): 
+        while(self.ctx.clock.time < runtime): 
             self.integrator.propagate(self.particles,self.ctx)
 
             # for particle in self.particles: 
@@ -83,14 +83,11 @@ class TimeDependentAlgo(Algorithm):
             ESS.append(1/np.sum(self.ctx.weights **2))
 
 
-            state.append(np.mean([particle.observation for particle in self.particles],axis=0))
+            state.append(np.mean([particle.state for particle in self.particles],axis=0))
 
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
-
-        plt.plot(data)
-        plt.show()
 
         rowN = 3
         N = 6

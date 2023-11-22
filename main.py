@@ -17,15 +17,15 @@ algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
                         resampler = NBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 7,
-                                    weights=np.zeros(1000),
+                                    weights=np.zeros(10000),
                                     seed_loc=3,
                                     rng=np.random.default_rng(),
-                        particle_count=1000))
+                        particle_count=10000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
 "gamma":0.1,
-"std":ESTIMATION.STATIC,
+"std":ESTIMATION.VARIABLE,
 "R":0,
 "hosp":15,
 "L":90,
@@ -39,7 +39,7 @@ algo.initialize(params={
           })
 
 
-algo.run('./datasets/JHU_COVID_CASES.csv',100)
+algo.run('./datasets/JHU_COVID_CASES.csv',879)
 
 
 
