@@ -44,6 +44,8 @@ class TimeDependentAlgo(Algorithm):
 
         data = pd.read_csv(data_path).to_numpy()
         data = np.delete(data,0,1)
+        data = data[70:]
+
 
         beta = []
         D = []
@@ -86,6 +88,9 @@ class TimeDependentAlgo(Algorithm):
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
+
+        plt.plot(data)
+        plt.show()
 
         rowN = 3
         N = 6

@@ -53,8 +53,6 @@ class MultivariatePerturbations(Perturb):
         for i,param_vec in enumerate(static_param_mat): 
             log_mean += ctx.weights[i] * (param_vec)
 
-        print(np.exp(log_mean))
-
         '''Computes the covariance of the logarithms of the particles'''
         cov = 0
         for i,param_vec in enumerate(static_param_mat): 
