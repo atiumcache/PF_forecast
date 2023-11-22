@@ -33,8 +33,9 @@ class TimeDependentAlgo(Algorithm):
                     p_params[key] = priors[key]()
 
             initial_infected = self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population)
-            state = np.concatenate((np.array([self.ctx.population-initial_infected,initial_infected]),[0 for _ in range(self.ctx.state_size-2)])) 
-            
+            state = np.concatenate((np.array([self.ctx.population-initial_infected]),[0 for _ in range(self.ctx.state_size-1)])) 
+            state[self.ctx.seed_loc] = initial_infected
+
             self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0])))    
 
 
@@ -44,7 +45,6 @@ class TimeDependentAlgo(Algorithm):
 
         data = pd.read_csv(data_path).to_numpy()
         data = np.delete(data,0,1)
-        data = data[70:]
 
 
         beta = []
@@ -58,7 +58,7 @@ class TimeDependentAlgo(Algorithm):
         state_quantiles = []
         beta_quantiles = []
 
-        while(self.ctx.clock.time < runtime): 
+        while(self.ctx.clock.time < runtime if (runtime != -1) else len(data)): 
             self.integrator.propagate(self.particles,self.ctx)
 
             # for particle in self.particles: 

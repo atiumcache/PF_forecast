@@ -110,7 +110,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        dt = 1
+        dt = 1/100
 
         for particle in particleArray:
 
@@ -128,7 +128,6 @@ class EulerSolver_SEAIRH(Integrator):
 
                 d_RHS,sim_obv =self.RHS(particleArray[j])
 
-                print(particleArray[j].state)
                 particleArray[j].state += d_RHS*dt
                 if(np.any(np.isnan(particleArray[j].state))): 
                     print(f"NaN state at particle: {j}")
@@ -142,7 +141,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-    def RHS(self,particle:Particle):
+    def RHS(t,particle:Particle):
 
     #params has all the parameters – beta, gamma
 
@@ -150,9 +149,9 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        S,E,A,I,R,H,D = particle.state #unpack the state variables
+        S,E,A,I,H,R, D = particle.state #unpack the state variables
 
-        N = S + E + A + I + R + H +D  #compute the total population
+        N = S + E + A + I + R + H + D  #compute the total population
 
         kL=0.25
 
@@ -186,5 +185,5 @@ class EulerSolver_SEAIRH(Integrator):
         dD = cH*(1-fR)*H
 
         new_I = kL*(1-fA)*E
-
         return np.array([dS,dE,dA,dI,dH,dR,dD]),new_I
+

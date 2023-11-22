@@ -18,13 +18,14 @@ algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
                         ctx=Context(population=7_000_000,
                                     state_size = 7,
                                     weights=np.zeros(1000),
+                                    seed_loc=3,
                                     rng=np.random.default_rng(),
                         particle_count=1000))
 
 algo.initialize(params={
-"beta":0.1,
+"beta":ESTIMATION.VARIABLE,
 "gamma":0.1,
-"std":ESTIMATION.VARIABLE,
+"std":ESTIMATION.STATIC,
 "R":0,
 "hosp":15,
 "L":90,
@@ -38,7 +39,7 @@ algo.initialize(params={
           })
 
 
-algo.run('./datasets/JHU_COVID_CASES.csv',500)
+algo.run('./datasets/JHU_COVID_CASES.csv',100)
 
 
 
