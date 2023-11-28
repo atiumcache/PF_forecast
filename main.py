@@ -17,10 +17,10 @@ algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
                         resampler = NBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 7,
-                                    weights=np.zeros(10000),
+                                    weights=np.zeros(1000),
                                     seed_loc=3,
                                     rng=np.random.default_rng(),
-                        particle_count=10000))
+                        particle_count=1000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
