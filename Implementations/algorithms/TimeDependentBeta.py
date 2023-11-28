@@ -81,14 +81,16 @@ class TimeDependentAlgo(Algorithm):
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
             ESS.append(1/np.sum(self.ctx.weights **2))
+            print(f"{([particle_max.param['gamma']])}")
 
-
-            state.append(np.mean([particle.state for particle in self.particles],axis=0))
-
+            state.append(particle_max.observation)
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
+        plt.yscale('log')
+        plt.plot(state)
+        plt.show()
         rowN = 3
         N = 6
 
@@ -103,7 +105,7 @@ class TimeDependentAlgo(Algorithm):
         fig.set_size_inches(10,5)
         ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
 
-        ax[0].plot(beta,label='Beta',zorder=12)
+        #ax[0].plot(beta,label='Beta',zorder=12)
         for i in range(11):
             ax[0].fill_between(np.arange(self.ctx.clock.time), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[0].title.set_text('Beta')
@@ -111,7 +113,7 @@ class TimeDependentAlgo(Algorithm):
         #ax[1].plot(state,label='New Hospitalizations')
         for i in range(11):
             ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        ax[1].plot(data)
+        ax[1].scatter(np.arange(self.ctx.clock.time),data,s=0.5,zorder=12)
         ax[1].title.set_text('New Hospitalizations')
 
         ax[2].plot(R,label='hosp')

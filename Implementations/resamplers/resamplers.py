@@ -19,7 +19,7 @@ def likelihood_NB_R(observation,particle_observation:NDArray[np.int_],R:float)->
     X = nbinom.pmf(observation, n = R, p = R/(particle_observation+R))
     return X
 
-def log_likelihood_poisson(observation,particle_observation,var):
+def likelihood_poisson(observation,particle_observation,var):
     return poisson.pmf(observation,particle_observation)
 
 def likelihood_NB_r(observation,particle_observation:NDArray[np.int_],R:float)->NDArray: 
@@ -35,7 +35,7 @@ def likelihood_NB_r(observation,particle_observation:NDArray[np.int_],R:float)->
 
 class NBinomResample(Resampler): 
     def __init__(self) -> None:
-        super().__init__(likelihood=likelihood_NB)
+        super().__init__(likelihood=likelihood_poisson)
 
     '''weights[i] += (self.likelihood(observation=observation[j],
                                                particle_observation=particle.observation[j],
