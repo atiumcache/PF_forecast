@@ -76,7 +76,7 @@ class TimeDependentAlgo(Algorithm):
 
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
             R.append(particle_max.param['hosp'])
-            R_quantiles.append(quantiles([particle.param['hosp'] for particle in self.particles]))
+            R_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
@@ -88,9 +88,6 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
-        plt.yscale('log')
-        plt.plot(state)
-        plt.show()
         rowN = 3
         N = 6
 
