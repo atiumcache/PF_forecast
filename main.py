@@ -12,20 +12,20 @@ import numpy as np
 
 np.set_printoptions(suppress=True)
 
-algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
+algo = TimeDependentAlgo(integrator = EulerSolver_SIR(),
                         perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.1,"sigma2":0.05}),
                         resampler = NBinomResampleR(),
                         ctx=Context(population=7_000_000,
-                                    state_size = 7,
-                                    weights=np.zeros(10000),
+                                    state_size = 3,
+                                    weights=np.zeros(5000),
                                     seed_loc=1,
                                     rng=np.random.default_rng(),
-                        particle_count=10000))
+                        particle_count=5000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
-"gamma":0,
-"eta":0,
+"gamma":ESTIMATION.STATIC,
+"eta":ESTIMATION.STATIC,
 "std":10,
 "R":1/10,
 "hosp":15,
@@ -41,7 +41,7 @@ algo.initialize(params={
           })
 
 #algo.print_particles()
-algo.run('./datasets/JHU_CONVOLVED_Arizona.csv',879)
+algo.run('./datasets/SIR_SIM_DATA.csv',300)
 
 
 

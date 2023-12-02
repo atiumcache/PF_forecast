@@ -56,15 +56,14 @@ class MultivariatePerturbations(Perturb):
         '''Computes the covariance of the logarithms of the particles'''
         cov = 0
         for i,param_vec in enumerate(static_param_mat): 
-            cov += ctx.weights[i] * (param_vec-log_mean) * (param_vec - log_mean).T
+            cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
 
         '''Holds the hyperparameter a, defined in terms of h'''
         a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
-        
         # '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
         for i in range(len(particleArray)): 
-            new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+            new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
         #     new_statics = ctx.rng.normal(static_param_mat[i])
 
             '''puts the perturbed static parameters back in the particle field'''

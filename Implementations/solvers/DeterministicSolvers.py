@@ -175,7 +175,7 @@ class EulerSolver_SIR(Integrator):
     '''Propagates the state forward one step and returns an array of states and observations across the the integration period'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        dt = 1/10
+        dt = 1
         for particle in particleArray: 
             particle.observation = 0
 
