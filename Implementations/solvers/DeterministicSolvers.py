@@ -90,7 +90,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        dt = 1/100
+        dt = 1
 
         for particle in particleArray:
 
