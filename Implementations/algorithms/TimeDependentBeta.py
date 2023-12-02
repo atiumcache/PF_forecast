@@ -47,7 +47,7 @@ class TimeDependentAlgo(Algorithm):
         data = np.delete(data,0,1)
 
 
-        beta = []
+        eta_quantiles = []
         D = []
         R = []
         state = []
@@ -74,14 +74,13 @@ class TimeDependentAlgo(Algorithm):
 
             LL.append(np.log((max(self.ctx.weights))))
 
-            beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
+            eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
             R.append(particle_max.param['hosp'])
             R_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
             ESS.append(1/np.sum(self.ctx.weights **2))
-            print(f"{([particle_max.param['gamma']])}")
 
             state.append(particle_max.observation)
 
@@ -94,6 +93,7 @@ class TimeDependentAlgo(Algorithm):
         R_quantiles = np.array(R_quantiles)
         state_quantiles = np.array(state_quantiles)
         beta_quantiles = np.array(beta_quantiles)
+        eta_quantiles = np.array(eta_quantiles)
 
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
@@ -110,11 +110,12 @@ class TimeDependentAlgo(Algorithm):
         #ax[1].plot(state,label='New Hospitalizations')
         for i in range(11):
             ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        ax[1].scatter(np.arange(self.ctx.clock.time),data,s=0.5,zorder=12)
+        ax[1].scatter(np.arange(self.ctx.clock.time),data[:self.ctx.clock.time],s=0.5,zorder=12)
         ax[1].title.set_text('New Hospitalizations')
 
-        ax[2].plot(R,label='hosp')
-        ax[2].title.set_text('hosp')
+        for i in range(11):
+            ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+        ax[2].title.set_text('eta')
 
         ax[3].plot(LL,label='Log Likelihood')
         total_LL = np.sum(LL)

@@ -175,7 +175,7 @@ class EulerSolver_SIR(Integrator):
     '''Propagates the state forward one step and returns an array of states and observations across the the integration period'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        dt = 1
+        dt = 1/10
         for particle in particleArray: 
             particle.observation = 0
 
@@ -198,9 +198,9 @@ class EulerSolver_SIR(Integrator):
 
         new_I = particle.param['beta']*S*I/N - particle.param['gamma'] * I
 
-        dS = -particle.param['beta']*S * I/N
+        dS = -particle.param['beta']*S * I/N + particle.param['eta'] * R
         dI = particle.param['beta']*S*I/N - particle.param['gamma'] * I
-        dR = particle.param['gamma'] * I
+        dR = particle.param['gamma'] * I - particle.param['eta'] * R
  
         return np.array([dS,dI,dR]),new_I
     
