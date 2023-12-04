@@ -33,6 +33,7 @@ class TimeDependentAlgo(Algorithm):
                     p_params[key] = priors[key]()
 
             initial_infected = self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population)
+            #initial_infected = float(1)
             state = np.concatenate((np.array([self.ctx.population-initial_infected]),[0 for _ in range(self.ctx.state_size-1)])) 
             state[self.ctx.seed_loc] = initial_infected
 
@@ -61,8 +62,9 @@ class TimeDependentAlgo(Algorithm):
         while(self.ctx.clock.time < runtime): 
             self.integrator.propagate(self.particles,self.ctx)
 
-            # for particle in self.particles: 
-            #     particle.param['beta'] = particle.param['beta'] * np.exp(self.ctx.rng.standard_normal() * 0.01)
+            # if(self.ctx.clock.time < 45): 
+            #     for particle in self.particles: 
+            #         particle.param['beta'] = 0
 
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
 
@@ -82,13 +84,22 @@ class TimeDependentAlgo(Algorithm):
             D.append(particle_max.param['D'])
             ESS.append(1/np.sum(self.ctx.weights **2))
 
-            state.append(particle_max.observation)
+            state.append(particle_max.state)
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
         rowN = 3
         N = 6
+
+        labels = ['Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
+        state = np.array(state)
+        for i in range(6): 
+            plt.yscale('log')
+            plt.plot(state[:,i],label = labels[i])
+
+        plt.show()
+            
 
         R_quantiles = np.array(R_quantiles)
         state_quantiles = np.array(state_quantiles)

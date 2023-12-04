@@ -12,16 +12,17 @@ import numpy as np
 
 np.set_printoptions(suppress=True)
 
-state = "Washington"
+state = "Arizona"
 
 algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.1,"sigma2":0.05}),
+                        perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.01,"sigma2":0.05}),
                         resampler = NBinomResampleR(),
                         ctx=Context(population=7_000_000,
                                     state_size = 7,
                                     weights=np.zeros(5000),
                                     seed_loc=1,
                                     rng=np.random.default_rng(),
+                                    seed_size=0.01,
                         particle_count=5000))
 
 algo.initialize(params={
