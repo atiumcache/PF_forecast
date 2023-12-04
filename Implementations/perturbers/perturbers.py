@@ -48,27 +48,28 @@ class MultivariatePerturbations(Perturb):
         var_param_mat = np.log(np.array(var_param_mat))
 
 
-        '''Computes the log_mean as defined in Calvetti et.al. '''
-        log_mean = 0
-        for i,param_vec in enumerate(static_param_mat): 
-            log_mean += ctx.weights[i] * (param_vec)
+        if(len(static_names) > 0): 
+            '''Computes the log_mean as defined in Calvetti et.al. '''
+            log_mean = 0
+            for i,param_vec in enumerate(static_param_mat): 
+                log_mean += ctx.weights[i] * (param_vec)
 
-        '''Computes the covariance of the logarithms of the particles'''
-        cov = 0
-        for i,param_vec in enumerate(static_param_mat): 
-            cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
+            '''Computes the covariance of the logarithms of the particles'''
+            cov = 0
+            for i,param_vec in enumerate(static_param_mat): 
+                cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
 
-        '''Holds the hyperparameter a, defined in terms of h'''
-        a = np.sqrt(1-(self.hyperparameters["h"])**2)
+            '''Holds the hyperparameter a, defined in terms of h'''
+            a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
-        # '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
-        for i in range(len(particleArray)): 
-            new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
-        #     new_statics = ctx.rng.normal(static_param_mat[i])
+            # '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
+            for i in range(len(particleArray)): 
+                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+            #     new_statics = ctx.rng.normal(static_param_mat[i])
 
-            '''puts the perturbed static parameters back in the particle field'''
-            for j,static in enumerate(new_statics): 
-                particleArray[i].param[static_names[j]] = np.exp(static)
+                '''puts the perturbed static parameters back in the particle field'''
+                for j,static in enumerate(new_statics): 
+                    particleArray[i].param[static_names[j]] = np.exp(static)
 
 
         '''Perturb the variable parameters '''

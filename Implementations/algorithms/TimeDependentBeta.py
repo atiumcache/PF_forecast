@@ -97,10 +97,13 @@ class TimeDependentAlgo(Algorithm):
 
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
-        fig = plt.clf()
         fig = plt.figure()
         fig.set_size_inches(10,5)
         ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
+        fig.subplots_adjust(hspace=0)
+        
+        for i in range(N): 
+            ax[i].set_xlabel('Days since 4/1/2020')
 
         #ax[0].plot(beta,label='Beta',zorder=12)
         for i in range(11):
@@ -119,7 +122,7 @@ class TimeDependentAlgo(Algorithm):
 
         ax[3].plot(LL,label='Log Likelihood')
         total_LL = np.sum(LL)
-        ax[3].title.set_text(f'Log Likelihood = {total_LL}')
+        ax[3].title.set_text(f'Log Likelihood = {round(total_LL,2)}')
 
         ax[4].plot(ESS,label='Effective Sample Size')
         ax[4].title.set_text('Effective Sample Size')
