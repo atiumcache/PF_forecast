@@ -33,7 +33,7 @@ class TimeDependentAlgo(Algorithm):
                     p_params[key] = priors[key]()
 
             initial_infected = self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population)
-            #initial_infected = float(1)
+
             state = np.concatenate((np.array([self.ctx.population-initial_infected]),[0 for _ in range(self.ctx.state_size-1)])) 
             state[self.ctx.seed_loc] = initial_infected
 
@@ -60,14 +60,18 @@ class TimeDependentAlgo(Algorithm):
         beta_quantiles = []
 
         while(self.ctx.clock.time < runtime): 
+
+            if(self.ctx.clock.time < 37): 
+                for particle in self.particles: 
+                    particle.param['beta'] = 0.
+
+            if(self.ctx.clock.time == 37): 
+                for particle in self.particles: 
+                    particle.param['beta'] = self.ctx.rng.uniform(0.2,0.4)
+
             self.integrator.propagate(self.particles,self.ctx)
 
-            # if(self.ctx.clock.time < 45): 
-            #     for particle in self.particles: 
-            #         particle.param['beta'] = 0
-
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
-
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
@@ -92,12 +96,14 @@ class TimeDependentAlgo(Algorithm):
         rowN = 3
         N = 6
 
-        labels = ['Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
+        labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
         state = np.array(state)
-        for i in range(6): 
+        for i in range(7): 
             plt.yscale('log')
             plt.plot(state[:,i],label = labels[i])
 
+        plt.xlabel('Days since April 1st 2020')
+        plt.legend()
         plt.show()
             
 
@@ -125,7 +131,7 @@ class TimeDependentAlgo(Algorithm):
         for i in range(11):
             ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[1].scatter(np.arange(self.ctx.clock.time),data[:self.ctx.clock.time],s=0.5,zorder=12)
-        ax[1].title.set_text('New Hospitalizations')
+        ax[1].title.set_text('Case Counts')
 
         for i in range(11):
             ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)

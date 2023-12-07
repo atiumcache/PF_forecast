@@ -90,10 +90,9 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        dt = 1
+        dt = 0.1
 
         for particle in particleArray:
-
             particle.observation = 0
 
  
@@ -102,7 +101,7 @@ class EulerSolver_SEAIRH(Integrator):
 
         for j,_ in enumerate(particleArray):
 
-            for _ in range(int(1/dt)):
+            for _ in range(int((1/dt))):
 
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
 

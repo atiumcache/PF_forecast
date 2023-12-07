@@ -1,6 +1,5 @@
 from Abstract.Perturb import Perturb
 from typing import List,Dict
-from ordered_set import OrderedSet
 import numpy as np
 from utilities.Utils import Context,Particle,ESTIMATION
 
@@ -40,11 +39,12 @@ class MultivariatePerturbations(Perturb):
             static_param_mat.append(static_params)
             var_param_mat.append(variable_params)
 
-        var_names = OrderedSet(var_names)
-        static_names = OrderedSet(static_names)
+        #names of the estimated parameters
+        var_names = np.unique(np.array(var_names))
+        static_names = np.unique(np.array(static_names))
 
+        #matrix of variable and static parameters from each particle
         static_param_mat = np.log(np.array(static_param_mat))
-
         var_param_mat = np.log(np.array(var_param_mat))
 
 
@@ -62,14 +62,19 @@ class MultivariatePerturbations(Perturb):
             '''Holds the hyperparameter a, defined in terms of h'''
             a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
-            # '''TODO for some reason the multivariate normal distribution isn't working in the 1-dimension case, need to investigate'''
-            for i in range(len(particleArray)): 
-                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
-            #     new_statics = ctx.rng.normal(static_param_mat[i])
+            #if else for the multivariate normal bug 
 
-                '''puts the perturbed static parameters back in the particle field'''
-                for j,static in enumerate(new_statics): 
-                    particleArray[i].param[static_names[j]] = np.exp(static)
+            if(len(static_param_mat[0]) == 1): 
+                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+
+            else: 
+                for i in range(len(particleArray)): 
+                    new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+
+
+            '''puts the perturbed static parameters back in the particle field'''
+            for j,static in enumerate(new_statics): 
+                particleArray[i].param[static_names[j]] = np.exp(static)
 
 
         '''Perturb the variable parameters '''
