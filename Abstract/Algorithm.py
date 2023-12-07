@@ -46,6 +46,8 @@ class Algorithm(ABC):
         for i,particle in enumerate(self.particles): 
             print(f"{i}: {particle}")
 
+            
+
 
 
 

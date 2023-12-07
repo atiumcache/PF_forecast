@@ -5,6 +5,7 @@ from scipy.stats import nbinom,poisson
 from scipy.special import loggamma
 from typing import List
 import numpy as np
+import math
 from numpy.typing import NDArray
 
 ''''''
@@ -31,12 +32,23 @@ def likelihood_NB_r(observation,particle_observation:NDArray[np.int_],R:float)->
     v2 = observation[observation>=0]
     x = loggamma(v2+R)-loggamma(v2+1)-loggamma(R)+R*np.log(v1)+v2*np.log(1-v1)
 
-
     return np.exp(x)
+
+def log_likelihood_NB(observation:NDArray[np.int_],particle_observation:NDArray[np.int_],R:float)->int: 
+    
+    prob = np.array([R/(R+particle_observation)])
+    prob[prob<=1e-10] = 1e-10
+    prob[prob>=1-1e-10] = 1-1e-10
+    v1 = prob[observation>=0] #do not include the days if observation is negative
+    v2 = observation[observation>=0]
+    x = loggamma(v2+R)-loggamma(v2+1)-loggamma(R)+R*np.log(v1)+v2*np.log(1-v1)
+
+    return x
+
 
 class NBinomResample(Resampler): 
     def __init__(self) -> None:
-        super().__init__(likelihood=likelihood_NB)
+        super().__init__(likelihood=likelihood_NB_r)
 
     '''weights[i] += (self.likelihood(observation=observation[j],
                                                particle_observation=particle.observation[j],
@@ -45,7 +57,7 @@ class NBinomResample(Resampler):
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
 
         for i in range(len(particleArray)): 
-            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,var=(particleArray[i].param['std'])**2)
+            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,R=1/(particleArray[i].param['R']))
             '''iterate over the particles and call the likelihood function for each one '''
 
         
@@ -146,24 +158,29 @@ class LogNBinomResample(Resampler):
     def __init__(self) -> None:
         super().__init__(log_likelihood_NB)
 
-    def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
-        p_obvs = np.array([particle.observation for particle in particleArray])
-        weights = np.zeros(len(p_obvs))
+    def compute_weights(self, observation: NDArray[np.int_], particleArray:List[Particle]) -> NDArray[np.float64]:
+        weights = np.zeros(len(particleArray))
         for i,particle in enumerate(particleArray):
-            for j in range(len(particle.observation)): 
-                weights[i] += (self.likelihood(observation=observation[j],
-                                               particle_observations=particle.observation[j],
-                                               var=particle.param['std']))
 
-        weights = weights-np.max(weights) #normalize the weights wrt their maximum, improves numerical stability
+            LL = 0
+            for j in range(len(observation)):
+                LL += log_likelihood_NB(observation=np.round(observation[j]),particle_observation=np.round(particle.observation[j]),R=1/particle.param['R'])
+            weights[i] = LL
+
+            if(math.isnan(weights[i])): 
+                print(f"real obv: {np.round(observation)}")
+                print(f"particle obv: {np.round(particle.observation)}")
+
+        
+
+        #weights = weights-np.max(weights) #normalize the weights wrt their maximum, improves numerical stability
         weights = log_norm(weights) #normalize the weights using the jacobian logarithm
         
         return weights
     
-    def resample(self, ctx: Context,particleArray:List[Particle],weights:NDArray) -> List[Particle]:
+    def resample(self, ctx: Context,particleArray:List[Particle]) -> List[Particle]:
         '''The actual resampling algorithm, the log variant of systematic resampling'''
-        ctx.weights = weights
-        log_cdf = jacob(weights)
+        log_cdf = jacob(ctx.weights)
         
         i = 0
         indices = np.zeros(ctx.particle_count)

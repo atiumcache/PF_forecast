@@ -37,7 +37,10 @@ class TimeDependentAlgo(Algorithm):
             state = np.concatenate((np.array([self.ctx.population-initial_infected]),[0 for _ in range(self.ctx.state_size-1)])) 
             state[self.ctx.seed_loc] = initial_infected
 
-            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0])))    
+            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))    
+
+    def forward_propagator(): 
+        '''This function simulates the 7 days data to be '''
 
 
     @timing
@@ -48,6 +51,7 @@ class TimeDependentAlgo(Algorithm):
         data = np.delete(data,0,1)
 
 
+        '''Arrays to hold all the output data'''
         eta_quantiles = []
         D = []
         R = []
@@ -61,24 +65,29 @@ class TimeDependentAlgo(Algorithm):
 
         while(self.ctx.clock.time < runtime): 
 
-            if(self.ctx.clock.time < 37): 
-                for particle in self.particles: 
-                    particle.param['beta'] = 0.
+            # '''start date for the particles'''
+            # if(self.ctx.clock.time < 37): 
+            #     for particle in self.particles: 
+            #         particle.param['beta'] = 0.
 
-            if(self.ctx.clock.time == 37): 
-                for particle in self.particles: 
-                    particle.param['beta'] = self.ctx.rng.uniform(0.2,0.4)
+            # if(self.ctx.clock.time == 37): 
+            #     for particle in self.particles: 
+            #         particle.param['beta'] = self.ctx.rng.uniform(0.2,0.4)
 
+            #one step propagation 
             self.integrator.propagate(self.particles,self.ctx)
 
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
+
+
+
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
             particle_max = self.particles[np.argmax(self.ctx.weights)]
 
 
-            LL.append(np.log((max(self.ctx.weights))))
+            LL.append(((max(self.ctx.weights))))
 
             eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
             R.append(particle_max.param['hosp'])

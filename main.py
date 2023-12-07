@@ -15,19 +15,20 @@ np.set_printoptions(suppress=True)
 state = "Arizona"
 
 algo = TimeDependentAlgo(integrator = EulerSolver_SEAIRH(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.1,"sigma2":0.05}),
-                        resampler = NBinomResampleR(),
+                        perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.01,"sigma2":0.1}),
+                        resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 7,
-                                    weights=np.zeros(10000),
+                                    weights=np.zeros(5000),
                                     seed_loc=1,
+                                    forward_estimation=3,
                                     rng=np.random.default_rng(),
-                        particle_count=10000))
+                        particle_count=5000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
-"gamma":0,
-"eta":0,
+"gamma":0.2,
+"eta":0.1,
 "std":10,
 "R":1/10,
 "hosp":15,
@@ -42,8 +43,8 @@ algo.initialize(params={
           "R":partial(algo.ctx.rng.uniform,0.1,0.9), 
           })
 
-# algo.print_particles()
-algo.run(f'./datasets/JHU_DATA_{state}.csv',300)
+#algo.print_particles()
+algo.run(f'./datasets/JHU_STATE_{state}.csv',600)
 
 
 

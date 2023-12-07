@@ -1,7 +1,9 @@
 from utilities.Utils import Particle,Context
 from Abstract.Integrator import Integrator
 from scipy.integrate import solve_ivp,odeint
-from typing import List
+from typing import List,Dict
+from numpy.typing import NDArray
+from math import isnan
 import numpy as np
 
 class EulerSolver(Integrator): 
@@ -90,10 +92,11 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        dt = 0.1
+        dt = 0.01
 
+        #zero out the particleArray
         for particle in particleArray:
-            particle.observation = 0
+            particle.observation = np.array([0 for _ in range(ctx.forward_estimation)])
 
  
 
@@ -101,18 +104,31 @@ class EulerSolver_SEAIRH(Integrator):
 
         for j,_ in enumerate(particleArray):
 
-            for _ in range(int((1/dt))):
+            #one step forward 
+
+            
+            for _ in range(int(1/dt)):
 
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
 
-                d_RHS,sim_obv =self.RHS(particleArray[j])
+                d_RHS,sim_obv =self.RHS(particleArray[j].state,particleArray[j].param)
 
                 particleArray[j].state += d_RHS*dt
                 if(np.any(np.isnan(particleArray[j].state))): 
                     print(f"NaN state at particle: {j}")
-                particleArray[j].observation += np.array([sim_obv])
-
+                particleArray[j].observation[0] += sim_obv
+        
  
+            #additional loops 
+            
+            state = particleArray[j].state
+            for i in range(1,ctx.forward_estimation):
+                for _ in range(int(1/dt)):
+
+                    d_RHS,sim_obv = self.RHS(state,particleArray[j].param)
+
+                    state += d_RHS*dt
+                    particleArray[j].observation[i] += sim_obv
 
         return particleArray
 
@@ -120,7 +136,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-    def RHS(t,particle:Particle):
+    def RHS(t,state:NDArray,param:Dict[str,float]):
 
     #params has all the parameters – beta, gamma
 
@@ -128,7 +144,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        S,E,A,I,H,R, D = particle.state #unpack the state variables
+        S,E,A,I,H,R, D = state #unpack the state variables
 
         N = S + E + A + I + R + H + D  #compute the total population
 
@@ -149,9 +165,9 @@ class EulerSolver_SEAIRH(Integrator):
  
         '''The state transitions of the ODE model is below'''
 
-        dS = -particle.param['beta']*(S*I)/N
+        dS = -param['beta']*(S*I)/N
 
-        dE = particle.param['beta']*S*I/N-kL*E
+        dE = param['beta']*S*I/N-kL*E
 
         dA = kL*fA*E-cA*A
 
@@ -176,30 +192,48 @@ class EulerSolver_SIR(Integrator):
 
         dt = 1
         for particle in particleArray: 
-            particle.observation = 0
+            particle.observation = np.array([0 for _ in range(ctx.forward_estimation)])
 
         for j,_ in enumerate(particleArray): 
-            for _ in range(int(1/dt)): 
+                        #one step forward 
+            for _ in range(int(1/dt)):
+
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
-                d_RHS,sim_obv =self.RHS(particleArray[j])
+
+                d_RHS,sim_obv =self.RHS(particleArray[j].state,particleArray[j].param)
 
                 particleArray[j].state += d_RHS*dt
-                if(np.any(np.isnan(particleArray[j].state))): 
-                    print(f"NaN state at particle: {j}")
-                particleArray[j].observation = particleArray[j].state[1]
+                if(np.any(np.isnan(particleArray[j].observation))): 
+                    print(f"NaN observation at particle: {j}")
+                
+                if(isnan(sim_obv)): 
+                    sim_obv = 0
+                particleArray[j].observation[0] += sim_obv
+        
+ 
+            #additional loops 
+            state = particleArray[j].state
+            for i in range(1,ctx.forward_estimation):
+                for _ in range(int(1/dt)):
+
+                    d_RHS,sim_obv = self.RHS(state,particleArray[j].param)
+
+                    state += d_RHS*dt
+                    particleArray[j].observation[i] += sim_obv
+
 
         return particleArray
     
-    def RHS(self,particle:Particle):
+    def RHS(self,state:NDArray,param:Dict[str,float]):
         
-        S,I,R = particle.state
+        S,I,R = state
         N = S + I + R
 
-        new_I = particle.param['beta']*S*I/N - particle.param['gamma'] * I
+        new_I = param['beta']*S*I/N - param['gamma'] * I
 
-        dS = -particle.param['beta']*S * I/N + particle.param['eta'] * R
-        dI = particle.param['beta']*S*I/N - particle.param['gamma'] * I
-        dR = particle.param['gamma'] * I - particle.param['eta'] * R
+        dS = -param['beta']*S * I/N + param['eta'] * R
+        dI = param['beta']*S*I/N - param['gamma'] * I
+        dR = param['gamma'] * I - param['eta'] * R
  
         return np.array([dS,dI,dR]),new_I
     
