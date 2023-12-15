@@ -15,40 +15,60 @@ class EulerSolver(Integrator):
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
         dt = 1
-        for particle in particleArray: 
-            particle.observation = 0
+        #zero out the particleArray
+        for particle in particleArray:
+            particle.observation = np.array([0 for _ in range(ctx.forward_estimation)])
 
-        for j,_ in enumerate(particleArray): 
-            for _ in range(int(1/dt)): 
+
+        for j,_ in enumerate(particleArray):
+
+            #one step forward 
+
+            
+            for _ in range(int(1/dt)):
+
                 '''This loop runs over the particleArray, performing the integration in RHS for each one'''
-                d_RHS,sim_obv =self.RHS_H(particleArray[j])
+
+                d_RHS,sim_obv =self.RHS_H(particleArray[j].state,particleArray[j].param)
 
                 particleArray[j].state += d_RHS*dt
                 if(np.any(np.isnan(particleArray[j].state))): 
                     print(f"NaN state at particle: {j}")
-                particleArray[j].observation += np.array([sim_obv])
+                particleArray[j].observation[0] += sim_obv * dt
+        
+ 
+            #additional loops 
+            
+            state = particleArray[j].state
+            for i in range(1,ctx.forward_estimation):
+                for _ in range(int(1/dt)):
 
+                    d_RHS,sim_obv = self.RHS_H(state,particleArray[j].param)
+
+                    state += d_RHS*dt
+                    particleArray[j].observation[i] += sim_obv * dt
 
         return particleArray
+
+
     
 
-    def RHS_H(self,particle:Particle):
+    def RHS_H(self,state:NDArray[np.int_],param:Dict[str,int]):
     #params has all the parameters – beta, gamma
     #state is a numpy array
 
-        S,I,R,H = particle.state #unpack the state variables
+        S,I,R,H = state #unpack the state variables
         N = S + I + R + H #compute the total population
 
-        new_H = ((1/particle.param['D'])*particle.param['gamma']) * I #our observation value for the particle  
-        new_I = particle.param['beta']*S*I/N
+        new_H = ((1/param['D'])*param['gamma']) * I #our observation value for the particle  
 
         '''The state transitions of the ODE model is below'''
-        dS = -particle.param['beta']*(S*I)/N + (1/particle.param['L'])*R 
-        dI = particle.param['beta']*S*I/N-(1/particle.param['D'])*I
-        dR = (1/particle.param['hosp']) * H + ((1/particle.param['D'])*(1-(particle.param['gamma']))*I)-(1/particle.param['L'])*R 
-        dH = (1/particle.param['D'])*(particle.param['gamma']) * I - (1/particle.param['hosp']) * H 
+        dS = -param['beta']*(S*I)/N + (1/param['L'])*R 
+        dI = param['beta']*S*I/N-(1/param['D'])*I
+        dR = (1/param['hosp']) * H + ((1/param['D'])*(1-(param['gamma']))*I)-(1/param['L'])*R 
+        dH = (1/param['D'])*(param['gamma']) * I - (1/param['hosp']) * H 
 
-        return np.array([dS,dI,dR,dH]),new_I
+        return np.array([dS,dI,dR,dH]),new_H
     
 class Rk45Solver(Integrator): 
 
@@ -65,10 +85,11 @@ class Rk45Solver(Integrator):
             y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
             
             t_span = (0.0, 1.0)
-            result_solve_ivp = solve_ivp(RHS_H, t_span, y0, args=(particle.param,))
+            result = odeint(func=RHS_H, t=t_span, y0=y0, args=(particle.param,))
 
-            particleArray[i].state = np.array(result_solve_ivp.y[0:ctx.state_size,-1])
-            particleArray[i].observation = np.array([result_solve_ivp.y[-1,-1]])
+
+            particleArray[i].state = np.squeeze(result[1,:ctx.state_size])
+            particleArray[i].observation = np.array([result[1,-1]])
 
 
             if(np.any(np.isnan(particleArray[i].state))): 
@@ -92,7 +113,7 @@ class EulerSolver_SEAIRH(Integrator):
 
  
 
-        dt = 0.01
+        dt = 1
 
         #zero out the particleArray
         for particle in particleArray:
@@ -237,6 +258,22 @@ class EulerSolver_SIR(Integrator):
  
         return np.array([dS,dI,dR]),new_I
     
+def RHS_H(state,t,param):
+    #params has all the parameters – beta, gamma
+    #state is a numpy array
+
+        S,I,R,H,new_H = state #unpack the state variables
+        N = S + I + R + H #compute the total population 
+
+        new_H = (1/param['D'])*(param['gamma']) * I
+
+        '''The state transitions of the ODE model is below'''
+        dS = -param['beta']*(S*I)/N + (1/param['L'])*R 
+        dI = param['beta']*S*I/N-(1/param['D'])*I
+        dR = (1/param['hosp']) * H + ((1/param['D'])*(1-(param['gamma']))*I)-(1/param['L'])*R 
+        dH = (1/param['D'])*(param['gamma']) * I - (1/param['hosp']) * H 
+
+        return np.array([dS,dI,dR,dH,new_H])
 
     
 

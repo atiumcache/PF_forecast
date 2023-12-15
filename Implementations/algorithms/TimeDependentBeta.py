@@ -50,6 +50,8 @@ class TimeDependentAlgo(Algorithm):
         data = pd.read_csv(data_path).to_numpy()
         data = np.delete(data,0,1)
 
+        predicted_beta = pd.read_csv('./datasets/out_logit-beta_trj_bootp.csv')
+
 
         '''Arrays to hold all the output data'''
         eta_quantiles = []
@@ -62,34 +64,29 @@ class TimeDependentAlgo(Algorithm):
         R_quantiles = []
         state_quantiles = []
         beta_quantiles = []
+        beta = []
 
         while(self.ctx.clock.time < runtime): 
 
-            # '''start date for the particles'''
-            # if(self.ctx.clock.time < 37): 
-            #     for particle in self.particles: 
-            #         particle.param['beta'] = 0.
-
-            # if(self.ctx.clock.time == 37): 
-            #     for particle in self.particles: 
-            #         particle.param['beta'] = self.ctx.rng.uniform(0.2,0.4)
-
             #one step propagation 
             self.integrator.propagate(self.particles,self.ctx)
+        
+
 
             self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
-
-
-
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
-            particle_max = self.particles[np.argmax(self.ctx.weights)]
 
+
+            particle_max = self.particles[np.argmax(self.ctx.weights)]
+            print(particle_max.observation)
+            print(data[self.ctx.clock.time])
 
             LL.append(((max(self.ctx.weights))))
 
             eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
+            beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
             R.append(particle_max.param['hosp'])
             R_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
@@ -102,19 +99,21 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
+        pd.DataFrame(beta).to_csv('./datasets/average_beta.csv')
+
         rowN = 3
         N = 6
 
         labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
         state = np.array(state)
-        for i in range(7): 
-            plt.yscale('log')
-            plt.plot(state[:,i],label = labels[i])
+        for i in range(1,self.ctx.state_size): 
+            plt.plot(state[:,i],label=labels[i])
 
         plt.xlabel('Days since April 1st 2020')
         plt.legend()
         plt.show()
-            
+
+        pd.DataFrame(state).to_csv('./datasets/ESTIMATED_HOSP.csv')            
 
         R_quantiles = np.array(R_quantiles)
         state_quantiles = np.array(state_quantiles)
