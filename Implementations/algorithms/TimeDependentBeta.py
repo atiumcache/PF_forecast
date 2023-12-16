@@ -104,7 +104,7 @@ class TimeDependentAlgo(Algorithm):
         rowN = 3
         N = 6
 
-        labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
+        labels = ['Susceptible','Infected','Recovered','Hospitalized','Hospitalized','Recovered','Dead']
         state = np.array(state)
         for i in range(1,self.ctx.state_size): 
             plt.plot(state[:,i],label=labels[i])

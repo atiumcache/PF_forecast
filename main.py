@@ -14,7 +14,7 @@ np.set_printoptions(suppress=True)
 
 state = "Arizona"
 
-algo = TimeDependentAlgo(integrator = EulerSolver(),
+algo = TimeDependentAlgo(integrator = PoissonSolver(),
                         perturb = MultivariatePerturbations(hyper_params={"h":0.5,"sigma1":0.01,"sigma2":0.1}),
                         resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
