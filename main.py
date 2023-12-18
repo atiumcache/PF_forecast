@@ -16,15 +16,15 @@ state = "Arizona"
 
 algo = TimeDependentAlgo(integrator = PoissonSolver(),
                         perturb = MultivariatePerturbations(hyper_params={"h":0.5,"sigma1":0.01,"sigma2":0.1}),
-                        resampler = LogNBinomResample(),
+                        resampler = NBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
-                                    weights=np.zeros(1000),
+                                    weights=np.zeros(5000),
                                     seed_loc=1,
                                     seed_size=0.01,
-                                    forward_estimation=1,
+                                    forward_estimation=3,
                                     rng=np.random.default_rng(),
-                        particle_count=1000))
+                        particle_count=5000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
