@@ -1,7 +1,7 @@
 from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
 from Implementations.resamplers.resamplers import NBinomResample,LogNBinomResample,NBinomResampleR
 from Implementations.solvers.StochasticSolvers import PoissonSolver
-from Implementations.solvers.DeterministicSolvers import EulerSolver,Rk45Solver,EulerSolver_SEAIRH,EulerSolver_SIR
+from Implementations.solvers.DeterministicSolvers import EulerSolver,LSODASolver
 from Implementations.perturbers.perturbers import MultivariatePerturbations
 from utilities.Utils import Context,ESTIMATION
 from functools import partial
@@ -14,17 +14,17 @@ np.set_printoptions(suppress=True)
 
 state = "Arizona"
 
-algo = TimeDependentAlgo(integrator = PoissonSolver(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":0.5,"sigma1":0.01,"sigma2":0.1}),
-                        resampler = NBinomResample(),
+algo = TimeDependentAlgo(integrator = LSODASolver(),
+                        perturb = MultivariatePerturbations(hyper_params={"h":0.1,"sigma1":0.01,"sigma2":0.1}),
+                        resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
-                                    weights=np.zeros(5000),
+                                    weights=np.zeros(1000),
                                     seed_loc=1,
                                     seed_size=0.01,
-                                    forward_estimation=3,
+                                    forward_estimation=1,
                                     rng=np.random.default_rng(),
-                        particle_count=5000))
+                        particle_count=1000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,

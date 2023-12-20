@@ -47,10 +47,12 @@ class TimeDependentAlgo(Algorithm):
     def run(self,data_path:str,runtime:int) ->None:
         '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''
 
-        data = pd.read_csv(data_path).to_numpy()
-        data = np.delete(data,0,1)
+        data1 = pd.read_csv(data_path).to_numpy()
+        data1 = np.delete(data1,0,1)
 
-        predicted_beta = pd.read_csv('./datasets/out_logit-beta_trj_bootp.csv')
+        data2 = pd.read_csv("/Users/averydrennan/SMC_EPI/SMC_EPI/datasets/FLU_HOSPITALIZATIONS.csv").to_numpy()
+        data2 = np.delete(data2,0,1)
+
 
 
         '''Arrays to hold all the output data'''
@@ -73,7 +75,7 @@ class TimeDependentAlgo(Algorithm):
         
 
 
-            self.ctx.weights = (self.resampler.compute_weights(data[self.ctx.clock.time],self.particles))
+            self.ctx.weights = (self.resampler.compute_weights(data1[self.ctx.clock.time],self.particles))
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
@@ -81,15 +83,15 @@ class TimeDependentAlgo(Algorithm):
 
             particle_max = self.particles[np.argmax(self.ctx.weights)]
             print(particle_max.observation)
-            print(data[self.ctx.clock.time])
+            print(f"{data1[self.ctx.clock.time]}{data2[self.ctx.clock.time]}")
 
             LL.append(((max(self.ctx.weights))))
 
-            eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
+            eta_quantiles.append(quantiles([particle.observation[0] for particle in self.particles]))
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
             R.append(particle_max.param['hosp'])
             R_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
-            state_quantiles.append(quantiles([particle.observation for particle in self.particles]))
+            #state_quantiles.append(quantiles([particle.observation[1] for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             D.append(particle_max.param['D'])
             ESS.append(1/np.sum(self.ctx.weights **2))
@@ -136,14 +138,15 @@ class TimeDependentAlgo(Algorithm):
         ax[0].title.set_text('Beta')
 
         #ax[1].plot(state,label='New Hospitalizations')
-        for i in range(11):
-            ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        ax[1].scatter(np.arange(self.ctx.clock.time),data[:self.ctx.clock.time],s=0.5,zorder=12)
-        ax[1].title.set_text('Case Counts')
+        # for i in range(11):
+        #     ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+        # ax[1].scatter(np.arange(self.ctx.clock.time),data2[:self.ctx.clock.time],s=0.5,zorder=12)
+        # ax[1].title.set_text('New Hospitalizations')
 
         for i in range(11):
             ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        ax[2].title.set_text('eta')
+        ax[2].scatter(np.arange(self.ctx.clock.time),data1[:self.ctx.clock.time],s=0.5,zorder=12)
+        ax[2].title.set_text('Total Hospitalized')
 
         ax[3].plot(LL,label='Log Likelihood')
         total_LL = np.sum(LL)

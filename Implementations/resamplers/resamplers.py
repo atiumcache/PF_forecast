@@ -163,8 +163,9 @@ class LogNBinomResample(Resampler):
         for i,particle in enumerate(particleArray):
 
             LL = 0
-            for j in range(len(observation)):
-                LL += log_likelihood_NB(observation=np.round(observation[j]),particle_observation=np.round(particle.observation[j]),R=1/particle.param['R'])
+            #for j in range(len(observation)):
+            LL += 1.0 * log_likelihood_NB(observation=np.round(observation[0]),particle_observation=np.round(particle.observation[0]),R=1/particle.param['R'])
+            LL += 1.0 * log_likelihood_NB(observation=np.round(observation[1]),particle_observation=np.round(particle.observation[1]),R=1/particle.param['R'])
             weights[i] = LL
 
             if(math.isnan(weights[i])): 

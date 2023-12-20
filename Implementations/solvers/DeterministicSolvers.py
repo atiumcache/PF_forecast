@@ -14,7 +14,7 @@ class EulerSolver(Integrator):
     '''Propagates the state forward one step and returns an array of states and observations across the the integration period'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        dt = 1/10
+        dt = 1/100
         #zero out the particleArray
         for particle in particleArray:
             particle.observation = np.array([0 for _ in range(ctx.forward_estimation)])
@@ -39,14 +39,14 @@ class EulerSolver(Integrator):
  
             #additional loops 
             
-            state = particleArray[j].state
-            for i in range(1,ctx.forward_estimation):
-                for _ in range(int(1/dt)):
+            # state = particleArray[j].state
+            # for i in range(1,ctx.forward_estimation):
+            #     for _ in range(int(1/dt)):
 
-                    d_RHS,sim_obv = self.RHS_H(state,particleArray[j].param)
+            #         d_RHS,sim_obv = self.RHS_H(state,particleArray[j].param)
 
-                    state += d_RHS*dt
-                    particleArray[j].observation[i] += sim_obv * dt
+            #         state += d_RHS*dt
+            #         particleArray[j].observation[i] += sim_obv * dt
 
         return particleArray
 
@@ -70,34 +70,6 @@ class EulerSolver(Integrator):
 
         return np.array([dS,dI,dR,dH]),new_H
     
-class Rk45Solver(Integrator): 
-
-    '''Runge Kutta algorithm for computing the t->t+1 transition'''
-    def __init__(self) -> None:
-        super().__init__()
-
-    '''Elements of particleArray are of Particle class in utilities/Utils.py'''
-    def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
-
-
-        for i,particle in enumerate(particleArray): 
-
-            y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
-            
-            t_span = (0.0, 1.0)
-            result = odeint(func=RHS_H, t=t_span, y0=y0, args=(particle.param,))
-
-
-            particleArray[i].state = np.squeeze(result[1,:ctx.state_size])
-            particleArray[i].observation = np.array([result[1,-1]])
-
-
-            if(np.any(np.isnan(particleArray[i].state))): 
-                    print(f"NaN state at particle: {i}")
-
-
-        return particleArray
-
 class EulerSolver_SEAIRH(Integrator):
 
     '''Uses the SIRSH model with a basic euler integrator to obtain the predictions for the state'''
@@ -258,7 +230,7 @@ class EulerSolver_SIR(Integrator):
  
         return np.array([dS,dI,dR]),new_I
     
-def RHS_H(state,t,param):
+def RHS_H(t,state,param):
     #params has all the parameters – beta, gamma
     #state is a numpy array
 
@@ -275,6 +247,55 @@ def RHS_H(state,t,param):
 
         return np.array([dS,dI,dR,dH,new_H])
 
+def Jacobian(t,state,par):
+
+    S,I,R,H,new_H = state
+    N = S + I + R + H #compute the total population 
+    return np.array([[-I*par.beta/N,
+                        -S*par.beta/N,
+                        1/par.L,0,0,],
+                        [I*par.beta/N,
+                        S*par.beta/N - 1/par.D,0,0,0,],
+                        [0,(1 - par.gamma)/par.D,
+                        -1/par.L,1/par.hosp,0,],
+                        [0,par.gamma/par.D,0,
+                        -1/par.hosp,0,],
+                        [0,par.gamma/par.D,0,0,0,],])
+
+
+
+class LSODASolver(Integrator):
     
+    '''Runge Kutta algorithm for computing the t->t+1 transition'''
+    def __init__(self) -> None:
+        super().__init__()
+
+    '''Elements of particleArray are of Particle class in utilities/Utils.py'''
+    def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
+
+
+        for i,particle in enumerate(particleArray): 
+
+            y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
+            
+            t_span = [0.0,1.0]
+            par = particle.param
+            sol =  solve_ivp(fun=lambda t,z: RHS_H(t,z,par), 
+                             jac=lambda t,z:Jacobian(t,z,par), 
+                             t_span=(0.0,1.0),
+                             y0=y0,
+                             t_eval=t_span,
+                             method='LSODA',rtol=1e-3,atol=1e-3)
+            
+            particleArray[i].state = sol.y[:ctx.state_size,1]
+            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+
+
+            if(np.any(np.isnan(particleArray[i].state))): 
+                    print(f"NaN state at particle: {i}")
+
+
+        return particleArray    
+
 
     
