@@ -262,7 +262,45 @@ def Jacobian(t,state,par):
                         -1/par.hosp,0,],
                         [0,par.gamma/par.D,0,0,0,],])
 
+def RHS_SEIARHD(t,state,param):
+    S,E,A,I,H,R, D = state #unpack the state variables
 
+    N = S + E + A + I + R + H + D  #compute the total population
+
+    kL=0.25
+
+    fA=0.44
+
+    fH=0.054
+
+    fR=0.79
+
+    cA=0.26
+
+    cI=0.12
+
+    cH=0.17
+
+
+    '''The state transitions of the ODE model is below'''
+
+    dS = -param['beta']*(S*I)/N
+
+    dE = param['beta']*S*I/N-kL*E
+
+    dA = kL*fA*E-cA*A
+
+    dI = kL*(1-fA)*E-cI*I # compare the I compartment to the reported case number, this model works for case number comparison, may not work for hospitalization number
+
+    dH = cI*fH*I-cH*fR * H
+
+    dR = cA*A+cI*(1-fH)*I+cH*fR*H
+
+    dD = cH*(1-fR)*H
+
+    new_I = kL*(1-fA)*E
+
+    return np.array([dS,dE,dA,dI,dH,dR,dD])
 
 class LSODASolver(Integrator):
     
@@ -288,14 +326,46 @@ class LSODASolver(Integrator):
                              method='LSODA',rtol=1e-3,atol=1e-3)
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
-            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+            particleArray[i].observation = np.array([sol.y[3,1]])
+            #particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
 
 
             if(np.any(np.isnan(particleArray[i].state))): 
                     print(f"NaN state at particle: {i}")
 
 
-        return particleArray    
+        return particleArray 
+
+class LSODASolverSEIARHD: 
+    '''Runge Kutta algorithm for computing the t->t+1 transition'''
+    def __init__(self) -> None:
+        super().__init__()
+
+    '''Elements of particleArray are of Particle class in utilities/Utils.py'''
+    def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
+
+
+        for i,particle in enumerate(particleArray): 
+
+            y0 = particle.state # Initial state of the system
+            
+            t_span = [0.0,float(ctx.forward_estimation)]
+            par = particle.param
+            sol =  solve_ivp(fun=lambda t,z: RHS_SEIARHD(t,z,par), 
+                             t_span=t_span,
+                             y0=y0,
+                             t_eval=np.linspace(t_span[0],t_span[1],ctx.forward_estimation+1),
+                             method='LSODA',rtol=1e-3,atol=1e-3)
+            
+            particleArray[i].state = sol.y[:ctx.state_size,1]
+            
+            # for j in range(ctx.forward_estimation):
+            particleArray[i].observation = np.array(sol.y[3,1:ctx.forward_estimation+1])
+            if(np.any(np.isnan(particleArray[i].state))): 
+                    print(f"NaN state at particle: {i}")
+        
+        return particleArray 
+
 
 
     

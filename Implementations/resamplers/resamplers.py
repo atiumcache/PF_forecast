@@ -150,8 +150,6 @@ class NBinomResampleR(Resampler):
 
         return particleArray
 
-
-#TODO Sit on this until after we test the static parameter estimatiion
 class LogNBinomResample(Resampler): 
     '''Resampler using a negative binomial likelihood function with estimated variance and log resampling step from 
     C. Gentner, S. Zhang, and T. Jost, “Log-PF: particle filtering in logarithm domain,” Journal of Electrical and Computer Engineering, vol. 2018, Article ID 5763461, 11 pages, 2018.'''
@@ -160,12 +158,17 @@ class LogNBinomResample(Resampler):
 
     def compute_weights(self, observation: NDArray[np.int_], particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))
+
         for i,particle in enumerate(particleArray):
 
+
             LL = 0
-            #for j in range(len(observation)):
-            LL += 1.0 * log_likelihood_NB(observation=np.round(observation[0]),particle_observation=np.round(particle.observation[0]),R=1/particle.param['R'])
-            LL += 1.0 * log_likelihood_NB(observation=np.round(observation[1]),particle_observation=np.round(particle.observation[1]),R=1/particle.param['R'])
+            for j in range(len(observation)):
+                LL += 1.0 * log_likelihood_NB(observation=np.round(observation[j]),
+                                              particle_observation=np.round(particle.observation[j]),
+                                              R=particle.param['R'])
+                
+
             weights[i] = LL
 
             if(math.isnan(weights[i])): 

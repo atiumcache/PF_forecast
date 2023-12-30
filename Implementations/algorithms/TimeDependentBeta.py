@@ -49,9 +49,9 @@ class TimeDependentAlgo(Algorithm):
 
         data1 = pd.read_csv(data_path).to_numpy()
         data1 = np.delete(data1,0,1)
+        data1 = data1[75:] #for the covid data
 
-        data2 = pd.read_csv("/Users/averydrennan/SMC_EPI/SMC_EPI/datasets/FLU_HOSPITALIZATIONS.csv").to_numpy()
-        data2 = np.delete(data2,0,1)
+
 
 
 
@@ -73,9 +73,8 @@ class TimeDependentAlgo(Algorithm):
             #one step propagation 
             self.integrator.propagate(self.particles,self.ctx)
         
-
-
-            self.ctx.weights = (self.resampler.compute_weights(data1[self.ctx.clock.time],self.particles))
+            obv = data1[self.ctx.clock.time:self.ctx.clock.time+(self.ctx.forward_estimation)]
+            self.ctx.weights = (self.resampler.compute_weights(obv,self.particles))
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
@@ -83,7 +82,7 @@ class TimeDependentAlgo(Algorithm):
 
             particle_max = self.particles[np.argmax(self.ctx.weights)]
             print(particle_max.observation)
-            print(f"{data1[self.ctx.clock.time]}{data2[self.ctx.clock.time]}")
+            print(f"{data1[self.ctx.clock.time]}")
 
             LL.append(((max(self.ctx.weights))))
 
@@ -108,12 +107,15 @@ class TimeDependentAlgo(Algorithm):
 
         labels = ['Susceptible','Infected','Recovered','Hospitalized','Hospitalized','Recovered','Dead']
         state = np.array(state)
+        plt.yscale('log')
         for i in range(1,self.ctx.state_size): 
             plt.plot(state[:,i],label=labels[i])
+
 
         plt.xlabel('Days since April 1st 2020')
         plt.legend()
         plt.show()
+
 
         pd.DataFrame(state).to_csv('./datasets/ESTIMATED_HOSP.csv')            
 
@@ -122,7 +124,14 @@ class TimeDependentAlgo(Algorithm):
         beta_quantiles = np.array(beta_quantiles)
         eta_quantiles = np.array(eta_quantiles)
 
+
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
+
+        for i in range(11):
+            plt.fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
+            plt.scatter(np.arange(self.ctx.clock.time),data1[:self.ctx.clock.time],s=0.5,zorder=12)
+        plt.show()
+
 
         fig = plt.figure()
         fig.set_size_inches(10,5)
@@ -137,6 +146,8 @@ class TimeDependentAlgo(Algorithm):
             ax[0].fill_between(np.arange(self.ctx.clock.time), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[0].title.set_text('Beta')
 
+        
+
         #ax[1].plot(state,label='New Hospitalizations')
         # for i in range(11):
         #     ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
@@ -146,7 +157,8 @@ class TimeDependentAlgo(Algorithm):
         for i in range(11):
             ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
         ax[2].scatter(np.arange(self.ctx.clock.time),data1[:self.ctx.clock.time],s=0.5,zorder=12)
-        ax[2].title.set_text('Total Hospitalized')
+        ax[2].title.set_text('Total Infected')
+
 
         ax[3].plot(LL,label='Log Likelihood')
         total_LL = np.sum(LL)
