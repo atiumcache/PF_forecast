@@ -105,14 +105,15 @@ class TimeDependentAlgo(Algorithm):
         rowN = 3
         N = 6
 
-        labels = ['Susceptible','Infected','Recovered','Hospitalized','Hospitalized','Recovered','Dead']
+        labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
         state = np.array(state)
-        plt.yscale('log')
+        #plt.yscale('log')
         for i in range(1,self.ctx.state_size): 
-            plt.plot(state[:,i],label=labels[i])
+            if(i != 5):
+                plt.plot(state[:,i],label=labels[i])
 
 
-        plt.xlabel('Days since April 1st 2020')
+        plt.xlabel('Days since March 16th 2020')
         plt.legend()
         plt.show()
 
@@ -127,19 +128,13 @@ class TimeDependentAlgo(Algorithm):
 
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
-        for i in range(11):
-            plt.fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-            plt.scatter(np.arange(self.ctx.clock.time),data1[:self.ctx.clock.time],s=0.5,zorder=12)
-        plt.show()
-
-
         fig = plt.figure()
         fig.set_size_inches(10,5)
         ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
         fig.subplots_adjust(hspace=0)
         
         for i in range(N): 
-            ax[i].set_xlabel('Days since 4/1/2020')
+            ax[i].set_xlabel('Days since 3/16/2020')
 
         #ax[0].plot(beta,label='Beta',zorder=12)
         for i in range(11):
@@ -147,12 +142,13 @@ class TimeDependentAlgo(Algorithm):
         ax[0].title.set_text('Beta')
 
         
+        labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
+        ax[1].title.set_text('Latent State')
+        state = np.array(state)
+        ax[1].set_yscale('log')
+        for i in range(1,self.ctx.state_size): 
+            ax[1].plot(state[:,i],label=labels[i],linewidth=0.5)
 
-        #ax[1].plot(state,label='New Hospitalizations')
-        # for i in range(11):
-        #     ax[1].fill_between(np.arange(self.ctx.clock.time), state_quantiles[:,i], state_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        # ax[1].scatter(np.arange(self.ctx.clock.time),data2[:self.ctx.clock.time],s=0.5,zorder=12)
-        # ax[1].title.set_text('New Hospitalizations')
 
         for i in range(11):
             ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
@@ -172,8 +168,9 @@ class TimeDependentAlgo(Algorithm):
             ax[5].fill_between(np.arange(self.ctx.clock.time), R_quantiles[:,i], R_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
 
         fig.tight_layout()
-        h = self.perturb.hyperparameters['h']
-        fig.savefig(f'figuresh{h}.png',dpi=300)
+        R_val = self.particles[0].param['R']
+        var = self.perturb.hyperparameters['sigma1']
+        fig.savefig(f'figuresR{R_val}_{self.ctx.forward_estimation}_var{var}.png',dpi=300)
 
                 
 
