@@ -12,7 +12,7 @@ import numpy as np
 
 np.set_printoptions(suppress=True)
 
-state = "CA"
+state = "AZ"
 
 algo = TimeDependentAlgo(integrator = LSODASolver(),
                         perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
