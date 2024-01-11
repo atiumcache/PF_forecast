@@ -14,14 +14,13 @@ np.set_printoptions(suppress=True)
 
 state = "Arizona"
 
-algo = TimeDependentAlgo(integrator = LSODASolverSEIARHD(),
-                        perturb = DynamicPerturbations(hyper_params={"h":1.,"sigma1":0.0001,"sigma2":0.1,"k":0.01}),
-                        resampler = NBinomResample(),
+algo = TimeDependentAlgo(integrator = LSODASolver(),
+                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
+                        resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
-                                    state_size = 7,
-                                    weights=np.zeros(10000),
-                                    seed_loc=3,
-                                    seed_size=0.0001,
+                                    state_size = 4,
+                                    weights=np.zeros(1000),
+                                    seed_loc=1,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
                         particle_count=10000))
@@ -31,7 +30,7 @@ algo.initialize(params={
 "gamma":0.1,
 "eta":0.1,
 "std":10,
-"R":1,
+"R":30,
 "hosp":15,
 "L":90,
 "D":10}
@@ -45,7 +44,7 @@ algo.initialize(params={
           })
 
 #algo.print_particles()
-algo.run(f'./datasets/JHU_DATA_Arizona.csv',100)
+algo.run(f'./datasets/FLU_HOSPITALIZATIONS.csv',100)
 
 
 

@@ -326,8 +326,8 @@ class LSODASolver(Integrator):
                              method='LSODA',rtol=1e-3,atol=1e-3)
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
-            particleArray[i].observation = np.array([sol.y[3,1]])
-            #particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+            #particleArray[i].observation = np.array([sol.y[3,1]])
+            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
 
 
             if(np.any(np.isnan(particleArray[i].state))): 

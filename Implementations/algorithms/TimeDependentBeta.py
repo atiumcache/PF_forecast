@@ -49,7 +49,6 @@ class TimeDependentAlgo(Algorithm):
 
         data1 = pd.read_csv(data_path).to_numpy()
         data1 = np.delete(data1,0,1)
-        data1 = data1[75:] #for the covid data
 
 
 
@@ -67,6 +66,7 @@ class TimeDependentAlgo(Algorithm):
         state_quantiles = []
         beta_quantiles = []
         beta = []
+        observations = []
 
         while(self.ctx.clock.time < runtime): 
 
@@ -82,6 +82,7 @@ class TimeDependentAlgo(Algorithm):
 
             particle_max = self.particles[np.argmax(self.ctx.weights)]
             print(particle_max.observation)
+            observations.append(particle_max.observation)
             print(f"{data1[self.ctx.clock.time]}")
 
             LL.append(((max(self.ctx.weights))))
@@ -102,6 +103,7 @@ class TimeDependentAlgo(Algorithm):
 
         pd.DataFrame(beta).to_csv('./datasets/average_beta.csv')
 
+
         rowN = 3
         N = 6
 
@@ -118,7 +120,7 @@ class TimeDependentAlgo(Algorithm):
         plt.show()
 
 
-        pd.DataFrame(state).to_csv('./datasets/ESTIMATED_HOSP.csv')            
+        pd.DataFrame(state).to_csv('./datasets/ESTIMATED_STATE.csv')            
 
         R_quantiles = np.array(R_quantiles)
         state_quantiles = np.array(state_quantiles)
