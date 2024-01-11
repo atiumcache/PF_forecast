@@ -12,7 +12,7 @@ import numpy as np
 
 np.set_printoptions(suppress=True)
 
-state = "Arizona"
+state = "CA"
 
 algo = TimeDependentAlgo(integrator = LSODASolver(),
                         perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
@@ -23,7 +23,7 @@ algo = TimeDependentAlgo(integrator = LSODASolver(),
                                     seed_loc=1,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
-                        particle_count=10000))
+                        particle_count=1000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
@@ -44,7 +44,7 @@ algo.initialize(params={
           })
 
 #algo.print_particles()
-algo.run(f'./datasets/FLU_HOSPITALIZATIONS.csv',100)
+algo.run(f'./datasets/{state}_FLU_HOSPITALIZATIONS.csv',223)
 
 
 

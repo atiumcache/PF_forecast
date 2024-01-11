@@ -52,8 +52,6 @@ class TimeDependentAlgo(Algorithm):
 
 
 
-
-
         '''Arrays to hold all the output data'''
         eta_quantiles = []
         D = []
@@ -107,12 +105,12 @@ class TimeDependentAlgo(Algorithm):
         rowN = 3
         N = 6
 
-        labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
+        labels = ['Susceptible','Infected','Recovered','Hospitalized']
         state = np.array(state)
-        #plt.yscale('log')
+        plt.yscale('log')
         for i in range(1,self.ctx.state_size): 
-            if(i != 5):
                 plt.plot(state[:,i],label=labels[i])
+        plt.plot(observations)
 
 
         plt.xlabel('Days since March 16th 2020')
@@ -172,7 +170,7 @@ class TimeDependentAlgo(Algorithm):
         fig.tight_layout()
         R_val = self.particles[0].param['R']
         var = self.perturb.hyperparameters['sigma1']
-        fig.savefig(f'figuresR{R_val}_{self.ctx.forward_estimation}_var{var}.png',dpi=300)
+        fig.savefig(f'{data_path[11:13]}_figuresR{R_val}_forward{self.ctx.forward_estimation}_var{var}.png',dpi=300)
 
                 
 
