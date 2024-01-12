@@ -15,22 +15,22 @@ np.set_printoptions(suppress=True)
 state = "AZ"
 
 algo = TimeDependentAlgo(integrator = LSODASolver(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.000000000000000000000000001,"sigma2":0.05,"k":0.01}),
+                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.05,"k":0.01}),
                         resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
-                                    weights=np.zeros(1000),
+                                    weights=np.zeros(5000),
                                     seed_loc=1,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
-                        particle_count=1000))
+                        particle_count=5000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
 "gamma":0.1,
 "eta":0.1,
 "std":10,
-"R":30,
+"R":50,
 "hosp":15,
 "L":90,
 "D":10}

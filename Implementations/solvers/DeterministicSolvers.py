@@ -14,7 +14,7 @@ class EulerSolver(Integrator):
     '''Propagates the state forward one step and returns an array of states and observations across the the integration period'''
     def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
 
-        dt = 1/100
+        dt = 1
         #zero out the particleArray
         for particle in particleArray:
             particle.observation = np.array([0 for _ in range(ctx.forward_estimation)])
@@ -34,7 +34,7 @@ class EulerSolver(Integrator):
                 particleArray[j].state += d_RHS*dt
                 if(np.any(np.isnan(particleArray[j].state))): 
                     print(f"NaN state at particle: {j}")
-                particleArray[j].observation[0] += sim_obv * dt
+                particleArray[j].observation[0] += d_RHS[3] * dt
         
  
             #additional loops 
@@ -326,8 +326,8 @@ class LSODASolver(Integrator):
                              method='LSODA',rtol=1e-3,atol=1e-3)
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
-            particleArray[i].observation = np.array([sol.y[3,1]])
-            #particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+            #particleArray[i].observation = np.array([sol.y[3,1]])
+            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
 
 
             if(np.any(np.isnan(particleArray[i].state))): 
