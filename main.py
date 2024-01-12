@@ -15,7 +15,7 @@ np.set_printoptions(suppress=True)
 state = "AZ"
 
 algo = TimeDependentAlgo(integrator = LSODASolver(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
+                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.000000000000000000000000001,"sigma2":0.05,"k":0.01}),
                         resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
