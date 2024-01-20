@@ -15,15 +15,15 @@ np.set_printoptions(suppress=True)
 state = "AZ"
 
 algo = TimeDependentAlgo(integrator = LSODASolver(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.05,"k":0.01}),
+                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
                         resampler = LogNBinomResample(),
                         ctx=Context(population=7_000_000,
                                     state_size = 4,
-                                    weights=np.zeros(5000),
+                                    weights=np.zeros(1000),
                                     seed_loc=1,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
-                        particle_count=5000))
+                        particle_count=1000))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
@@ -40,10 +40,9 @@ algo.initialize(params={
           "hosp":partial(algo.ctx.rng.normal,17.21147833,5),
           "gamma":partial(algo.ctx.rng.uniform,0.1,0.7),
           "eta":partial(algo.ctx.rng.uniform,0.3,0.5),
-          "R":partial(algo.ctx.rng.uniform,0.1,0.9), 
+          "R":partial(algo.ctx.rng.uniform,30,50), 
           })
 
-#algo.print_particles()
 algo.run(f'./datasets/{state}_FLU_HOSPITALIZATIONS.csv',223)
 
 

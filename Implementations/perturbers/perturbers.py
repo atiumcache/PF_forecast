@@ -46,7 +46,7 @@ class MultivariatePerturbations(Perturb):
         #matrix of variable and static parameters from each particle
         static_param_mat = np.log(np.array(static_param_mat))
         var_param_mat = np.log(np.array(var_param_mat))
-
+        
 
         if(len(static_names) > 0): 
             '''Computes the log_mean as defined in Calvetti et.al. '''
