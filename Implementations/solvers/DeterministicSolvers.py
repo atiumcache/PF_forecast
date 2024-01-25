@@ -302,6 +302,21 @@ def RHS_SEIARHD(t,state,param):
 
     return np.array([dS,dE,dA,dI,dH,dR,dD])
 
+def RHS_Calvetti(t,y,par): 
+    S,E,I,R,_ = y
+
+    N = S + E + I + R
+
+    dS = - par['beta'] * ((E + par['q'] * I)/N) * S
+    dE =   par['beta'] * ((E + par['q'] * I)/N) * S - par['eta']*E - par['gamma'] * E
+    dI = par['eta'] * E - par['gamma'] * I - par['mu'] * I
+    dR = par['gamma'] * E + par['gamma'] * I
+
+    d_newI = par['eta'] * E
+
+    return np.array([dS,dE,dI,dR,d_newI])
+
+
 class LSODASolver(Integrator):
     
     '''Runge Kutta algorithm for computing the t->t+1 transition'''
@@ -366,6 +381,36 @@ class LSODASolverSEIARHD:
         
         return particleArray 
 
+class LSODACalvettiSolver(Integrator):
+    '''Runge Kutta algorithm for computing the t->t+1 transition'''
+    def __init__(self) -> None:
+        super().__init__()
 
+    '''Elements of particleArray are of Particle class in utilities/Utils.py'''
+    def propagate(self,particleArray:List[Particle],ctx:Context)->List[Particle]: 
+
+
+        for i,particle in enumerate(particleArray): 
+
+            y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
+            
+            t_span = [0.0,1.0]
+            par = particle.param
+            sol =  solve_ivp(fun=lambda t,z: RHS_Calvetti(t,z,par), 
+                             t_span=(0.0,1.0),
+                             y0=y0,
+                             t_eval=t_span,
+                             method='LSODA',rtol=1e-3,atol=1e-3)
+            
+            particleArray[i].state = sol.y[:ctx.state_size,1]
+            #particleArray[i].observation = np.array([sol.y[3,1]])
+            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+
+
+            if(np.any(np.isnan(particleArray[i].state))): 
+                    print(f"NaN state at particle: {i}")
+
+
+        return particleArray 
 
     
