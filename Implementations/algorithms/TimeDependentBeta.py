@@ -102,7 +102,7 @@ class TimeDependentAlgo(Algorithm):
 
         pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
         pd.DataFrame(eta).to_csv('../datasets/average_eta.csv')
-        pd.DataFrame(beta).to_csv('../datasets/average_gamma.csv')
+        pd.DataFrame(gamma).to_csv('../datasets/average_gamma.csv')
 
 
         rowN = 3
