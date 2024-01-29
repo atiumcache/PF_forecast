@@ -44,7 +44,7 @@ class Context:
     rng:random.Generator = field(default_factory=lambda: np.random.default_rng())
     seed_size: float = 0.01 #estimate of initial percentage of infected out of the total population
     state_size: int = 4 #number of state variables in the model
-    seed_loc: int = 1 #zero indexed seed location 
+    seed_loc: List[int] = field(default_factory=lambda: list()) #zero indexed seed location 
     population: int = 100000 #estimate of the total population 
     estimated_params: Dict[str,int] = field(default_factory=lambda: dict()) #number of estimated parameters in the model 
     forward_estimation: int = 7 #The number of subsequent states to be considered in the likelihood function

@@ -32,10 +32,15 @@ class TimeDependentAlgo(Algorithm):
                 if((p_params[key] == ESTIMATION.STATIC) or (p_params[key] == ESTIMATION.VARIABLE)): 
                     p_params[key] = priors[key]()
 
-            initial_infected = self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population)
+            seeds = []
+            for _ in range(len(self.ctx.seed_loc)):
+                seeds.append(self.ctx.rng.uniform(0,self.ctx.seed_size*self.ctx.population))
 
-            state = np.concatenate((np.array([self.ctx.population-initial_infected]),[0 for _ in range(self.ctx.state_size-1)])) 
-            state[self.ctx.seed_loc] = initial_infected
+            state = np.concatenate((np.array([self.ctx.population],dtype=np.float_),[0 for _ in range(self.ctx.state_size-1)])) 
+            for i in range(len(seeds)):
+
+                state[self.ctx.seed_loc[i]] += seeds[i]
+                state[0] -= seeds[i]
 
             self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))    
 
