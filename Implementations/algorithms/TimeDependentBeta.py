@@ -80,9 +80,9 @@ class TimeDependentAlgo(Algorithm):
 
 
             particle_max = self.particles[np.argmax(self.ctx.weights)]
-            print(particle_max.observation)
+            #print(particle_max.observation)
             observations.append(particle_max.observation)
-            print(f"{data1[self.ctx.clock.time]}")
+            #print(f"{data1[self.ctx.clock.time]}")
 
             LL.append(((max(self.ctx.weights))))
 
@@ -97,12 +97,16 @@ class TimeDependentAlgo(Algorithm):
             gamma_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
 
-            print(f"Iteration: {self.ctx.clock.time}")
+            #print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
         pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
         pd.DataFrame(eta).to_csv('../datasets/average_eta.csv')
         pd.DataFrame(gamma).to_csv('../datasets/average_gamma.csv')
+
+        pd.DataFrame(beta_quantiles).to_csv('../datasets/beta_quantiles.csv')
+        pd.DataFrame(eta_quantiles).to_csv('../datasets/eta_quantiles.csv')
+        pd.DataFrame(gamma_quantiles).to_csv('../datasets/gamma_quantiles.csv')
 
 
         rowN = 3
