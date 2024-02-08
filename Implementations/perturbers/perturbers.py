@@ -52,12 +52,12 @@ class MultivariatePerturbations(Perturb):
             '''Computes the log_mean as defined in Calvetti et.al. '''
             log_mean = 0
             for i,param_vec in enumerate(static_param_mat): 
-                log_mean += ctx.weights[i] * (param_vec)
+                log_mean += ctx.pos_weights[i] * (param_vec)
 
             '''Computes the covariance of the logarithms of the particles'''
             cov = 0
             for i,param_vec in enumerate(static_param_mat): 
-                cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
+                cov += ctx.pos_weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
 
             '''Holds the hyperparameter a, defined in terms of h'''
             a = np.sqrt(1-(self.hyperparameters["h"])**2)

@@ -38,7 +38,9 @@ class Particle:
 @dataclass
 class Context: 
     '''Meta data about the algorithm'''
-    weights: NDArray[np.float64]
+    prior_weights: NDArray[np.float64]
+    pos_weights : NDArray[np.float64]
+    weight_ratio: NDArray[np.float64]
     particle_count: int = 1000
     clock: Clock = field(default_factory=lambda: Clock())
     rng:random.Generator = field(default_factory=lambda: np.random.default_rng())

@@ -206,10 +206,30 @@ class PoissonResample(Resampler):
     def __init__(self) -> None:
         super().__init__(likelihood=likelihood_poisson)
 
-    def compute_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
+    def compute_prior_weights(self, ctx:Context, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
         for i in range(len(particleArray)): 
-            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,var =0)
+            weights[i] = ctx.weight_ratio[i] * self.likelihood(np.round(observation),particleArray[i].observation,var = 0)
+            '''iterate over the particles and call the likelihood function for each one '''
+
+        '''This loop sets all weights that are out of bounds to a very small non-zero number'''
+        for j in range(len(particleArray)):  
+            if(weights[j] == 0):
+                weights[j] = 10**-300 
+            elif(np.isnan(weights[j])):
+                weights[j] = 10**-300
+            elif(np.isinf(weights[j])):
+                weights[j] = 10**-300
+
+        weights = weights/np.sum(weights)#normalize the weights
+        
+        return np.squeeze(weights)
+    
+    def compute_pos_weights(self, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
+        weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
+        for i in range(len(particleArray)): 
+            obv = particleArray[i].param['eta'] * particleArray[i].state[1]
+            weights[i] = self.likelihood(np.round(observation),obv,var =0)
             '''iterate over the particles and call the likelihood function for each one '''
 
         '''This loop sets all weights that are out of bounds to a very small non-zero number'''
@@ -231,7 +251,7 @@ class PoissonResample(Resampler):
         indexes = np.arange(ctx.particle_count) #create a cumulative ndarray from 0 to particle_count
 
         #The numpy resampling algorithm, see jupyter notebnook resampling.ipynb for more details
-        new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.weights)
+        new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.prior_weights)
 
 
 

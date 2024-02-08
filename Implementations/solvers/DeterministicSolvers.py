@@ -378,6 +378,8 @@ class LSODASolverSEIARHD:
             particleArray[i].observation = np.array(sol.y[3,1:ctx.forward_estimation+1])
             if(np.any(np.isnan(particleArray[i].state))): 
                     print(f"NaN state at particle: {i}")
+            
+            particleArray[i].param['beta'] *= np.exp(particleArray[i].param['alpha'] * ctx.rng.standard_normal())
         
         return particleArray 
 

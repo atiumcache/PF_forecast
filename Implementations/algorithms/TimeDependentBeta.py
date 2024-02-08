@@ -78,23 +78,26 @@ class TimeDependentAlgo(Algorithm):
             self.integrator.propagate(self.particles,self.ctx)
         
             obv = data1[self.ctx.clock.time:self.ctx.clock.time+(self.ctx.forward_estimation)]
-            self.ctx.weights = (self.resampler.compute_weights(obv,self.particles))
+            self.ctx.prior_weights = self.resampler.compute_prior_weights(self.ctx,obv,self.particles)
             self.particles = self.resampler.resample(self.ctx,self.particles)
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
+            self.ctx.pos_weights = self.resampler.compute_pos_weights(obv,self.particles)
+
+            self.ctx.weight_ratio = self.ctx.pos_weights/self.ctx.prior_weights
+            self.ctx.weight_ratio /= np.sum(self.ctx.weight_ratio)
 
 
-
-            particle_max = self.particles[np.argmax(self.ctx.weights)]
+            particle_max = self.particles[np.argmax(self.ctx.weight_ratio)]
             #print(particle_max.observation)
             observations.append(particle_max.observation)
             #print(f"{data1[self.ctx.clock.time]}")
 
-            LL.append(((max(self.ctx.weights))))
+            LL.append(((max(self.ctx.weight_ratio))))
 
             #state_quantiles.append(quantiles([particle.observation[1] for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
-            ESS.append(1/np.sum(self.ctx.weights **2))
+            ESS.append(1/np.sum(self.ctx.weight_ratio **2))
 
             state.append(np.mean([particle.state for particle in self.particles],axis=0))
             eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
@@ -102,7 +105,7 @@ class TimeDependentAlgo(Algorithm):
             gamma_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
 
-            #print(f"Iteration: {self.ctx.clock.time}")
+            print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
         pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
