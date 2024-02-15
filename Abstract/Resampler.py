@@ -23,6 +23,7 @@ class Resampler(ABC):
     def compute_pos_weights(self,observation:NDArray,particleArray:List[Particle])->NDArray[float_]: 
         '''Computes the weights of the particles given an observation at time t from the time series'''
         pass
+ 
 
     @abstractmethod
     def resample(self,ctx:Context,particleArray:List[Particle]) ->List[Particle]:
