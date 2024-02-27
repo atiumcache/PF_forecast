@@ -209,7 +209,7 @@ class PoissonResample(Resampler):
     def compute_prior_weights(self, ctx:Context, observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
         for i in range(len(particleArray)): 
-            weights[i] = ctx.weight_ratio[i] * self.likelihood(np.round(observation),particleArray[i].observation,var = 0)
+            weights[i] = self.likelihood(np.round(observation),particleArray[i].observation,var = 0)
             '''iterate over the particles and call the likelihood function for each one '''
 
         '''This loop sets all weights that are out of bounds to a very small non-zero number'''
