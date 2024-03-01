@@ -298,7 +298,6 @@ def RHS_SEIARHD(t,state,param):
 
     dD = cH*(1-fR)*H
 
-    new_I = kL*(1-fA)*E
 
     return np.array([dS,dE,dA,dI,dH,dR,dD])
 
@@ -315,7 +314,6 @@ def RHS_Calvetti(t,y,par):
     d_newI = par['eta'] * E
 
     return np.array([dS,dE,dI,dR,d_newI])
-
 
 class LSODASolver(Integrator):
     
@@ -379,7 +377,6 @@ class LSODASolverSEIARHD:
             if(np.any(np.isnan(particleArray[i].state))): 
                     print(f"NaN state at particle: {i}")
             
-            particleArray[i].param['beta'] *= np.exp(particleArray[i].param['alpha'] * ctx.rng.standard_normal())
         
         return particleArray 
 

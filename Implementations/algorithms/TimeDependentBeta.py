@@ -88,9 +88,6 @@ class TimeDependentAlgo(Algorithm):
 
 
             particle_max = self.particles[np.argmax(self.ctx.weight_ratio)]
-            #print(particle_max.observation)
-            observations.append(particle_max.observation)
-            #print(f"{data1[self.ctx.clock.time]}")
 
             LL.append(((max(self.ctx.weight_ratio))))
 
@@ -102,8 +99,10 @@ class TimeDependentAlgo(Algorithm):
             state.append(np.mean([particle.state for particle in self.particles],axis=0))
             eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
             eta.append(np.mean([particle.param['eta'] for particle in self.particles]))
+
             gamma_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
+            observations.append(quantiles([particle.observation for particle in self.particles]))
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
@@ -115,24 +114,7 @@ class TimeDependentAlgo(Algorithm):
         pd.DataFrame(beta_quantiles).to_csv('../datasets/beta_quantiles.csv')
         pd.DataFrame(eta_quantiles).to_csv('../datasets/eta_quantiles.csv')
         pd.DataFrame(gamma_quantiles).to_csv('../datasets/gamma_quantiles.csv')
-
-
-        rowN = 3
-        N = 6
-
-        labels = ['Susceptible','Exposed','Infected','Recovered']
-        state = np.array(state)
-        plt.yscale('log')
-        for i in range(self.ctx.state_size): 
-                plt.plot(state[:,i],label=labels[i])
-        #plt.plot(observations)
-
-
-        plt.xlabel('Time(Days)')
-        plt.legend()
-        plt.show()
-
-
+        pd.DataFrame(observations).to_csv('../datasets/particle_observation.csv')
 
         pd.DataFrame(state).to_csv('../datasets/ESTIMATED_STATE.csv')            
 
@@ -142,78 +124,6 @@ class TimeDependentAlgo(Algorithm):
         gamma_quantiles = np.array(gamma_quantiles)
 
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
-
-        # for i in range(11):
-        #     plt.fill_between(np.arange(self.ctx.clock.time), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        # plt.show()
-
-        # plt.title("Mean of Beta")
-        # plt.plot(beta)
-        # plt.show()
-
-        # plt.title("Mean of Eta")
-        # plt.plot(eta)
-        # plt.show()
-
-        # plt.title("Mean of Gamma")
-        # plt.plot(gamma)
-        # plt.show()
-
-        # for i in range(11):
-        #     plt.fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        
-        # plt.title("Distribution of Eta")
-        # plt.show()
-
-        # plt.title("Distribution of Gamma")
-        # for i in range(11):
-        #     plt.fill_between(np.arange(self.ctx.clock.time), gamma_quantiles[:,i], gamma_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        # plt.show()
-
-
-        # fig = plt.figure()
-        # fig.set_size_inches(10,5)
-        # ax = [plt.subplot(2,rowN,i+1) for i in range(N)]
-        # fig.subplots_adjust(hspace=0)
-        
-        # for i in range(N): 
-        #     ax[i].set_xlabel('Days since 3/16/2020')
-
-        #ax[0].plot(beta,label='Beta',zorder=12)
-        # for i in range(11):
-        #     ax[0].fill_between(np.arange(self.ctx.clock.time), beta_quantiles[:,i], beta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        # ax[0].title.set_text('Beta')
-
-        
-        # labels = ['Susceptible','Exposed','Asymptomatic','Infected','Hospitalized','Recovered','Dead']
-        # ax[1].title.set_text('Latent State')
-        # state = np.array(state)
-        # ax[1].set_yscale('log')
-        # for i in range(1,self.ctx.state_size): 
-        #     ax[1].plot(state[:,i],label=labels[i],linewidth=0.5)
-
-
-        # for i in range(11):
-        #     ax[2].fill_between(np.arange(self.ctx.clock.time), eta_quantiles[:,i], eta_quantiles[:,22-i], facecolor=colors[11 - i], zorder=i)
-        # ax[2].scatter(np.arange(self.ctx.clock.time),data1[:self.ctx.clock.time],s=0.5,zorder=12)
-        # ax[2].title.set_text('Total Infected')
-
-
-        # ax[3].plot(LL,label='Log Likelihood')
-        # total_LL = np.sum(LL)
-        # ax[3].title.set_text(f'Log Likelihood = {round(total_LL,2)}')
-
-        # ax[4].plot(ESS,label='Effective Sample Size')
-        # ax[4].title.set_text('Effective Sample Size')
-
-        
-        #fig.tight_layout()
-
-        #fig.savefig(f'{data_path[11:13]}_figuresR{R_val}_forward{self.ctx.forward_estimation}_var{var}.png',dpi=300)
-
-                
-
-
 
 
 

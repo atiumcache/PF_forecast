@@ -46,18 +46,17 @@ class MultivariatePerturbations(Perturb):
         #matrix of variable and static parameters from each particle
         static_param_mat = np.log(np.array(static_param_mat))
         var_param_mat = np.log(np.array(var_param_mat))
-        
 
         if(len(static_names) > 0): 
             '''Computes the log_mean as defined in Calvetti et.al. '''
             log_mean = 0
             for i,param_vec in enumerate(static_param_mat): 
-                log_mean += ctx.pos_weights[i] * (param_vec)
-
+                log_mean += ctx.prior_weights[i] * (param_vec)
+            
             '''Computes the covariance of the logarithms of the particles'''
             cov = 0
             for i,param_vec in enumerate(static_param_mat): 
-                cov += ctx.pos_weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
+                cov += ctx.prior_weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
 
             '''Holds the hyperparameter a, defined in terms of h'''
             a = np.sqrt(1-(self.hyperparameters["h"])**2)
@@ -65,7 +64,7 @@ class MultivariatePerturbations(Perturb):
             #if else for the multivariate normal bug 
 
             if(len(static_param_mat[0]) == 1): 
-                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*np.squeeze(cov))
 
             else: 
                 for i in range(len(particleArray)): 
