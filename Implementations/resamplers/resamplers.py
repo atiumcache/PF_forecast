@@ -183,19 +183,33 @@ class LogNBinomResample(Resampler):
     def __init__(self) -> None:
         super().__init__(log_likelihood_NB)
 
-    def compute_weights(self, observation: NDArray[np.int_], particleArray:List[Particle]) -> NDArray[np.float64]:
+    def compute_prior_weights(self, ctx:Context,observation: NDArray[np.int_], particleArray:List[Particle]) -> NDArray[np.float64]:
+        weights = np.zeros(len(particleArray))
+
+        for i,particle in enumerate(particleArray):
+            LL = self.likelihood(np.round(observation),particleArray[i].observation,R=particleArray[i].param['R'])
+                
+            weights[i] = LL
+
+            if(math.isnan(weights[i])): 
+                print(f"real obv: {np.round(observation)}")
+                print(f"particle obv: {np.round(particle.observation)}")
+
+        
+
+        #weights = weights-np.max(weights) #normalize the weights wrt their maximum, improves numerical stability
+        weights = log_norm(weights) #normalize the weights using the jacobian logarithm
+        
+        return weights
+    
+    def compute_pos_weights(self, observation: NDArray[np.int_], particleArray:List[Particle]) -> NDArray[np.float64]:
         weights = np.zeros(len(particleArray))
 
         for i,particle in enumerate(particleArray):
 
 
-            LL = 0
-            for j in range(len(observation)):
-                LL += 1.0 * log_likelihood_NB(observation=np.round(observation[j]),
-                                              particle_observation=np.round(particle.observation[j]),
-                                              R=particle.param['R'])
+            LL = self.likelihood(np.round(observation),particleArray[i].observation,R=particleArray[i].param['R'])
                 
-
             weights[i] = LL
 
             if(math.isnan(weights[i])): 
@@ -211,7 +225,7 @@ class LogNBinomResample(Resampler):
     
     def resample(self, ctx: Context,particleArray:List[Particle]) -> List[Particle]:
         '''The actual resampling algorithm, the log variant of systematic resampling'''
-        log_cdf = jacob(ctx.weights)
+        log_cdf = jacob(ctx.prior_weights)
         
         i = 0
         indices = np.zeros(ctx.particle_count)

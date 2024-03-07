@@ -86,8 +86,9 @@ class TimeDependentAlgo(Algorithm):
             self.ctx.weight_ratio = self.ctx.pos_weights/self.ctx.prior_weights
             self.ctx.weight_ratio /= np.sum(self.ctx.weight_ratio)
 
+            particle_max = self.particles[np.argmax(self.ctx.prior_weights)]
 
-            particle_max = self.particles[np.argmax(self.ctx.weight_ratio)]
+            print(particle_max.param)
 
             LL.append(((max(self.ctx.weight_ratio))))
 

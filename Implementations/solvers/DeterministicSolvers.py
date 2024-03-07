@@ -336,7 +336,7 @@ class LSODASolver(Integrator):
                              t_span=(0.0,1.0),
                              y0=y0,
                              t_eval=t_span,
-                             method='LSODA',rtol=1e-3,atol=1e-3)
+                             method='RK45',rtol=1e-3,atol=1e-3)
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
             #particleArray[i].observation = np.array([sol.y[3,1]])
