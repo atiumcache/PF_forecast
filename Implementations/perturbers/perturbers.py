@@ -242,7 +242,7 @@ class LogMultivariatePerturbations(Perturb):
                     '''Absolute value here accounts for taking log of a negative number, 
                     log_theta is surely negative. We take the complex part outside the computation. '''
 
-                    '''Make sure to add the weights to the deltas.'''
+                    '''Make sure to add the weights to the deltas. Must be the log weights for this to work properly. '''
                     deltas[j,i] = ctx.prior_weights[j] + log_log
 
             ξ = []
@@ -254,16 +254,28 @@ class LogMultivariatePerturbations(Perturb):
             ξ = np.array(ξ)[:,-1]
 
 
-            '''Now for Σ, I called these elements psis to match up with the notation I used in the paper. '''
-            psis = np.array(np.log(static_param_mat) - ξ)
+            '''Now for Σ, I called these elements psis to match up with the notation I used in the paper. Vectorization at work here, psis shape is 
+            (particle_count,len(static_names))
+            '''
+            psis = np.array(static_param_mat - ξ)
 
             matrix_set = []
             for i in range(ctx.particle_count): 
                 matrix_set.append(np.outer(psis[i,:] - ξ,psis[i,:]-ξ))
             matrix_set = np.array(matrix_set)
 
+            '''Set up the matrix set, you could definitely do this all with numpy arrays but it would be slightly complicated, would give a small speed boost. 
+            TODO Set this up as a vectorized operation. 
+            
+            '''
+
             Σ = np.zeros((len(static_names),len(static_names)))
 
+            '''Algorithm to find the minimum value for C
+            
+            find the absolute value of the minimum element in the off diagonal and add e + epsilon. Here epsilon is 1
+            
+            '''
             C = np.abs(np.min(matrix_set[:,0,1])) + np.exp(1) + 1
             #C = 100
 
@@ -271,20 +283,28 @@ class LogMultivariatePerturbations(Perturb):
                 for j in range(len(static_names)):
                     if(i != j):
 
+                        '''On the off diagonals we compute the elements using the mean shifting approach. Thus we need two sets of deltas, 
+                        one for the mean shifted quantity and one for the constant to subtract to invert the map.'''
+
                         deltas_Y = np.log(matrix_set[:,i,j] + C * np.ones_like(matrix_set[:,i,j])) + ctx.prior_weights
+
                         deltas_Z = ctx.prior_weights + np.log(C * np.ones_like(ctx.prior_weights))
+
                         Z = np.exp(jacob(deltas_Z)[-1])
+
                         Σ[i,j] = np.exp(jacob(deltas_Y)[-1]) - Z
 
                     else: 
+                        '''On the diagonal the elements are guaranteed to be positive, so there isn't a '''
+
                         deltas = np.log(matrix_set[:,i,j]) + ctx.prior_weights
                         Σ[i,j] = np.exp(jacob(deltas)[-1])
 
             if(len(static_param_mat[0]) == 1): 
-                new_statics = ctx.rng.normal(a * np.log(static_param_mat[i]) + (1-a)*ξ,(self.hyperparameters["h"]**2)*np.squeeze(Σ))
+                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*np.squeeze(Σ))
 
             for i in range(len(particleArray)): 
-                new_statics = ctx.rng.multivariate_normal(a * np.log(static_param_mat[i]) + (1-a)*ξ,(self.hyperparameters["h"]**2)*Σ)
+                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*Σ)
 
 
             '''puts the perturbed static parameters back in the particle field'''
