@@ -83,9 +83,17 @@ def quantiles(items:List)->List:
         return list(np.quantile(items, qtlMark))
 
 
-def jacob(δ:NDArray)->NDArray:
-    '''The jacobian logarithm, used in log likelihood normalization and resampling processes
-    δ will be an array of log-probabilities '''
+def jacob(δ:NDArray[np.float_])->NDArray[np.float_]:
+    """The jacobian logarithm, used in log likelihood normalization and resampling processes
+    δ will be an array of values. 
+    
+    Args: 
+        δ: An array of values to sum
+
+    Returns: 
+        The vector of partial sums of δ.          
+    
+    """
     n = len(δ)
     Δ = np.zeros(n)
     Δ[0] = δ[0]

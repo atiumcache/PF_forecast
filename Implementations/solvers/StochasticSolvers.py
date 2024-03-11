@@ -9,10 +9,23 @@ import numpy as np
 
 
 class PoissonSolver(Integrator): 
-    '''This class uses the tau-leaping method to compute the next state of the particle and the observations, 
-    i.e. a poisson stochastic propagation model'''
+    """This class uses the tau-leaping method to compute the next state of the particle and the observations, 
+    i.e. a poisson stochastic propagation model"""
     def propagate(self, particleArray: List[Particle],ctx:Context) -> List[Particle]:
-        '''Implementation of the one step propagation function from t to t+1'''
+
+
+        """Propagates the state forward one step and returns an array of states and observations across the the integration period
+        
+        Args: 
+            particleArray: A list of particles, this will be self.particles from Algorithm. 
+            ctx: The Algorithm's context object is passed as well, in case algorithm metadata is needed. 
+
+        Returns: 
+            Outputs the updated particle list. Note that as python lists are mutable and therefore passed by reference
+            we could forego the return, however I've found that for consistentcy purposes it's better to ensure the 
+            self.particles list in the Algorithm is updated via assignment. 
+
+        """
 
         tau = 1
 
@@ -24,12 +37,24 @@ class PoissonSolver(Integrator):
 
                 state,hospitalized,new_hospitalized = self.RHS(particleArray[j],ctx,tau)
                 particleArray[j].state = state
+
+                '''TODO Why is the observation like this? Must be broken.'''
                 particleArray[j].observation += [hospitalized,new_hospitalized]
 
 
         return particleArray
     
     def RHS(self,particle:Particle,ctx:Context,tau:float):
+
+        """RHS function for the tau-leaping methodology. 
+        
+        Args: 
+            particle: A single particle in the particle list. 
+            ctx: The algorithm's Context, used to obtain the rng. 
+            tau: A parameter governing the length of time on which to generate the poisson draws. 
+        
+        """
+
         S,I,R,H = particle.state
         N = S+I+R+H
         new_susceptibles = ctx.rng.poisson(((1/particle.param['L'])*R) * tau)

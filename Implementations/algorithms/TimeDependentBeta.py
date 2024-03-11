@@ -88,8 +88,6 @@ class TimeDependentAlgo(Algorithm):
 
             particle_max = self.particles[np.argmax(self.ctx.prior_weights)]
 
-            print(particle_max.param)
-
             LL.append(((max(self.ctx.weight_ratio))))
 
             #state_quantiles.append(quantiles([particle.observation[1] for particle in self.particles]))
