@@ -452,8 +452,6 @@ class EulerSolver_SIR(Integrator):
     
 class LSODASolver(Integrator):
 
-    
-    
     def __init__(self) -> None:
         """A one step integrator of Alex's SIRH model using LSODA or RK45 if the jacobian is not available."""
         super().__init__()
@@ -476,7 +474,7 @@ class LSODASolver(Integrator):
 
         for i,particle in enumerate(particleArray): 
 
-            y0 = np.concatenate((particle.state,particle.observation))  # Initial state of the system
+            y0 = np.concatenate((particle.state,particle.observation))  # State at time t
             
             t_span = [0.0,1.0]
             par = particle.param

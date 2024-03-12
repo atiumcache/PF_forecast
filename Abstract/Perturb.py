@@ -4,7 +4,7 @@ from utilities.Utils import Particle,Context
 
 class Perturb(ABC): 
     """Class encapsulating the perturbation function necessary to generate new particle proposals"""
-    hyperparameters: Dict #A dictionary of perturbation parameters
+    hyperparameters: Dict[str,float] #A dictionary of perturbation parameters
 
     def __init__ (self,hyper_params:Dict)-> None: 
         """The perturber has special hyperparameters which tell randomly_perturb how much to move the parameters and state, implementation defined. """

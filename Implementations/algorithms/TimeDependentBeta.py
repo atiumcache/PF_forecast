@@ -75,12 +75,17 @@ class TimeDependentAlgo(Algorithm):
         while(self.ctx.clock.time < runtime): 
 
             #one step propagation 
+
             self.integrator.propagate(self.particles,self.ctx)
         
             obv = data1[self.ctx.clock.time:self.ctx.clock.time+(self.ctx.forward_estimation)]
+
             self.ctx.prior_weights = self.resampler.compute_prior_weights(self.ctx,obv,self.particles)
+
             self.particles = self.resampler.resample(self.ctx,self.particles)
+
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
+
             self.ctx.pos_weights = self.resampler.compute_pos_weights(obv,self.particles)
 
             self.ctx.weight_ratio = self.ctx.pos_weights/self.ctx.prior_weights

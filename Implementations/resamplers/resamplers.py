@@ -103,6 +103,11 @@ class NBinomResample(Resampler):
 
         '''this loop reindexes the particles by rebuilding the particles, I threw in the copies just to be safe, we need to make sure this is a deep copy, 
         just copying the references will screw things up.'''
+
+        '''TODO 
+        Investigate whether copy is necessary for final loop. 
+        maybe benchmark. 
+        '''
         for i in range(len(particleArray)): 
             particleArray[i] = Particle(particleCopy[new_particle_indexes[i]].param.copy(),
                                         particleCopy[new_particle_indexes[i]].state.copy(),
