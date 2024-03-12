@@ -276,8 +276,8 @@ class LogMultivariatePerturbations(Perturb):
             find the absolute value of the minimum element in the off diagonal and add e + epsilon. Here epsilon is 1
             
             '''
-            C = np.abs(np.min(matrix_set[:,0,1])) + np.exp(1) + 1
-            #C = 100
+            #C = np.abs(np.min(matrix_set[:,0,1])) + np.exp(1) + 1
+            C = 100
 
             for i in range(len(static_names)):
                 for j in range(len(static_names)):
