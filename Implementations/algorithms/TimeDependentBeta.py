@@ -8,6 +8,8 @@ from typing import Dict,Callable
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import plotly.graph_objects as go
+import plotly.express as px
 
 from utilities.Utils import Context
 
@@ -42,7 +44,8 @@ class TimeDependentAlgo(Algorithm):
                 state[self.ctx.seed_loc[i]] += seeds[i]
                 state[0] -= seeds[i]
 
-            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))    
+            self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))   
+
 
     def forward_propagator(): 
         '''This function simulates the 7 days data to be '''
@@ -55,7 +58,8 @@ class TimeDependentAlgo(Algorithm):
         data1 = pd.read_csv(data_path).to_numpy()
         data1 = np.delete(data1,0,1)
 
-
+        "Initialize labels and first column of sankey matrix"
+        self.ctx.sankey_indices.append(np.arange(self.ctx.particle_count)) 
 
         '''Arrays to hold all the output data'''
         eta_quantiles = []
@@ -87,8 +91,6 @@ class TimeDependentAlgo(Algorithm):
             self.ctx.weight_ratio /= np.sum(self.ctx.weight_ratio)
 
             particle_max = self.particles[np.argmax(self.ctx.prior_weights)]
-
-            print(particle_max.param)
 
             LL.append(((max(self.ctx.weight_ratio))))
 
@@ -125,6 +127,18 @@ class TimeDependentAlgo(Algorithm):
         gamma_quantiles = np.array(gamma_quantiles)
 
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
+
+        # sankey test code
+        print(self.ctx.sankey_indices)
+
+        df_sankey = pd.DataFrame(np.array(self.ctx.sankey_indices[:11]).T, columns=np.arange(11))
+
+        print(df_sankey)
+
+        fig = px.parallel_categories(df_sankey)
+        fig.show()
+
+       
 
 
 

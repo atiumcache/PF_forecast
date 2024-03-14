@@ -115,6 +115,9 @@ class NBinomResample(Resampler):
         #The numpy resampling algorithm, see jupyter notebnook resampling.ipynb for more details
         new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.prior_weights)
 
+        # Add new indices as a column in the sankey matrix
+        ctx.sankey_indices.append(new_particle_indexes)
+
         particleCopy = particleArray.copy()#copy the particle array refs to ensure we don't overwrite particles
 
         #this loop reindexes the particles by rebuilding the particles
@@ -122,9 +125,6 @@ class NBinomResample(Resampler):
             particleArray[i] = Particle(particleCopy[new_particle_indexes[i]].param.copy(),
                                         particleCopy[new_particle_indexes[i]].state.copy(),
                                         particleCopy[new_particle_indexes[i]].observation)
-
-
-        
 
         return particleArray
 

@@ -38,6 +38,7 @@ class Particle:
 @dataclass
 class Context: 
     '''Meta data about the algorithm'''
+    sankey_indices: List[int] # a 2D matrix that stores particle indices at each step of the algo
     prior_weights: NDArray[np.float64]
     pos_weights : NDArray[np.float64]
     weight_ratio: NDArray[np.float64]
@@ -50,6 +51,7 @@ class Context:
     population: int = 100000 #estimate of the total population 
     estimated_params: Dict[str,int] = field(default_factory=lambda: dict()) #number of estimated parameters in the model 
     forward_estimation: int = 7 #The number of subsequent states to be considered in the likelihood function
+    
 
 @dataclass
 class SMCContext: 
