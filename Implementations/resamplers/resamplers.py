@@ -99,6 +99,8 @@ class NBinomResample(Resampler):
         #The numpy multinomial resampling algorithm, see jupyter notebnook resampling.ipynb for more details
         new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.prior_weights)
 
+        print(new_particle_indexes)
+
         particleCopy = particleArray.copy()#copy the particle array refs to ensure we don't overwrite particles
 
         '''this loop reindexes the particles by rebuilding the particles, I threw in the copies just to be safe, we need to make sure this is a deep copy, 

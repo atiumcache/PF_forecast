@@ -33,22 +33,18 @@ algo.initialize(params={
 "gamma":1/14,
 "mu":0.004,
 "q":0.1,
-"eta":1/7,
+"eta":ESTIMATION.STATIC,
 "std":10,
 "R":50,
 "hosp":15,
 "L":90,
 "D":10}
 ,priors={"beta":partial(algo.ctx.rng.uniform,0.1,0.6), 
-          "D":partial(algo.ctx.rng.uniform,5,15),
-          "std":partial(algo.ctx.rng.uniform,20.,30.),
-          "hosp":partial(algo.ctx.rng.normal,17.21147833,5),
           "gamma":partial(algo.ctx.rng.uniform,1/28,1/7),
-          "eta":partial(algo.ctx.rng.uniform,1/15,1/3),
-          "R":partial(algo.ctx.rng.uniform,30,50), 
           })
 
-algo.run(f'./datasets/calvetti_sim_data_protocol_A.csv',119)
+algo.print_particles()
+#algo.run(f'./datasets/calvetti_sim_data_protocol_A.csv',119)
 
 
 
