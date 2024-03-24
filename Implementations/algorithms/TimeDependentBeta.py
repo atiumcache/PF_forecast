@@ -95,7 +95,7 @@ class TimeDependentAlgo(Algorithm):
 
             #one step propagation 
 
-            self.integrator.propagate(self.particles,self.ctx)
+            self.particles = self.integrator.propagate(self.particles,self.ctx)
         
             obv = data1[self.ctx.clock.time:self.ctx.clock.time+(self.ctx.forward_estimation)]
 

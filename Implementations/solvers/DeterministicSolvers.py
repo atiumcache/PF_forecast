@@ -473,26 +473,16 @@ class LSODASolver(Integrator):
 
 
         for i,particle in enumerate(particleArray): 
-
-            y0 = np.concatenate((particle.state,particle.observation))  # State at time t
             
             t_span = [0.0,1.0]
-            par = particle.param
-            sol =  solve_ivp(fun=lambda t,z: RHS_H(t,z,par), 
-                             jac=lambda t,z:Jacobian(t,z,par), 
+            sol =  solve_ivp(fun=lambda t,y: RHS_H(t,y,particle.param), 
                              t_span=(0.0,1.0),
-                             y0=y0,
+                             y0=particle.state,
                              t_eval=t_span,
-                             method='LSODA',rtol=1e-3,atol=1e-3)
+                             method='RK45',rtol=1e-3,atol=1e-3)
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
-            #particleArray[i].observation = np.array([sol.y[3,1]])
-            particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
-
-
-            if(np.any(np.isnan(particleArray[i].state))): 
-                    print(f"NaN state at particle: {i}")
-
+            particleArray[i].observation = sol.y[:ctx.state_size,1]
 
         return particleArray 
 
@@ -542,8 +532,6 @@ class LSODASolverSEIARHD:
 
 class LSODACalvettiSolver(Integrator):
     
-    
-
     def __init__(self) -> None:
         """A one step integrator for the SEIR model of Calvetti et. al. using LSODA."""
         super().__init__()

@@ -24,7 +24,7 @@ class Algorithm(ABC):
         self.resampler = resampler
         self.particles = []
         self.ctx = ctx
-        self.output = None
+
 
 
 

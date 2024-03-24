@@ -317,7 +317,7 @@ class PoissonResample(Resampler):
         for i in range(len(particleArray)): 
             particleArray[i] = Particle(particleCopy[new_particle_indexes[i]].param.copy(),
                                         particleCopy[new_particle_indexes[i]].state.copy(),
-                                        particleCopy[new_particle_indexes[i]].observation)
+                                        particleCopy[new_particle_indexes[i]].observation.copy())
 
 
         
