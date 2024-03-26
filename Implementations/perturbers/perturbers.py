@@ -108,6 +108,7 @@ class MultivariatePerturbations(Perturb):
                 for i in range(len(particleArray)): 
                     new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
 
+            print(a)
 
             '''puts the perturbed static parameters back in the particle field'''
             for j,static in enumerate(new_statics): 

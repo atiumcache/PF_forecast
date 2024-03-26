@@ -88,6 +88,8 @@ class TimeDependentAlgo(Algorithm):
         beta_quantiles = []
         beta = []
         eta = []
+        q = []
+        q_quantiles = []
         observations = []
         gamma = []
 
@@ -129,9 +131,13 @@ class TimeDependentAlgo(Algorithm):
             eta_quantiles.append(quantiles([particle.param['eta'] for particle in self.particles]))
             eta.append(np.mean([particle.param['eta'] for particle in self.particles]))
 
+
+
             gamma_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
             observations.append(quantiles([particle.observation for particle in self.particles]))
+
+            print(f"eta: {eta[-1]} gamma: { gamma[-1] }")
 
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
@@ -144,6 +150,10 @@ class TimeDependentAlgo(Algorithm):
         pd.DataFrame(eta_quantiles).to_csv('../datasets/eta_quantiles.csv')
         pd.DataFrame(gamma_quantiles).to_csv('../datasets/gamma_quantiles.csv')
         pd.DataFrame(observations).to_csv('../datasets/particle_observation.csv')
+
+        pd.DataFrame(q_quantiles).to_csv('../datasets/q_quantiles.csv')
+        pd.DataFrame(q).to_csv('../datasets/average_q.csv')
+
 
         pd.DataFrame(state).to_csv('../datasets/ESTIMATED_STATE.csv') 
         pd.DataFrame(ESS).to_csv('../datasets/ESS.csv')           

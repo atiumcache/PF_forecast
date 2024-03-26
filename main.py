@@ -32,7 +32,7 @@ algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
 "gamma":1/14,
 "mu":0.004,
-"q":0.1,
+"q":ESTIMATION.STATIC,
 "eta":ESTIMATION.STATIC,
 "std":10,
 "R":50,
