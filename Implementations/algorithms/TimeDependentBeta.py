@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import plotly.graph_objects as go
 import plotly.express as px
+from Implementations.sankey import visualize_particles
 
 from utilities.Utils import Context
 
@@ -59,7 +60,8 @@ class TimeDependentAlgo(Algorithm):
         data1 = np.delete(data1,0,1)
 
         "Initialize labels and first column of sankey matrix"
-        self.ctx.sankey_indices.append(np.arange(self.ctx.particle_count)) 
+        if self.ctx.run_sankey == True:
+            self.ctx.sankey_indices.append(np.arange(self.ctx.particle_count)) 
 
         '''Arrays to hold all the output data'''
         eta_quantiles = []
@@ -107,7 +109,7 @@ class TimeDependentAlgo(Algorithm):
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
             observations.append(quantiles([particle.observation for particle in self.particles]))
 
-            print(f"Iteration: {self.ctx.clock.time}")
+            # print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
         pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
@@ -129,14 +131,8 @@ class TimeDependentAlgo(Algorithm):
         colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
         # sankey test code
-        print(self.ctx.sankey_indices)
-
-        df_sankey = pd.DataFrame(np.array(self.ctx.sankey_indices[:11]).T, columns=np.arange(11))
-
-        print(df_sankey)
-
-        fig = px.parallel_categories(df_sankey)
-        fig.show()
+        if self.ctx.run_sankey == True:
+            visualize_particles(self.ctx.particle_count, self.ctx.sankey_indices)
 
        
 

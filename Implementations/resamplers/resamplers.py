@@ -116,7 +116,8 @@ class NBinomResample(Resampler):
         new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.prior_weights)
 
         # Add new indices as a column in the sankey matrix
-        ctx.sankey_indices.append(new_particle_indexes)
+        if ctx.run_sankey == True:
+            ctx.sankey_indices.append(new_particle_indexes)
 
         particleCopy = particleArray.copy()#copy the particle array refs to ensure we don't overwrite particles
 
