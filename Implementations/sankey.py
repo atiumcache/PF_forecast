@@ -53,7 +53,7 @@ def visualize_particles(num_of_particles, resampling_indices):
     time_steps = 12
     for step in range(1, time_steps):
         for p in range(num_of_particles):
-            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=10/num_of_particles)
+            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=50/num_of_particles)
 
     # TODO: Trace the ending particles back through the chart in red?
 
