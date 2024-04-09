@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def visualize_particles(num_of_particles, resampling_indices):
-    plt.figure(figsize=(15, 10))
+    plt.figure(figsize=(12, 7))
 
     def unique_ranks(arr):
         # Sort the array and get indices
@@ -53,9 +53,23 @@ def visualize_particles(num_of_particles, resampling_indices):
     time_steps = 12
     for step in range(1, time_steps):
         for p in range(num_of_particles):
-            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=50/num_of_particles)
+            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=20/num_of_particles)
 
     # TODO: Trace the ending particles back through the chart in red?
+
+    # Generate reverse mapping from positions back to original indices for each step
+    final_positions = positions[-1]
+
+    for final_pos in final_positions:
+        current_pos = final_pos
+        for step in range(time_steps - 1, 0, -1):
+            # Find the particle in the previous step that corresponds to the current particle
+            previous_particle_index = resampling_indices[step][current_pos]
+            
+            plt.plot([step-1, step], [positions[step-1, previous_particle_index], positions[step, current_pos]], linestyle='solid', color='red', linewidth=2)
+
+            # Update current_pos for the next iteration of the loop
+            current_pos = previous_particle_index
 
     plt.xlabel('Time Step')
     plt.ylabel('Particles')
