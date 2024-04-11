@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+import copy
 
 def visualize_particles(num_of_particles, resampling_indices):
     plt.figure(figsize=(12, 7))
@@ -40,9 +40,6 @@ def visualize_particles(num_of_particles, resampling_indices):
         
     # We don't want to outright "sort" the index arrays themselves,
     # as this will provide false information as to where each particle came from. 
-    print("Debugging Info:")
-    print("Indices Length: ", len(resampling_indices))
-    print("Particle Count: ", num_of_particles)
 
     positions = np.zeros_like(resampling_indices, dtype=int)
     positions[0] = np.arange(num_of_particles)  # Initial positions are just the particle indices
@@ -53,24 +50,23 @@ def visualize_particles(num_of_particles, resampling_indices):
     time_steps = 12
     for step in range(1, time_steps):
         for p in range(num_of_particles):
-            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=20/num_of_particles)
+            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=30/num_of_particles)
 
-    # TODO: Trace the ending particles back through the chart in red?
+    
+    ### Trace the lineage of last particles in red
+    # intialize all 1's, because all of the particles are in the lineage (trivially)
+    prev_indices = np.ones(num_of_particles)
 
-    # Generate reverse mapping from positions back to original indices for each step
-    final_positions = positions[-1]
+    for step in range(time_steps - 1, 0, -1):
+        next_indices = np.zeros(num_of_particles)
+        for p in range(num_of_particles):
+            if prev_indices[positions[step][p]] != 0:
+                plt.plot([step-1, step], [resampling_indices[step][p], positions[step][p]], linestyle='solid', color='red', linewidth=30/num_of_particles)
+                next_indices[resampling_indices[step][p]] = 1
+        
+        prev_indices = copy.deepcopy(next_indices)
 
-    for final_pos in final_positions:
-        current_pos = final_pos
-        for step in range(time_steps - 1, 0, -1):
-            # Find the particle in the previous step that corresponds to the current particle
-            previous_particle_index = resampling_indices[step][current_pos]
-            
-            plt.plot([step-1, step], [positions[step-1, previous_particle_index], positions[step, current_pos]], linestyle='solid', color='red', linewidth=2)
-
-            # Update current_pos for the next iteration of the loop
-            current_pos = previous_particle_index
-
+    
     plt.xlabel('Time Step')
     plt.ylabel('Particles')
     plt.title('Particle Filtering Visualization')
