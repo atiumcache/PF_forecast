@@ -52,10 +52,6 @@ class TimeDependentAlgo(Algorithm):
             self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))   
 
 
-    def forward_propagator(): 
-        '''This function simulates the 7 days data to be '''
-
-
     @timing
     def run(self,data_path:str,runtime:int) ->None:
         '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''

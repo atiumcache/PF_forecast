@@ -38,7 +38,6 @@ class Particle:
 @dataclass
 class Context: 
     '''Meta data about the algorithm'''
-    sankey_indices: List[int] # a 2D matrix that stores particle indices at each step of the algo
     weights: NDArray[np.float64]
     particle_count: int = field(default = 1000) 
     clock: Clock = field(default_factory=lambda: Clock())
@@ -46,10 +45,11 @@ class Context:
     seed_size: float = field(default = 0.01) #estimate of initial percentage of infected out of the total population
     state_size: int = field(default = 4) #number of state variables in the model
     seed_loc: List[int] = field(default_factory=lambda: list()) #zero indexed seed location 
+    sankey_indices: List[int] = field(default_factory=lambda: list()) # a 2D matrix that stores particle indices at each step of the algo
     population: int = field(default=100_000) #estimate of the total population 
     estimated_params: Dict[str,int] = field(default_factory=lambda: dict()) #number of estimated parameters in the model 
     forward_estimation: int = 7 #The number of subsequent states to be considered in the likelihood function
-    run_sankey: bool = True # Set False to turn off Sankey code
+    run_sankey: bool = False # Set False to turn off Sankey code
 
 
 def timing(f):
