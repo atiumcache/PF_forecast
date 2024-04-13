@@ -22,8 +22,6 @@ class SMC:
         self.resampler = resampler
         self.ctx = ctx
 
-        for 
-
 
     def run(self,data:np.array):
         pass

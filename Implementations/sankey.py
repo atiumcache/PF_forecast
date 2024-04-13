@@ -4,7 +4,7 @@ import pandas as pd
 import copy
 
 def visualize_particles(num_of_particles, resampling_indices):
-    plt.figure(figsize=(12, 7))
+    plt.figure(figsize=(8, 5), dpi=600)
 
     def unique_ranks(arr):
         # Sort the array and get indices
@@ -50,7 +50,7 @@ def visualize_particles(num_of_particles, resampling_indices):
     time_steps = 12
     for step in range(1, time_steps):
         for p in range(num_of_particles):
-            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='blue', markersize=0.1, linewidth=30/num_of_particles)
+            plt.plot([step-1, step], [resampling_indices[step][p], positions[step, p]], linestyle='solid', color='darkcyan', markersize=0.1, linewidth=30/num_of_particles)
 
     
     ### Trace the lineage of last particles in red
@@ -61,7 +61,7 @@ def visualize_particles(num_of_particles, resampling_indices):
         next_indices = np.zeros(num_of_particles)
         for p in range(num_of_particles):
             if prev_indices[positions[step][p]] != 0:
-                plt.plot([step-1, step], [resampling_indices[step][p], positions[step][p]], linestyle='solid', color='red', linewidth=30/num_of_particles)
+                plt.plot([step-1, step], [resampling_indices[step][p], positions[step][p]], linestyle='solid', color='mediumvioletred', linewidth=50/num_of_particles)
                 next_indices[resampling_indices[step][p]] = 1
         
         prev_indices = copy.deepcopy(next_indices)
@@ -69,7 +69,7 @@ def visualize_particles(num_of_particles, resampling_indices):
     
     plt.xlabel('Time Step')
     plt.ylabel('Particles')
-    plt.title('Particle Filtering Visualization')
+    plt.title('Trace Plot for Particle Resampling')
     plt.grid(True)
     plt.xticks(np.arange(time_steps))
     plt.show()
