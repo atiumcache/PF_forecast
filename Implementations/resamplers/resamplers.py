@@ -7,7 +7,6 @@ import math
 from numpy.typing import NDArray
 from utilities.likelihood_functions import *
 
-'''TODO Convert the Poisson and NBinomResample to systematic resampling, or give an option to the user to choose which scheme they prefer. '''
 
 class NBinomResample(Resampler): 
     
@@ -49,17 +48,31 @@ class NBinomResample(Resampler):
         
         return np.squeeze(weights)
     
-    def compute_pos_weights(self,observation: NDArray, particleArray:List[Particle]) -> NDArray[np.float64]:
-        """Computes the posterior weights of the particles given an observation at time t from the time series. 
-        
-        Args: 
-            observation: An array of observations for the current time point, count data. 
-            particleArray: A list of particles, the Algorithm's self.particles list. 
+    def resample(self, ctx: Context,particleArray:List[Particle]) -> List[Particle]:
+        '''This is a basic resampling method, more advanced methods like systematic resampling need to override this'''    
 
-        Returns: 
-            A numpy array of the normalized weights. 
-            
-        """
+        indexes = np.arange(ctx.particle_count) #create a cumulative ndarray from 0 to particle_count
+
+        #The numpy resampling algorithm, see jupyter notebnook resampling.ipynb for more details
+        new_particle_indexes = ctx.rng.choice(a=indexes, size=ctx.particle_count, replace=True, p=ctx.prior_weights)
+
+        # Add new indices as a column in the sankey matrix
+        if ctx.run_sankey == True:
+            ctx.sankey_indices.append(new_particle_indexes)
+
+        particleCopy = particleArray.copy()#copy the particle array refs to ensure we don't overwrite particles
+
+        #this loop reindexes the particles by rebuilding the particles
+        for i in range(len(particleArray)): 
+            particleArray[i] = Particle(particleCopy[new_particle_indexes[i]].param.copy(),
+                                        particleCopy[new_particle_indexes[i]].state.copy(),
+                                        particleCopy[new_particle_indexes[i]].observation)
+
+        return particleArray
+
+class NBinomResampleR(Resampler):
+    def __init__(self) -> None:
+        super().__init__(likelihood=likelihood_NB_r)
 
         weights = np.zeros(len(particleArray))#initialize weights as an array of zeros
 

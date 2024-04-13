@@ -38,6 +38,7 @@ class Particle:
 @dataclass
 class Context: 
     '''Meta data about the algorithm'''
+    sankey_indices: List[int] # a 2D matrix that stores particle indices at each step of the algo
     prior_weights: NDArray[np.float64]
     pos_weights : NDArray[np.float64]
     weight_ratio: NDArray[np.float64]
@@ -49,7 +50,10 @@ class Context:
     seed_loc: List[int] = field(default_factory=lambda: list()) #zero indexed seed location 
     population: int = field(default=100_000) #estimate of the total population 
     estimated_params: Dict[str,int] = field(default_factory=lambda: dict()) #number of estimated parameters in the model 
-    forward_estimation: int = field(default = 1) #The number of subsequent states to be considered in the likelihood function
+    forward_estimation: int = 7 #The number of subsequent states to be considered in the likelihood function
+    run_sankey: bool = True # Set False to turn off Sankey code
+
+    
 
 @dataclass
 class SMCContext: 

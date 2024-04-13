@@ -26,7 +26,8 @@ algo = TimeDependentAlgo(integrator = LSODACalvettiSolver(),
                                     seed_size=0.0001,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
-                        particle_count=1000))
+                                    particle_count=1000, 
+                                    run_sankey=True))
 
 algo.initialize(params={
 "beta":ESTIMATION.VARIABLE,
