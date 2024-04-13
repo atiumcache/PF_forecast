@@ -486,6 +486,7 @@ class LSODASolver(Integrator):
             
             particleArray[i].state = sol.y[:ctx.state_size,1]
             particleArray[i].observation = np.array([sol.y[-1,1]-sol.y[-1,0]])
+            #particleArray[i].observation = sol.y[3,1]
 
         return particleArray 
 
