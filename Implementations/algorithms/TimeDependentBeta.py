@@ -85,29 +85,18 @@ class TimeDependentAlgo(Algorithm):
         gamma = []
 
         while(self.ctx.clock.time < runtime): 
-
-            #one step propagation 
+ 
 
             self.particles = self.integrator.propagate(self.particles,self.ctx)
         
             obv = data1[self.ctx.clock.time:self.ctx.clock.time+(self.ctx.forward_estimation)]
 
-            self.ctx.prior_weights = self.resampler.compute_prior_weights(self.ctx,obv,self.particles)
+            self.ctx.weights = self.resampler.compute_weights(self.ctx,obv,self.particles)
 
             self.particles = self.resampler.resample(self.ctx,self.particles)
 
             self.particles = self.perturb.randomly_perturb(self.ctx,self.particles) 
 
-            self.ctx.pos_weights = self.resampler.compute_pos_weights(obv,self.particles)
-
-            self.ctx.weight_ratio = self.ctx.pos_weights/self.ctx.prior_weights
-            self.ctx.weight_ratio /= np.sum(self.ctx.weight_ratio)
-
-            particle_max = self.particles[np.argmax(self.ctx.prior_weights)]
-
-            LL.append(((max(self.ctx.weight_ratio))))
-
-            #state_quantiles.append(quantiles([particle.observation[1] for particle in self.particles]))
             beta_quantiles.append(quantiles([particle.param['beta'] for particle in self.particles]))
             beta.append(np.mean([particle.param['beta'] for particle in self.particles]))
 
@@ -121,7 +110,7 @@ class TimeDependentAlgo(Algorithm):
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
             observations.append(quantiles([particle.observation for particle in self.particles]))
 
-            # print(f"Iteration: {self.ctx.clock.time}")
+            print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
         pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
@@ -140,7 +129,6 @@ class TimeDependentAlgo(Algorithm):
         eta_quantiles = np.array(eta_quantiles)
         gamma_quantiles = np.array(gamma_quantiles)
 
-        colors = cm.plasma(np.linspace(0, 1, 12)) # type: ignore
 
         # sankey test code
         if self.ctx.run_sankey == True:

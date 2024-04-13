@@ -30,7 +30,7 @@ class Resampler(ABC):
         self.likelihood = likelihood
 
     @abstractmethod
-    def compute_prior_weights(self,ctx:Context, observation:NDArray,particleArray:List[Particle])->NDArray[float_]: 
+    def compute_weights(self,ctx:Context, observation:NDArray,particleArray:List[Particle])->NDArray[float_]: 
         """Computes the prior weights of the particles given an observation at time t from the time series. 
         
         Args: 
@@ -43,21 +43,6 @@ class Resampler(ABC):
             
         """
         pass
-
-    def compute_pos_weights(self,observation:NDArray,particleArray:List[Particle])->NDArray[float_]: 
-        """Computes the posterior weights of the particles given an observation at time t from the time series. 
-        
-        Args: 
-            observation: An array of observations for the current time point, count data. 
-            particleArray: A list of particles, the Algorithm's self.particles list. 
-
-        Returns: 
-            A numpy array of the normalized weights. 
-        
-        
-        """
-        pass
- 
 
     @abstractmethod
     def resample(self,ctx:Context,particleArray:List[Particle]) ->List[Particle]:
