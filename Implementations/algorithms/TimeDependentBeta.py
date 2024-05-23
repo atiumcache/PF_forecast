@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import plotly.graph_objects as go
 import plotly.express as px
-from Implementations.sankey import visualize_particles
+from utilities.sankey import visualize_particles
 
 from utilities.Utils import Context
 

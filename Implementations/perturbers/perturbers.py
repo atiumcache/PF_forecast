@@ -83,34 +83,35 @@ class MultivariatePerturbations(Perturb):
 
 
             '''Computes the log_mean as defined in Calvetti et.al. '''
-            log_mean = 0
-            for i,param_vec in enumerate(static_param_mat): 
-                log_mean += ctx.weights[i] * (param_vec)
-            
+            log_mean = np.average(static_param_mat,axis=0,weights=ctx.weights)
+            # for i,param_vec in enumerate(static_param_mat): 
+            #     log_mean += ctx.weights[i] * (param_vec)
+
 
             '''Computes the covariance of the logarithms of the particles'''
-            cov = 0
-            for i,param_vec in enumerate(static_param_mat): 
-                cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
+            cov = np.cov(static_param_mat.T,aweights=ctx.weights)
+            # for i,param_vec in enumerate(static_param_mat): 
+            #     cov += ctx.weights[i] * np.outer(param_vec-log_mean,param_vec-log_mean)
 
             '''Holds the hyperparameter a, defined in terms of h'''
             a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
+            # if(len(static_names) == 1):
 
-            '''TODO I feel like we should be able to use the multivariate normal distribution for all of this, the if check is inefficient but ctx.rng.multivariate_normal 
-            doesn't work in the single variate case. Also the numpy array for cov has an extra dimension if the dimension is 1, using squeeze as a stopgap. There's got to be a 
-            better way to tackle this.'''
-            if(len(static_param_mat[0]) == 1): 
-                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*np.squeeze(cov))
+            #     for i in range(len(particleArray)): 
+            #         new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*np.sqrt(cov))
 
-            else: 
-                for i in range(len(particleArray)): 
-                    new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+            #         '''puts the perturbed static parameters back in the particle field'''
+            #         for j,static in enumerate(new_statics): 
+            #             particleArray[i].param[static_names[j]] = np.exp(static)
 
 
-            '''puts the perturbed static parameters back in the particle field'''
-            for j,static in enumerate(new_statics): 
-                particleArray[i].param[static_names[j]] = np.exp(static)
+            for i in range(len(particleArray)): 
+                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+
+                '''puts the perturbed static parameters back in the particle field'''
+                for j,static in enumerate(new_statics): 
+                    particleArray[i].param[static_names[j]] = np.exp(static)
 
 
         '''Perturb the variable parameters
@@ -299,17 +300,22 @@ class LogMultivariatePerturbations(Perturb):
                         deltas = np.log(matrix_set[:,i,j]) + ctx.weights
                         Σ[i,j] = np.exp(jacob(deltas)[-1])
 
-            if(len(static_param_mat[0]) == 1): 
-                new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*np.squeeze(Σ))
 
-            for i in range(len(particleArray)): 
-                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*Σ)
+            if(len(static_names) == 1):
+                for i in range(len(particleArray)): 
+                    new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*np.sqrt(Σ))
 
+                    '''puts the perturbed static parameters back in the particle field'''
+                    for j,static in enumerate(new_statics): 
+                        particleArray[i].param[static_names[j]] = np.exp(static)
 
-            '''puts the perturbed static parameters back in the particle field'''
-            for j,static in enumerate(new_statics): 
-                particleArray[i].param[static_names[j]] = np.exp(static)
+            else: 
+                for i in range(len(particleArray)): 
+                    new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*ξ,(self.hyperparameters["h"]**2)*Σ)
 
+                    '''puts the perturbed static parameters back in the particle field'''
+                    for j,static in enumerate(new_statics): 
+                        particleArray[i].param[static_names[j]] = np.exp(static)
         
         
 
