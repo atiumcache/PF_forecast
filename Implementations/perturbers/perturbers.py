@@ -96,14 +96,14 @@ class MultivariatePerturbations(Perturb):
             '''Holds the hyperparameter a, defined in terms of h'''
             a = np.sqrt(1-(self.hyperparameters["h"])**2)
 
-            # if(len(static_names) == 1):
+            if(len(static_names) == 1):
 
-            #     for i in range(len(particleArray)): 
-            #         new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*np.sqrt(cov))
+                for i in range(len(particleArray)): 
+                    new_statics = ctx.rng.normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*np.squeeze(np.sqrt(cov)))
 
-            #         '''puts the perturbed static parameters back in the particle field'''
-            #         for j,static in enumerate(new_statics): 
-            #             particleArray[i].param[static_names[j]] = np.exp(static)
+                    '''puts the perturbed static parameters back in the particle field'''
+                    for j,static in enumerate(new_statics): 
+                        particleArray[i].param[static_names[j]] = np.exp(static)
 
 
             for i in range(len(particleArray)): 
