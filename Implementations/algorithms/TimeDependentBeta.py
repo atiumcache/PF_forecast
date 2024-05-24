@@ -102,8 +102,8 @@ class TimeDependentAlgo(Algorithm):
 
 
 
-            gamma_quantiles.append(quantiles([particle.param['q'] for particle in self.particles]))
-            gamma.append(np.mean([particle.param['q'] for particle in self.particles]))
+            gamma_quantiles.append(quantiles([particle.param['gamma'] for particle in self.particles]))
+            gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
             observations.append(quantiles([particle.observation for particle in self.particles]))
 
             print(f"Iteration: {self.ctx.clock.time}")
