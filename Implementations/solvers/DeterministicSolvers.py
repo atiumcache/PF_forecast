@@ -577,6 +577,8 @@ class LSODACalvettiSolver(Integrator):
                     print(f"NaN state at particle: {i}")
 
 
+        
+
         return particleArray 
 
     

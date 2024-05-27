@@ -142,6 +142,7 @@ class MultivariatePerturbations(Perturb):
             log_state = np.log(particleArray[i].state)
             td_vec = np.concatenate((log_state,var_param_mat[i])) #Everything in here is log
             perturbed = np.exp(ctx.rng.multivariate_normal(td_vec,C))
+            particle_population = np.sum(particleArray[i].state[0:ctx.state_size])
 
             '''Normalization
             
@@ -151,7 +152,7 @@ class MultivariatePerturbations(Perturb):
             
             '''
             perturbed[0:ctx.state_size] /= np.sum(perturbed[0:ctx.state_size])
-            perturbed[0:ctx.state_size] *= ctx.population
+            perturbed[0:ctx.state_size] *= particle_population
 
             '''Returns the perturbed values to the particles. Dependent on the ctx.state_size value.'''
             particleArray[i].state = perturbed[:ctx.state_size]
@@ -344,10 +345,11 @@ class LogMultivariatePerturbations(Perturb):
 
             td_vec = (np.concatenate((log_state,var_param_mat[i])))
             perturbed = np.exp(ctx.rng.multivariate_normal(td_vec,C))
+            particle_population = np.sum(particleArray[i].state[0:ctx.state_size])
 
             '''Normalization'''
             perturbed[0:ctx.state_size] /= np.sum(perturbed[0:ctx.state_size])
-            perturbed[0:ctx.state_size] *= ctx.population
+            perturbed[0:ctx.state_size] *= particle_population
 
 
             particleArray[i].state = perturbed[:ctx.state_size]
