@@ -106,12 +106,14 @@ class MultivariatePerturbations(Perturb):
                         particleArray[i].param[static_names[j]] = np.exp(static)
 
 
-            for i in range(len(particleArray)): 
-                new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+            else: 
 
-                '''puts the perturbed static parameters back in the particle field'''
-                for j,static in enumerate(new_statics): 
-                    particleArray[i].param[static_names[j]] = np.exp(static)
+                for i in range(len(particleArray)): 
+                    new_statics = ctx.rng.multivariate_normal(a * static_param_mat[i] + (1-a)*log_mean,(self.hyperparameters["h"]**2)*cov)
+
+                    '''puts the perturbed static parameters back in the particle field'''
+                    for j,static in enumerate(new_statics): 
+                        particleArray[i].param[static_names[j]] = np.exp(static)
 
 
         '''Perturb the variable parameters
