@@ -7,6 +7,7 @@ from functools import partial
 import pandas as pd
 import numpy as np
 from argparse import ArgumentParser
+from datetime import date
 
 
 def process_args():
@@ -19,24 +20,16 @@ def process_args():
     parser = ArgumentParser(
                     prog='SMC_EPI',
                     description='Runs a particle filter over the given data.')
-    parser.add_argument('filepath', help="absolute path for hospitalization data")
+    parser.add_argument('filepath', help="file path for hospitalization data", type=str)
     parser.add_argument('state_code', help="state location code from 'locations.csv'")
-    parser.add_argument('runtime', help='time steps', type=int)
+    parser.add_argument('start_date', help='day to forecast from. ISO 8601 format.', type=str)
     return parser.parse_args()
 
 
-def get_population(state_code):
+def get_population(state_code: str) -> int:
     """
     Returns a state's population.
-
-    Args:
-        state_code (string): location code corresponding to state
-
-    Returns:
-        int: population of given state
     """    
-    # state_code = str(state_code).zfill(2) # Standardize state code
-
     df = pd.read_csv('./datasets/state_populations.csv')
     
     # Query the DataFrame to get the population
@@ -47,13 +40,29 @@ def get_population(state_code):
         return None
     
 
+def get_previous_80_rows(df, date):
+    """
+    Returns a data frame containing 80 rows of a state's hospitalization data.
+    Data runs from input date to 80 days prior. 
 
+    Args:
+        df (DataFrame): A single state's hospitalization data. 
+        date (Date): Date object in ISO 8601 format. 
 
-def main():
-    args = process_args()
-    state_population = get_population(args.state_code)
+    Returns:
+        DataFrame: The filtered df with 80 rows. 
+    """    
+    df['date'] = pd.to_datetime(df['date'])
+    df_sorted = df.sort_values(by='date')
+    date_index = df_sorted[df_sorted['date'] == date].index[0]
+    start_index = max(date_index - 80, 0)
+    result_df = df_sorted.iloc[start_index:date_index+1]
+    return result_df
+    
 
-    algo = TimeDependentAlgo(integrator = LSODASolver(),
+def initialize_algo(state_population):
+    """Returns an algorithm object, given a state's population."""
+    algorithm = TimeDependentAlgo(integrator = LSODASolver(),
                         perturb = MultivariatePerturbations(hyper_params={"h":0.5,"sigma1":0.1,"sigma2":0.05}),
                         resampler = NBinomResample(),
                         ctx=Context(population=state_population,
@@ -64,8 +73,8 @@ def main():
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
                                     particle_count=10))
-
-    algo.initialize(params={
+    
+    algorithm.initialize(params={
     "beta":ESTIMATION.VARIABLE,
     "gamma":0.06,
     "mu":0.004,
@@ -77,12 +86,26 @@ def main():
     "L":90,
     "D":10,
     }
-    ,priors={"beta":partial(algo.ctx.rng.uniform,0.1,0.15), 
-            "D":partial(algo.ctx.rng.uniform,0,15),
+    ,priors={"beta":partial(algorithm.ctx.rng.uniform,0.1,0.15), 
+            "D":partial(algorithm.ctx.rng.uniform,0,15),
             })
+    
+    return algorithm
 
-    algo.run(args.filepath, args.runtime)
 
+def main():
+    args = process_args()
+    state_pop = get_population(args.state_code)
+
+    # Run the particle filter for 80 days prior to start date
+    start_date = date.fromisoformat(args.start_date)
+    state_data = get_previous_80_rows()
+
+
+    #algo = initialize_algo(state_pop)
+    #algo.run(args.filepath, args.runtime)
+    
+    
 
 if __name__ == "__main__":
     main()
