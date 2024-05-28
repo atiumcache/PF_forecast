@@ -1,53 +1,91 @@
 from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
-from Implementations.resamplers.resamplers import NBinomResample,LogNBinomResample,NBinomResampleR,PoissonResample
-from Implementations.solvers.StochasticSolvers import PoissonSolver
-from Implementations.solvers.DeterministicSolvers import EulerSolver,LSODASolver,LSODASolverSEIARHD,LSODACalvettiSolver
-from Implementations.perturbers.perturbers import MultivariatePerturbations,DynamicPerturbations
+from Implementations.resamplers.resamplers import PoissonResample,NBinomResample
+from Implementations.solvers.DeterministicSolvers import LSODACalvettiSolver,LSODASolver,LSODASolverSEIARHD,EulerSolver
+from Implementations.perturbers.perturbers import MultivariatePerturbations
 from utilities.Utils import Context,ESTIMATION
 from functools import partial
-import matplotlib.pyplot as plt
-
 import pandas as pd
 import numpy as np
+from argparse import ArgumentParser
 
-np.set_printoptions(suppress=True)
 
-state = "AZ"
+def process_args():
+    """
+    Processes command line arguments.
 
-algo = TimeDependentAlgo(integrator = LSODACalvettiSolver(),
-                        perturb = MultivariatePerturbations(hyper_params={"h":1.,"sigma1":0.01,"sigma2":0.1,"k":0.01}),
-                        resampler = PoissonResample(),
-                        ctx=Context(population=100_000,
+    Returns:
+        Namespace: Contains the parsed command line arguments.
+    """    
+    parser = ArgumentParser(
+                    prog='SMC_EPI',
+                    description='Runs a particle filter over the given data.')
+    parser.add_argument('filepath', help="absolute path for hospitalization data")
+    parser.add_argument('state_code', help="state location code from 'locations.csv'")
+    parser.add_argument('runtime', help='time steps', type=int)
+    return parser.parse_args()
+
+
+def get_population(state_code):
+    """
+    Returns a state's population.
+
+    Args:
+        state_code (string): location code corresponding to state
+
+    Returns:
+        int: population of given state
+    """    
+    # state_code = str(state_code).zfill(2) # Standardize state code
+
+    df = pd.read_csv('./datasets/state_populations.csv')
+    
+    # Query the DataFrame to get the population
+    try: 
+        population = df.loc[df['state_code'] == int(state_code), 'population'].values
+        return population[0]
+    except:
+        return None
+    
+
+
+
+def main():
+    args = process_args()
+    state_population = get_population(args.state_code)
+
+    algo = TimeDependentAlgo(integrator = LSODASolver(),
+                        perturb = MultivariatePerturbations(hyper_params={"h":0.5,"sigma1":0.1,"sigma2":0.05}),
+                        resampler = NBinomResample(),
+                        ctx=Context(population=state_population,
                                     state_size = 4,
-                                    prior_weights=np.zeros(1000),
-                                    pos_weights=np.zeros(1000),
-                                    weight_ratio=np.ones(1000),
-                                    seed_loc=[1,2],
-                                    seed_size=0.0001,
+                                    weights=np.ones(1000),
+                                    seed_loc=[1],
+                                    seed_size=0.005,
                                     forward_estimation=1,
                                     rng=np.random.default_rng(),
-                                    particle_count=1000, 
-                                    run_sankey=True))
+                                    particle_count=10))
 
-algo.initialize(params={
-"beta":ESTIMATION.VARIABLE,
-"gamma":1/14,
-"mu":0.004,
-"q":ESTIMATION.STATIC,
-"eta":ESTIMATION.STATIC,
-"std":10,
-"R":50,
-"hosp":15,
-"L":90,
-"D":10}
-,priors={"beta":partial(algo.ctx.rng.uniform,0.1,0.6), 
-          "gamma":partial(algo.ctx.rng.uniform,1/28,1/7),
-          })
+    algo.initialize(params={
+    "beta":ESTIMATION.VARIABLE,
+    "gamma":0.06,
+    "mu":0.004,
+    "q":0.1,
+    "eta":0.1,
+    "std":10,
+    "R":50, 
+    "hosp":10,
+    "L":90,
+    "D":10,
+    }
+    ,priors={"beta":partial(algo.ctx.rng.uniform,0.1,0.15), 
+            "D":partial(algo.ctx.rng.uniform,0,15),
+            })
 
-algo.print_particles()
-#algo.run(f'./datasets/calvetti_sim_data_protocol_A.csv',119)
+    algo.run(args.filepath, args.runtime)
 
 
+if __name__ == "__main__":
+    main()
 
 
 

@@ -109,16 +109,16 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}")
             self.ctx.clock.tick()
 
-        pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
-        pd.DataFrame(eta).to_csv('../datasets/average_eta.csv')
-        pd.DataFrame(gamma).to_csv('../datasets/average_gamma.csv')
+        pd.DataFrame(beta).to_csv('./datasets/average_beta.csv')
+        pd.DataFrame(eta).to_csv('./datasets/average_eta.csv')
+        pd.DataFrame(gamma).to_csv('./datasets/average_gamma.csv')
 
-        pd.DataFrame(beta_quantiles).to_csv('../datasets/beta_quantiles.csv')
-        pd.DataFrame(eta_quantiles).to_csv('../datasets/eta_quantiles.csv')
-        pd.DataFrame(gamma_quantiles).to_csv('../datasets/gamma_quantiles.csv')
-        pd.DataFrame(observations).to_csv('../datasets/particle_observation.csv')
+        pd.DataFrame(beta_quantiles).to_csv('./datasets/beta_quantiles.csv')
+        pd.DataFrame(eta_quantiles).to_csv('./datasets/eta_quantiles.csv')
+        pd.DataFrame(gamma_quantiles).to_csv('./datasets/gamma_quantiles.csv')
+        pd.DataFrame(observations).to_csv('./datasets/particle_observation.csv')
 
-        pd.DataFrame(state).to_csv('../datasets/ESTIMATED_STATE.csv')            
+        pd.DataFrame(state).to_csv('./datasets/ESTIMATED_STATE.csv')            
 
         state_quantiles = np.array(state_quantiles)
         beta_quantiles = np.array(beta_quantiles)
