@@ -1,6 +1,6 @@
 #*[-----------------------------------------------------------------------------------------------]*#
 #*[ Objective : This R program detects changepoints in beta_t and logit(beta_t) before a given    ]*#
-#*[             time point under the AR(1) piecewise linear trends model using GA. Also, the       ]*#
+#*[             time point under the AR(1) piecewise linear trends model using GA. Also, the      ]*#
 #*[             program tests the model and generates next 28 days' beta_t values.                ]*#
 #*[ Updated   : Mar 25, 2024                                                                      ]*#
 #*[ Developers: Jaechoul Lee                                                                      ]*#

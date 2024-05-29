@@ -27,16 +27,18 @@ def main(state_abbrev):
     '''Setup the time span up to the final data point and the forecast'''
     t_span = [0,endpoint] 
     forecast_span = [endpoint,endpoint+26]
+    
+    
 
 
-    def RHS_H(t,state,parameters):
+    def RHS_H(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
         """
         Model definition for the integrator.
 
-        :param float t: The current time point.
-        :param numpy.ndarray state: A numpy array containing the current values of the state variables [S, I, R, H, new_H].
-        :param dict parameters: A dictionary containing the model parameters.
-        :returns numpy.ndarray: An array containing the derivatives [dS, dI, dR, dH, new_H].
+        :param t: The current time point.
+        :param state: A numpy array containing the current values of the state variables [S, I, R, H, new_H].
+        :param parameters: A dictionary containing the model parameters.
+        :returns np.ndarray: An array containing the derivatives [dS, dI, dR, dH, new_H].
         """
         S,I,R,H,new_H = state # unpack the state variables
         N = S + I + R + H # compute the total population 

@@ -1,7 +1,8 @@
 import unittest
 import pandas as pd
+from pandas.testing import assert_frame_equal
 from io import StringIO
-from main import get_population
+from main import get_population, get_previous_80_rows
 
 class TestGetPopulation(unittest.TestCase):
 
@@ -17,6 +18,7 @@ class TestGetPopulation(unittest.TestCase):
     def test_get_population_non_numeric_code(self):
         # Test for a non-numeric state code
         self.assertIsNone(get_population('XX'))
+
 
 if __name__ == '__main__':
     unittest.main()

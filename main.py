@@ -14,8 +14,7 @@ def process_args():
     """
     Processes command line arguments.
 
-    Returns:
-        Namespace: Contains the parsed command line arguments.
+    :return Namespace: Contains the parsed command line arguments.
     """    
     parser = ArgumentParser(
                     prog='SMC_EPI',
@@ -29,7 +28,10 @@ def process_args():
 def get_population(state_code: str) -> int:
     """
     Returns a state's population.
-    """    
+
+    :param state_code: Location code corresponding to state. 
+    :return: population.
+    """       
     df = pd.read_csv('./datasets/state_populations.csv')
     
     # Query the DataFrame to get the population
@@ -40,23 +42,22 @@ def get_population(state_code: str) -> int:
         return None
     
 
-def get_previous_80_rows(df, date):
+def get_previous_80_rows(df: pd.DataFrame, target_date: pd.DateTime) -> pd.DataFrame:
     """
     Returns a data frame containing 80 rows of a state's hospitalization data.
     Data runs from input date to 80 days prior. 
 
-    Args:
-        df (DataFrame): A single state's hospitalization data. 
-        date (Date): Date object in ISO 8601 format. 
-
-    Returns:
-        DataFrame: The filtered df with 80 rows. 
+    :param df: A single state's hospitalization data. 
+    :param date: Date object in ISO 8601 format. 
+    :return: The filtered df with 80 rows. 
     """    
     df['date'] = pd.to_datetime(df['date'])
     df_sorted = df.sort_values(by='date')
-    date_index = df_sorted[df_sorted['date'] == date].index[0]
+    date_index = df_sorted[df_sorted['date'] == target_date].index[0]
     start_index = max(date_index - 80, 0)
     result_df = df_sorted.iloc[start_index:date_index+1]
+    result_df = result_df.drop(columns=['state', 'date'], axis=1)
+
     return result_df
     
 
@@ -96,17 +97,17 @@ def initialize_algo(state_population):
 def main():
     args = process_args()
     state_pop = get_population(args.state_code)
+    hosp_csv_path = './datasets/hosp_data/hosp_' + args.state_code + '.csv'
+    state_data = pd.read_csv(hosp_csv_path)
+
+    start_date = pd.to_datetime(args.start_date)
+    state_data = get_previous_80_rows(state_data, start_date)
 
     # Run the particle filter for 80 days prior to start date
-    start_date = date.fromisoformat(args.start_date)
-    state_data = get_previous_80_rows()
-
-
-    #algo = initialize_algo(state_pop)
-    #algo.run(args.filepath, args.runtime)
+    algo = initialize_algo(state_pop)
+    algo.run(state_data, 80)
     
     
-
 if __name__ == "__main__":
     main()
 
