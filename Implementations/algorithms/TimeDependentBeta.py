@@ -53,10 +53,12 @@ class TimeDependentAlgo(Algorithm):
 
 
     @timing
-    def run(self,data_path:str,runtime:int) ->None:
-        '''The algorithms main run method, takes the time series data as a parameter and returns an output object encapsulating parameter and state values'''
-
-        data1 = pd.read_csv(data_path).to_numpy()
+    def run(self, df:pd.DataFrame, runtime:int) -> None:
+        '''
+        Inputs: time series data and runtime.
+        Outputs: csv files for parameter and state values.
+        '''
+        data1 = df.to_numpy()
         data1 = np.delete(data1,0,1)
 
         "Initialize labels and first column of sankey matrix"
@@ -106,19 +108,19 @@ class TimeDependentAlgo(Algorithm):
             gamma.append(np.mean([particle.param['gamma'] for particle in self.particles]))
             observations.append(quantiles([particle.observation for particle in self.particles]))
 
-            print(f"Iteration: {self.ctx.clock.time}")
+            print(f"Iteration: {self.ctx.clock.time}", end='\r')
             self.ctx.clock.tick()
 
-        pd.DataFrame(beta).to_csv('../datasets/average_beta.csv')
-        pd.DataFrame(eta).to_csv('../datasets/average_eta.csv')
-        pd.DataFrame(gamma).to_csv('../datasets/average_gamma.csv')
+        pd.DataFrame(beta).to_csv('./datasets/average_beta.csv')
+        pd.DataFrame(eta).to_csv('./datasets/average_eta.csv')
+        pd.DataFrame(gamma).to_csv('./datasets/average_gamma.csv')
 
-        pd.DataFrame(beta_quantiles).to_csv('../datasets/beta_quantiles.csv')
-        pd.DataFrame(eta_quantiles).to_csv('../datasets/eta_quantiles.csv')
-        pd.DataFrame(gamma_quantiles).to_csv('../datasets/gamma_quantiles.csv')
-        pd.DataFrame(observations).to_csv('../datasets/particle_observation.csv')
+        pd.DataFrame(beta_quantiles).to_csv('./datasets/beta_quantiles.csv')
+        pd.DataFrame(eta_quantiles).to_csv('./datasets/eta_quantiles.csv')
+        pd.DataFrame(gamma_quantiles).to_csv('./datasets/gamma_quantiles.csv')
+        pd.DataFrame(observations).to_csv('./datasets/particle_observation.csv')
 
-        pd.DataFrame(state).to_csv('../datasets/ESTIMATED_STATE.csv')            
+        pd.DataFrame(state).to_csv('./datasets/ESTIMATED_STATE.csv')            
 
         state_quantiles = np.array(state_quantiles)
         beta_quantiles = np.array(beta_quantiles)
