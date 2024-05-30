@@ -14,7 +14,7 @@ def process_args():
     )
     parser.add_argument("state_code", help="state location code from 'locations.csv'")
     parser.add_argument(
-        "start_date", help="day to forecast from. ISO 8601 format.", type=str
+        "forecast_start_date", help="day to forecast from. ISO 8601 format.", type=str
     )
     return parser.parse_args()
 

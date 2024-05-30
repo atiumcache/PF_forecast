@@ -12,7 +12,7 @@ def main():
 
     state = State(args.state_code)
 
-    start_date = pd.to_datetime(args.start_date)
+    start_date = pd.to_datetime(args.forecast_start_date)
 
     filtered_state_data = get_previous_80_rows(state.hosp_data, start_date)
 
