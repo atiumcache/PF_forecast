@@ -11,8 +11,7 @@ def main():
 
     start_date = pd.to_datetime(args.start_date)
     
-    # Get the previous 80 rows of data
-    filtered_state_data = get_previous_80_rows(state.data, start_date)
+    filtered_state_data = get_previous_80_rows(state.hosp_data, start_date)
 
     # Run the particle filter for 80 days prior to start date
     algo = initialize_algo(state.population)

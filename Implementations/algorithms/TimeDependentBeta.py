@@ -52,7 +52,6 @@ class TimeDependentAlgo(Algorithm):
             self.particles.append(Particle(param=p_params,state=state.copy(),observation=np.array([0 for _ in range(self.ctx.forward_estimation)])))   
 
 
-    @timing
     def run(self, df:pd.DataFrame, runtime:int) -> None:
         '''
         Inputs: time series data and runtime.

@@ -29,15 +29,15 @@ class TestState(unittest.TestCase):
     def test_load_hospital_data(self):
         # Test loading hospital data for a valid state code
         state = State('01')
-        self.assertIsNotNone(state.data)
-        self.assertFalse(state.data.empty)
-        print("Hospital data DataFrame:", state.data)
+        self.assertIsNotNone(state.hosp_data)
+        self.assertFalse(state.hosp_data.empty)
+        print("Hospital data DataFrame:", state.hosp_data)
 
     def test_load_hospital_data_invalid_code(self):
         # Test loading hospital data for an invalid state code
         state = State('99')
-        self.assertTrue(state.data.empty)
-        print("Hospital data DataFrame for invalid code '99':", state.data)
+        self.assertTrue(state.hosp_data.empty)
+        print("Hospital data DataFrame for invalid code '99':", state.hosp_data)
 
 if __name__ == '__main__':
     unittest.main()
