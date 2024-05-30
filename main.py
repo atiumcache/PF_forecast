@@ -3,8 +3,7 @@ from datetime import date
 import pandas as pd
 
 from filter_forecast.algo_init import initialize_algo
-from filter_forecast.helpers import (get_population, get_previous_80_rows,
-                                     process_args)
+from filter_forecast.helpers import get_population, get_previous_80_rows, process_args
 from filter_forecast.state import State
 
 

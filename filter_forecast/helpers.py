@@ -10,9 +10,8 @@ def process_args():
     :return Namespace: Contains the parsed command line arguments.
     """
     parser = ArgumentParser(
-        prog="SMC_EPI", description="Runs a particle filter over the given data."
+        description="Runs a particle filter over the given state's data."
     )
-    parser.add_argument("filepath", help="file path for hospitalization data", type=str)
     parser.add_argument("state_code", help="state location code from 'locations.csv'")
     parser.add_argument(
         "start_date", help="day to forecast from. ISO 8601 format.", type=str
