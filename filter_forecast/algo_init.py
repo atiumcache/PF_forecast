@@ -1,16 +1,25 @@
-from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
-from Implementations.resamplers.resamplers import PoissonResample, NBinomResample
-from Implementations.solvers.DeterministicSolvers import LSODACalvettiSolver, LSODASolver, LSODASolverSEIARHD, EulerSolver
-from Implementations.perturbers.perturbers import MultivariatePerturbations
-from utilities.Utils import Context, ESTIMATION
 from functools import partial
+
 import numpy as np
+
+from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
+from Implementations.perturbers.perturbers import MultivariatePerturbations
+from Implementations.resamplers.resamplers import (NBinomResample,
+                                                   PoissonResample)
+from Implementations.solvers.DeterministicSolvers import (EulerSolver,
+                                                          LSODACalvettiSolver,
+                                                          LSODASolver,
+                                                          LSODASolverSEIARHD)
+from utilities.Utils import ESTIMATION, Context
+
 
 def initialize_algo(state_population):
     """Returns an algorithm object, given a state's population."""
     algorithm = TimeDependentAlgo(
         integrator=LSODASolver(),
-        perturb=MultivariatePerturbations(hyper_params={"h": 0.5, "sigma1": 0.1, "sigma2": 0.05}),
+        perturb=MultivariatePerturbations(
+            hyper_params={"h": 0.5, "sigma1": 0.1, "sigma2": 0.05}
+        ),
         resampler=NBinomResample(),
         ctx=Context(
             population=state_population,
@@ -20,10 +29,10 @@ def initialize_algo(state_population):
             seed_size=0.005,
             forward_estimation=1,
             rng=np.random.default_rng(),
-            particle_count=10
-        )
+            particle_count=10,
+        ),
     )
-    
+
     algorithm.initialize(
         params={
             "beta": ESTIMATION.VARIABLE,
@@ -40,7 +49,7 @@ def initialize_algo(state_population):
         priors={
             "beta": partial(algorithm.ctx.rng.uniform, 0.1, 0.15),
             "D": partial(algorithm.ctx.rng.uniform, 0, 15),
-        }
+        },
     )
-    
+
     return algorithm
