@@ -7,31 +7,7 @@ from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(state_abbrev):
-    """Read in the necessary csv files"""
-    predicted_beta = pd.read_csv(
-        "./datasets/Out_prog3/out_logit-beta_trj_rnorm.csv"
-    ).to_numpy()
-    predicted_beta = np.delete(predicted_beta, 0, 1)
-
-    observations = pd.read_csv(
-        f"./datasets/{state_abbrev}_FLU_HOSPITALIZATIONS.csv"
-    ).to_numpy()
-    observations = np.delete(observations, 0, 1)
-
-    estimated_state = pd.read_csv("./datasets/ESTIMATED_STATE.csv").to_numpy()
-    estimated_state = np.delete(estimated_state, 0, 1)
-
-    pf_beta = pd.read_csv("./datasets/average_beta.csv").to_numpy()
-    pf_beta = np.delete(pf_beta, 0, 1).squeeze()
-
-    endpoint = 79
-
-    """Setup the time span up to the final data point and the forecast"""
-    t_span = [0, endpoint]
-    forecast_span = [endpoint, endpoint + 26]
-
-    def RHS_H(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
+def RHS_H(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
         """
         Model definition for the integrator.
 
@@ -59,6 +35,31 @@ def main(state_abbrev):
 
         return np.array([dS, dI, dR, dH, new_H])
 
+
+def main(state_abbrev):
+    """Read in the necessary csv files"""
+    predicted_beta = pd.read_csv(
+        "./datasets/Out_prog3/out_logit-beta_trj_rnorm.csv"
+    ).to_numpy()
+    predicted_beta = np.delete(predicted_beta, 0, 1)
+
+    observations = pd.read_csv(
+        f"./datasets/{state_abbrev}_FLU_HOSPITALIZATIONS.csv"
+    ).to_numpy()
+    observations = np.delete(observations, 0, 1)
+
+    estimated_state = pd.read_csv("./datasets/ESTIMATED_STATE.csv").to_numpy()
+    estimated_state = np.delete(estimated_state, 0, 1)
+
+    pf_beta = pd.read_csv("./datasets/average_beta.csv").to_numpy()
+    pf_beta = np.delete(pf_beta, 0, 1).squeeze()
+
+    endpoint = 79
+
+    """Setup the time span up to the final data point and the forecast"""
+    t_span = [0, endpoint]
+    forecast_span = [endpoint, endpoint + 26]
+
     def beta(t):
         """Functional form of beta to use for integration"""
         if t < t_span[1]:
@@ -81,19 +82,23 @@ def main(state_abbrev):
         method="RK45",
     ).y
 
-    """Generate a distribution over the observed and forecasted."""
-    forecast_newH = np.diff(forecast[4, :])
+    """Generate a nbinom distribution over the observed and forecasted."""
+    print(forecast)
+    forecast_new_hosp = np.diff(forecast[4, :])
     timeseries = np.copy(
-        np.concatenate((observations[: t_span[1]].squeeze(), forecast_newH))
+        np.concatenate((observations[: t_span[1]].squeeze(), forecast_new_hosp))
     )
-    num_rv = 10000
-    output = np.zeros((num_rv, len(timeseries)))
+    num_samples = 10000
+    sim_results = np.zeros((num_samples, len(timeseries)))
     r = 40
     r = np.ceil(r)
     quantiles_hosp = []
 
     for i in range(len(timeseries)):
-        output[:, i] = nbinom.rvs(n=r, p=r / (r + timeseries[i]), size=num_rv)
+        sim_results[:, i] = nbinom.rvs(n=r, p=r / (r + timeseries[i]), size=num_samples)
+
+    output_df = pd.DataFrame(sim_results)
+    output_df.to_csv ('testing_output.csv')
 
     def quantiles(items):
         """Returns 23 quantiles of the List passed in"""
@@ -127,6 +132,13 @@ def main(state_abbrev):
         return list(np.quantile(items, qtlMark))
 
     for i in range(len(timeseries)):
-        quantiles_hosp.append(quantiles(output[:, i]))
+        quantiles_hosp.append(quantiles(sim_results[:, i]))
 
-    quantiles_hosp = np.array(quantiles_hosp)
+    quantiles_hosp = np.array(quantiles_hosp, dtype=int)
+    print(forecast_new_hosp)
+    hosp_df = pd.DataFrame(quantiles_hosp)
+    hosp_df.to_csv('./testing_hosp.csv')
+
+
+if __name__ == "__main__":
+     main('AZ')
