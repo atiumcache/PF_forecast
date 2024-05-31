@@ -14,10 +14,12 @@ We will utilize a bash script to automate this process on NAU's Monsoon HPC.
 Download the new hospitalization reports and split the data into state-level data using the `process_new_data.py` script.
 
 ### Run the Particle Filter
-For each state, we run the particle filter `main.py` on the state-level data. This outputs a predicted transmission rate `β`. 
+For each state, we run the particle filter `main.py` on the state-level data. This outputs an inferred transmission rate `β`. 
 
 ### Forecasting
-Using the `prog3_cpt-PLT-prd_v0-4.R` script, we use the predicted transmission rate `β` to forecast hospitalization rates 28 days into the future.
+The `prog3_cpt-PLT-prd_v0-4.R` script uses trend forecasting to predict the transmission rate `β` up to 28 days into the future.
+
+Then, `LSODA_forecast.py` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
 
 ### Determine Accuracy
 Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts. More information on WIS can be found here:
