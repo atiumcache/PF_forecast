@@ -1,58 +1,15 @@
-import sys
+import os
+from datetime import datetime, timedelta
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def RHS_H(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
-        """
-        Model definition for the integrator.
+def main(state_abbrev, location_code, reference_date):
 
-        :param t: The current time point.
-        :param state: A numpy array containing the current values of the state variables [S, I, R, H, new_H].
-        :param parameters: A dictionary containing the model parameters.
-        :returns np.ndarray: An array containing the derivatives [dS, dI, dR, dH, new_H].
-        """
-        S, I, R, H, new_H = state  # unpack the state variables
-        N = S + I + R + H  # compute the total population
-
-        new_H = (1 / parameters["D"]) * (parameters["gamma"]) * I
-
-        """The state transitions of the ODE model is below"""
-        dS = -parameters["beta"](int(t)) * (S * I) / N + (1 / parameters["L"]) * R
-        dI = parameters["beta"](int(t)) * S * I / N - (1 / parameters["D"]) * I
-        dR = (
-            (1 / parameters["hosp"]) * H
-            + ((1 / parameters["D"]) * (1 - (parameters["gamma"])) * I)
-            - (1 / parameters["L"]) * R
-        )
-        dH = (1 / parameters["D"]) * (parameters["gamma"]) * I - (
-            1 / parameters["hosp"]
-        ) * H
-
-        return np.array([dS, dI, dR, dH, new_H])
-
-
-def main(state_abbrev):
-    """Read in the necessary csv files"""
-    predicted_beta = pd.read_csv(
-        "./datasets/Out_prog3/out_logit-beta_trj_rnorm.csv"
-    ).to_numpy()
-    predicted_beta = np.delete(predicted_beta, 0, 1)
-
-    observations = pd.read_csv(
-        f"./datasets/{state_abbrev}_FLU_HOSPITALIZATIONS.csv"
-    ).to_numpy()
-    observations = np.delete(observations, 0, 1)
-
-    estimated_state = pd.read_csv("./datasets/ESTIMATED_STATE.csv").to_numpy()
-    estimated_state = np.delete(estimated_state, 0, 1)
-
-    pf_beta = pd.read_csv("./datasets/average_beta.csv").to_numpy()
-    pf_beta = np.delete(pf_beta, 0, 1).squeeze()
+    all_data = DataReader(state_abbrev)
 
     endpoint = 79
 
@@ -63,9 +20,9 @@ def main(state_abbrev):
     def beta(t):
         """Functional form of beta to use for integration"""
         if t < t_span[1]:
-            return pf_beta[t]
+            return all_data.pf_beta[t]
         else:
-            return predicted_beta[5, t - forecast_span[0]]
+            return all_data.predicted_beta[5, t - forecast_span[0]]
 
     params = {"beta": beta, "gamma": 0.06, "hosp": 10, "L": 90, "D": 10}
 
@@ -74,7 +31,10 @@ def main(state_abbrev):
         fun=lambda t, z: RHS_H(t, z, params),
         t_span=[forecast_span[0], forecast_span[1]],
         y0=np.concatenate(
-            (estimated_state[forecast_span[0]], observations[forecast_span[0]])
+            (
+                all_data.estimated_state[forecast_span[0]],
+                all_data.observations[forecast_span[0]],
+            )
         ),
         t_eval=np.linspace(
             forecast_span[0], forecast_span[1], forecast_span[1] - forecast_span[0]
@@ -82,27 +42,26 @@ def main(state_abbrev):
         method="RK45",
     ).y
 
-    """Generate a nbinom distribution over the observed and forecasted."""
-    print(forecast)
+    """Generate a negative binomial distribution over the observed and forecasted."""
     forecast_new_hosp = np.diff(forecast[4, :])
     timeseries = np.copy(
-        np.concatenate((observations[: t_span[1]].squeeze(), forecast_new_hosp))
+        np.concatenate(
+            (all_data.observations[: t_span[1]].squeeze(), forecast_new_hosp)
+        )
     )
     num_samples = 10000
     sim_results = np.zeros((num_samples, len(timeseries)))
-    r = 40
-    r = np.ceil(r)
+    r_param = 40
+    r_param = np.ceil(r_param)
     quantiles_hosp = []
 
     for i in range(len(timeseries)):
-        sim_results[:, i] = nbinom.rvs(n=r, p=r / (r + timeseries[i]), size=num_samples)
+        sim_results[:, i] = nbinom.rvs(
+            n=r_param, p=r_param / (r_param + timeseries[i]), size=num_samples
+        )
 
-    output_df = pd.DataFrame(sim_results)
-    output_df.to_csv ('testing_output.csv')
-
-    def quantiles(items):
-        """Returns 23 quantiles of the List passed in"""
-        qtlMark = 1.00 * np.array(
+    def calculate_quantiles(simulated_quantiles):
+        quantile_marks = 1.00 * np.array(
             [
                 0.010,
                 0.025,
@@ -129,16 +88,179 @@ def main(state_abbrev):
                 0.990,
             ]
         )
-        return list(np.quantile(items, qtlMark))
+        return list(np.quantile(simulated_quantiles, quantile_marks))
 
     for i in range(len(timeseries)):
-        quantiles_hosp.append(quantiles(sim_results[:, i]))
+        quantiles_hosp.append(calculate_quantiles(sim_results[:, i]))
 
     quantiles_hosp = np.array(quantiles_hosp, dtype=int)
-    print(forecast_new_hosp)
+
     hosp_df = pd.DataFrame(quantiles_hosp)
-    hosp_df.to_csv('./testing_hosp.csv')
+    hosp_df.to_csv("./testing_hosp.csv")
+
+
+def generate_target_end_dates(start_date: datetime) -> list:
+    """Find the 4 prediction dates."""
+    return [start_date + timedelta(days=7 * i) for i in range(1, 5)]
+
+
+def calculate_horizon_sums(data: pd.DataFrame) -> dict:
+    """Add the daily predictions for each week to find a weekly prediction."""
+    horizons = {
+        1: data.iloc[-22:-15].sum(axis=0).values,
+        2: data.iloc[-15:-8].sum(axis=0).values,
+        3: data.iloc[-8:-1].sum(axis=0).values,
+        4: data.iloc[-7:].sum(axis=0).values,
+    }
+    return horizons
+
+
+def insert_quantile_rows(
+    df: pd.DataFrame,
+    location_code: str,
+    reference_date: datetime,
+    target_end_dates: list,
+    horizon_sums: dict,
+    quantile_marks: np.ndarray,
+) -> pd.DataFrame:
+    """Create new rows for each prediction."""
+    for horizon, target_end_date in zip(horizon_sums.keys(), target_end_dates):
+        for quantile, value in zip(quantile_marks, horizon_sums[horizon]):
+            new_row = {
+                "reference_date": reference_date.strftime("%Y-%m-%d"),
+                "horizon": horizon,
+                "target_end_date": target_end_date.strftime("%Y-%m-%d"),
+                "location": location_code,
+                "output_type": "quantile",
+                "output_type_id": f"{quantile:.3f}",
+                "value": value,
+            }
+            df = df.append(new_row, ignore_index=True)
+    return df
+
+
+def save_output_to_csv(
+    location_code: str, reference_date: str, hosp_data: pd.DataFrame
+) -> None:
+    csv_path = reference_date + "-PF-flu-predictions.csv"
+    reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
+    target_end_dates = generate_target_end_dates(reference_date_dt)
+
+    quantile_marks = 1.00 * np.array(
+        [
+            0.010,
+            0.025,
+            0.050,
+            0.100,
+            0.150,
+            0.200,
+            0.250,
+            0.300,
+            0.350,
+            0.400,
+            0.450,
+            0.500,
+            0.550,
+            0.600,
+            0.650,
+            0.700,
+            0.750,
+            0.800,
+            0.850,
+            0.900,
+            0.950,
+            0.975,
+            0.990,
+        ]
+    )
+
+    # Calculate the horizon sums from the hospital data
+    horizon_sums = calculate_horizon_sums(hosp_data)
+
+    if os.path.exists(csv_path):
+        output = pd.read_csv(csv_path)
+    else:
+        output = pd.DataFrame(
+            columns=[
+                "reference_date",
+                "horizon",
+                "target_end_date",
+                "location",
+                "output_type",
+                "output_type_id",
+                "value",
+            ]
+        )
+
+    output = insert_quantile_rows(
+        output,
+        location_code,
+        reference_date_dt,
+        target_end_dates,
+        horizon_sums,
+        quantile_marks,
+    )
+
+    output.to_csv(csv_path, index=False)
+    print(f"File {csv_path} updated with new data from location {location_code}.")
+
+
+def RHS_H(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
+    """
+    Model definition for the integrator.
+
+    :param t: The current time point.
+    :param state: A numpy array containing the current values of the state variables [S, I, R, H, new_H].
+    :param parameters: A dictionary containing the model parameters.
+    :returns np.ndarray: An array containing the derivatives [dS, dI, dR, dH, new_H].
+    """
+    S, I, R, H, new_H = state  # unpack the state variables
+    N = S + I + R + H  # compute the total population
+
+    new_H = (1 / parameters["D"]) * (parameters["gamma"]) * I
+
+    """The state transitions of the ODE model is below"""
+    dS = -parameters["beta"](int(t)) * (S * I) / N + (1 / parameters["L"]) * R
+    dI = parameters["beta"](int(t)) * S * I / N - (1 / parameters["D"]) * I
+    dR = (
+        (1 / parameters["hosp"]) * H
+        + ((1 / parameters["D"]) * (1 - (parameters["gamma"])) * I)
+        - (1 / parameters["L"]) * R
+    )
+    dH = (1 / parameters["D"]) * (parameters["gamma"]) * I - (
+        1 / parameters["hosp"]
+    ) * H
+
+    return np.array([dS, dI, dR, dH, new_H])
+
+
+class DataReader:
+    def __init__(self, state_abbrev):
+        self.state_abbrev = state_abbrev
+        self.predicted_beta = None
+        self.observations = None
+        self.estimated_state = None
+        self.pf_beta = None
+        self.read_in_data()
+
+    def read_in_data(self):
+        """Read in the necessary csv files"""
+        self.predicted_beta = pd.read_csv(
+            "./datasets/Out_prog3/out_logit-beta_trj_rnorm.csv"
+        ).to_numpy()
+        self.predicted_beta = np.delete(self.predicted_beta, 0, 1)
+
+        self.observations = pd.read_csv(
+            f"./datasets/{self.state_abbrev}_FLU_HOSPITALIZATIONS.csv"
+        ).to_numpy()
+        self.observations = np.delete(self.observations, 0, 1)
+
+        self.estimated_state = pd.read_csv("./datasets/ESTIMATED_STATE.csv").to_numpy()
+        self.estimated_state = np.delete(self.estimated_state, 0, 1)
+
+        self.pf_beta = pd.read_csv("./datasets/average_beta.csv").to_numpy()
+        self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
 
 
 if __name__ == "__main__":
-     main('AZ')
+    main("AZ", "04", "2024-03-28")

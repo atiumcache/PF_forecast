@@ -21,7 +21,6 @@ def main():
         location_to_state.update({location_number: abbreviation})
 
     """Extract hospitalization data"""
-    global full_hosp_data
     full_hosp_data = pd.read_csv(full_data_file)
     full_hosp_data = full_hosp_data[
         ["date", "state", "previous_day_admission_influenza_confirmed"]
