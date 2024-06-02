@@ -2,28 +2,38 @@
 #*[ Objective : This R program detects changepoints in beta_t and logit(beta_t) before a given    ]*#
 #*[             time point under the AR(1) piecewise linear trends model using GA. Also, the      ]*#
 #*[             program tests the model and generates next 28 days' beta_t values.                ]*#
-#*[ Updated   : Mar 25, 2024                                                                      ]*#
-#*[ Developers: Jaechoul Lee                                                                      ]*#
+#*[ Updated   : June 2, 2024                                                                      ]*#
+#*[ Developers: Jaechoul Lee    
+#*[ Altered by: Andrew Attilio                                                                    ]*#
 #*[-----------------------------------------------------------------------------------------------]*#
 
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) < 1) {
+  stop("At least one argument must be supplied (output directory).", call. = FALSE)
+}
+
+working_dir <- args[1]
+output_dir <- args[2]
+state_abbreviation <- args[3]
+
 # Setup directories
-WD <- getwd()
-WD.out <- paste( WD, "/Documents/!1Research/Paper/Epidemiology/P05_FluSIR/Analysis/", sep="" ) # on Mac
-WD.out <- paste( WD, "/!1Research/Paper/Epidemiology/P05_FluSIR/Analysis/", sep="" )           # on Windows
+WD <- working_dir
+WD.out <- paste( WD, "/PycharmProjects/filter_forecast", sep="" ) # on Mac
 
 # Load required packages
 library( dplyr )
 library( ggplot2 )
 
 # Load the R code for the piecewise linear trends model and GA
-source( file=paste(WD.out,"lib_ga-PLT_v1-0.R",sep="") )
+source( file=paste(WD.out, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 0-1: Read the Arizona daily new influenza hospitalizations data
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the AZ daily new influenza hospitalizations data
-df.flu <- read.csv( file=paste(WD.out,"data_AZ_FLU_HOSPITALIZATIONS.csv",sep=""),header=TRUE )
+df.flu <- read.csv( file=paste(WD.out,"/datasets/AZ_FLU_HOSPITALIZATIONS.csv",sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 
 df.flu$time_1 <- df.flu$time_0+1                          # [CAUTION] time starts at 1 instead of 0
@@ -43,7 +53,7 @@ ggplot( df.flu, aes(x=time_0,y=hosp) ) +
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the estimated beta series
-df.beta <- read.csv( file=paste(WD.out,"data_average_beta_20240318.csv",sep=""),header=TRUE )
+df.beta <- read.csv( file=paste(WD.out,"average_beta.csv",sep=""),header=TRUE )
 colnames( df.beta ) <- c("time_0","beta.t")
 
 df.beta$time_1 <- df.beta$time_0+1                        # [CAUTION] time starts at 1 instead of 0
@@ -54,13 +64,7 @@ summary( df.beta$beta.t )
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.03161 0.07473 0.12346 0.12185 0.16631 0.26578
 
-# Data visualization
-dev.new( width=10, height=4 )
-ggplot( df.beta, aes(x=time_0,y=beta.t) ) +
-  geom_line( color="#00AFBB",linewidth=0.75 ) +
-  ylab( "beta_t" ) +
-  xlab( "Time" ) +
-  theme_bw()
+
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-2: Determine a target beta_t during period t_bgn:t_end
@@ -100,21 +104,6 @@ lb.t     <- log( b.t/(b.t_max-b.t) )                    # logit with b.t_max as 
 lb.t_act <- log( b.t_act/(b.t_max-b.t_act) )
 t.t      <- time( lb.t )                                # times associated with lb.t
 
-# Timeplot of logit(beta.t)
-dev.new( width=8, height=4 )
-ggplot() +
-  geom_line( aes(x=t.t,y=lb.t), color="#00AFBB", linewidth=0.75 ) +
-  ylab( "log(beta_t/(beta_t_max-beta_t))" ) +
-  xlab( "Time" ) +
-  theme_bw()
-
-# Sample ACF and PACF for autocorrelation
-dev.new( width=8,height=4 )
-par( mfrow=c(2,2),mex=0.75 )
-acf( lb.t,lag.max=28,ylim=c(-0.5,1) )
-pacf( lb.t,lag.max=28,ylim=c(-0.5,1) )
-acf( diff(lb.t),lag.max=28,ylim=c(-0.5,1) )
-pacf( diff(lb.t),lag.max=28,ylim=c(-0.5,1) )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 2-1: Find changepoints in logit(beta_t) for PLT model with AR(1) during period t_bgn:t_end
@@ -170,14 +159,7 @@ fit.PLTar_GA
 t.t <- time( lb.t )                                     # times associated with logit(b.t)
 lb.t_trd <- fit.PLTar_trends( y=lb.t, cp=ga.sol )       # piecewise trends line with changepoints
 
-dev.new( width=8,height=4 )
-ggplot() +
-  geom_line( aes(x=t.t,y=lb.t),color="#00AFBB",linewidth=0.75 ) +
-  geom_line( aes(x=t.t,y=lb.t_trd),color="blue",linewidth=0.75 ) +
-  geom_vline( xintercept=ga.sol[-1],lwd=0.5,lty=2,colour="tomato" ) +
-  ylab( "logit(beta_t)" ) +
-  xlab( "Time" ) +
-  theme_bw()
+
 
 coef_fit.PLTar <- coef( fit.PLTar_GA )                  # PLT model parameter estimates
 coef_fit.PLTar
@@ -242,16 +224,6 @@ lb.t_fct <- fct.PLTar( fit=fit.PLTar_GA, y=lb.t, cp=ga.sol, n.ahead=n_fct )
 lb.t_fct.95l <- lb.t_fct$pred - 1.96*lb.t_fct$se
 lb.t_fct.95u <- lb.t_fct$pred + 1.96*lb.t_fct$se
 
-dev.new( width=8,height=4 )
-par( mfrow=c(1,1),mex=0.75 )
-ts.plot( lb.t, lb.t_fct$pred, type="o", col=1:2, ylim=c(-2.0,1.5), main="logit(beta_t) with 28 days predicted")
-lines( lb.t_trd, col="orange" )
-lines( lb.t_act, col="gray50" )
-lines( lb.t_fct.95l,col="blue",lty="dashed" )
-lines( lb.t_fct.95u,col="blue",lty="dashed" )
-abline( v=ga.sol[-1], col="green", lty=2 )
-legend( "topright", lty=c("solid","solid","dashed"),
-        legend=c("Actual","Predicted","Upper & Lower 95%"),col=c("black","red","blue") )
 
 # Inverse logit transformation
 b.t_fct.prd <- b.t_max*exp(lb.t_fct$pred)/(1+exp(lb.t_fct$pred))
@@ -259,16 +231,6 @@ b.t_trd     <- b.t_max*exp(lb.t_trd)/(1+exp(lb.t_trd))
 b.t_fct.95l <- b.t_max*exp(lb.t_fct.95l)/(1+exp(lb.t_fct.95l))
 b.t_fct.95u <- b.t_max*exp(lb.t_fct.95u)/(1+exp(lb.t_fct.95u))
 
-dev.new( width=8,height=4 )
-par( mfrow=c(1,1),mex=0.75 )
-ts.plot( b.t, b.t_fct.prd, type="o", col=1:2, ylim=c(0,0.3), main="beta_t with 28 days predicted")
-lines( b.t_trd, col="orange" )
-lines( b.t_act, col="gray50" )
-lines( b.t_fct.95l,col="blue",lty="dashed" )
-lines( b.t_fct.95u,col="blue",lty="dashed" )
-abline( v=ga.sol[-1], col="green", lty=2 )
-legend( "topright", lty=c("solid","solid","dashed"),
-        legend=c("Actual","Predicted","Upper & Lower 95% CI"),col=c("black","red","blue") )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 2-5: Trajectories of beta.t based on logit(beta.t)

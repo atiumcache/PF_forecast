@@ -130,7 +130,7 @@ def save_output_to_csv(
         reference_date: Date to predict from.
         horizon_sums: Dict containing weekly prediction quantiles.
     """
-    csv_path = reference_date + "-PF-flu-predictions.csv"
+    csv_path = "./datasets/hosp_forecasts/" + reference_date + "-PF-flu-predictions.csv"
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
 
