@@ -34,7 +34,7 @@ def get_previous_80_rows(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.Data
     Data runs from input date to 80 days prior.
 
     :param df: A single state's hospitalization data.
-    :param date: Date object in ISO 8601 format.
+    :param target_date: Date object in ISO 8601 format.
     :return: The filtered df with 80 rows.
     """
     df["date"] = pd.to_datetime(df["date"])

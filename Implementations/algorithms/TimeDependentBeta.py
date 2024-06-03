@@ -137,14 +137,9 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}", end="\r")
             self.ctx.clock.tick()
 
-        pd.DataFrame(beta).to_csv("./datasets/average_beta.csv")
+        loc_code = self.ctx.location_code
 
-        pd.DataFrame(beta_quantiles).to_csv("./datasets/beta_quantiles.csv")
-        pd.DataFrame(observations).to_csv("./datasets/particle_observation.csv")
-
-        pd.DataFrame(state).to_csv("./datasets/ESTIMATED_STATE.csv")
-
-        state_quantiles = np.array(state_quantiles)
-        beta_quantiles = np.array(beta_quantiles)
-        eta_quantiles = np.array(eta_quantiles)
-        gamma_quantiles = np.array(gamma_quantiles)
+        pd.DataFrame(beta).to_csv(f"./datasets/pf_results/{loc_code}_average_beta.csv")
+        pd.DataFrame(beta_quantiles).to_csv(f"./datasets/pf_results/{loc_code}_beta_quantiles.csv")
+        pd.DataFrame(observations).to_csv(f"./datasets/pf_results/{loc_code}_particle_observation.csv")
+        pd.DataFrame(state).to_csv(f"./datasets/pf_results/{loc_code}_ESTIMATED_STATE.csv")

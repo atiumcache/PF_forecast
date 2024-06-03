@@ -13,7 +13,7 @@ from Implementations.solvers.DeterministicSolvers import (EulerSolver,
 from utilities.Utils import ESTIMATION, Context
 
 
-def initialize_algo(state_population):
+def initialize_algo(state_population: int, loc_code: str):
     """Returns an algorithm object, given a state's population."""
     algorithm = TimeDependentAlgo(
         integrator=LSODASolver(),
@@ -22,6 +22,7 @@ def initialize_algo(state_population):
         ),
         resampler=NBinomResample(),
         ctx=Context(
+            location_code=loc_code,
             population=state_population,
             state_size=4,
             weights=np.ones(1000),

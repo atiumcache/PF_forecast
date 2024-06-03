@@ -42,8 +42,8 @@ class Particle:
 
 @dataclass
 class Context:
-    """Meta data about the algorithm"""
-
+    """Metadata about the algorithm"""
+    location_code: str
     weights: NDArray[np.float64]
     particle_count: int = field(default=1000)
     clock: Clock = field(default_factory=lambda: Clock())

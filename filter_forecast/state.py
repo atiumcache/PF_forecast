@@ -32,7 +32,7 @@ class State:
                 )
 
     @classmethod
-    def get_population(cls, state_code: str) -> int:
+    def get_population(cls, state_code: str) -> int | None:
         cls.load_state_populations()
         try:
             population = cls.state_populations.loc[
