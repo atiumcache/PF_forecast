@@ -3,3 +3,5 @@ numpy==1.26.4
 pandas==2.2.2
 plotly==5.20.0
 scipy==1.13.1
+
+ray~=2.23.0

@@ -1,18 +1,19 @@
 from datetime import date
 
 import pandas as pd
+import ray
 
 from filter_forecast.algo_init import initialize_algo
 from filter_forecast.helpers import get_previous_80_rows, process_args
 from filter_forecast.state import State
 
 
-def main():
-    args = process_args()
+@ray.remote
+def main(state_code: str, start_date: str) -> None:
 
-    state = State(args.state_code)
+    state = State(state_code)
 
-    start_date = pd.to_datetime(args.forecast_start_date)
+    start_date = pd.to_datetime(start_date)
 
     filtered_state_data = get_previous_80_rows(state.hosp_data, start_date)
 
@@ -21,5 +22,3 @@ def main():
     algo.run(filtered_state_data, 80)
 
 
-if __name__ == "__main__":
-    main()

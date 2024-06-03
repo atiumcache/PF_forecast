@@ -1,10 +1,6 @@
-from typing import Callable, Dict
+from typing import Callable
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from matplotlib import cm
 
 from Abstract.Algorithm import Algorithm
 from Abstract.Integrator import Integrator
@@ -37,7 +33,8 @@ class TimeDependentAlgo(Algorithm):
                 self.ctx.estimated_params[key] = ESTIMATION.VARIABLE
 
         for _ in range(self.ctx.particle_count):
-            """Setup the particles at t = 0, important we make a copy of the params dictionary before using it isto setup each particle."""
+            """Setup the particles at t = 0, important we make a copy of the params dictionary
+             before using it to setup each particle."""
 
             p_params = params.copy()
             """Call the priors to generate values for the estimated params and set their values in the new params."""
@@ -82,24 +79,16 @@ class TimeDependentAlgo(Algorithm):
         data1 = df.to_numpy()
         data1 = np.delete(data1, 0, 1)
 
-        "Initialize labels and first column of sankey matrix"
-        if self.ctx.run_sankey == True:
-            self.ctx.sankey_indices.append(np.arange(self.ctx.particle_count))
-
         """Arrays to hold all the output data"""
         eta_quantiles = []
 
         state = []
-        LL = []
-        ESS = []
         gamma_quantiles = []
 
         state_quantiles = []
         beta_quantiles = []
         beta = []
         eta = []
-        q = []
-        q_quantiles = []
         observations = []
         gamma = []
 
@@ -149,12 +138,8 @@ class TimeDependentAlgo(Algorithm):
             self.ctx.clock.tick()
 
         pd.DataFrame(beta).to_csv("./datasets/average_beta.csv")
-        pd.DataFrame(eta).to_csv("./datasets/average_eta.csv")
-        pd.DataFrame(gamma).to_csv("./datasets/average_gamma.csv")
 
         pd.DataFrame(beta_quantiles).to_csv("./datasets/beta_quantiles.csv")
-        pd.DataFrame(eta_quantiles).to_csv("./datasets/eta_quantiles.csv")
-        pd.DataFrame(gamma_quantiles).to_csv("./datasets/gamma_quantiles.csv")
         pd.DataFrame(observations).to_csv("./datasets/particle_observation.csv")
 
         pd.DataFrame(state).to_csv("./datasets/ESTIMATED_STATE.csv")
@@ -163,7 +148,3 @@ class TimeDependentAlgo(Algorithm):
         beta_quantiles = np.array(beta_quantiles)
         eta_quantiles = np.array(eta_quantiles)
         gamma_quantiles = np.array(gamma_quantiles)
-
-        # sankey test code
-        if self.ctx.run_sankey == True:
-            visualize_particles(self.ctx.particle_count, self.ctx.sankey_indices)

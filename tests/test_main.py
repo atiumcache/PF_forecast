@@ -4,7 +4,7 @@ from io import StringIO
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from main import get_population, get_previous_80_rows
+from particle_filter import get_population, get_previous_80_rows
 
 
 class TestGetPopulation(unittest.TestCase):
