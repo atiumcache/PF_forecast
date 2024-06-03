@@ -24,16 +24,18 @@ WD.out <- output_dir
 # Load required packages
 library( dplyr )
 library( ggplot2 )
+library(glue)
 
 # Load the R code for the piecewise linear trends model and GA
-source( file=paste(WD.out, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
+source( file=paste(WD, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 0-1: Read the Arizona daily new influenza hospitalizations data
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the AZ daily new influenza hospitalizations data
-df.flu <- read.csv( file=paste(WD.out,"/datasets//hosp_data/AZ_FLU_HOSPITALIZATIONS.csv",sep=""),header=TRUE )
+data_path_extension <- glue("/datasets/hosp_data/{state_abbreviation}_")
+df.flu <- read.csv( file=paste(WD.out,"/datasets/hosp_data/AZ_FLU_HOSPITALIZATIONS.csv",sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 
 df.flu$time_1 <- df.flu$time_0+1                          # [CAUTION] time starts at 1 instead of 0
