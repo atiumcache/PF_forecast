@@ -48,8 +48,6 @@ df.flu <- read.csv( file=paste(WD, data_path_extension ,sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 
 df.flu$time_1 <- df.flu$time_0+1                          # [CAUTION] time starts at 1 instead of 0
-dim( df.flu )
-# [1] 223   3
 
 
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -57,17 +55,11 @@ dim( df.flu )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the estimated beta series
-beta_path_extension <- glue("/datasets/pf_results/{loc_code}_average_beta.csv")
+beta_path_extension <- glue("/datasets/pf_results/{location_code}_average_beta.csv")
 df.beta <- read.csv( file=paste(WD, beta_path_extension, sep=""), header=TRUE )
 colnames( df.beta ) <- c("time_0","beta.t")
 
 df.beta$time_1 <- df.beta$time_0+1                        # [CAUTION] time starts at 1 instead of 0
-dim( df.beta )
-# [1] 120   3
-
-summary( df.beta$beta.t )
-#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 0.03161 0.07473 0.12346 0.12185 0.16631 0.26578
 
 
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -83,19 +75,6 @@ n_fct <- 28                                             # number of days for for
 b.t     <- ts( df.beta$beta.t[ which(t_bgn   <= df.beta$time_1 & df.beta$time_1 <= t_end      ) ], start=t_bgn   )
 b.t_act <- ts( df.beta$beta.t[ which(t_end+1 <= df.beta$time_1 & df.beta$time_1 <= t_end+n_fct) ], start=t_end+1 )
 
-summary(b.t)
-#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 0.1105  0.1323  0.1673  0.1698  0.1999  0.2658 
-sd(b.t)
-# [1] 0.03811991
-
-# Sample ACF and PACF for autocorrelation
-dev.new( width=8, height=4 )
-par( mfrow=c(2,2),mex=0.75 )
-acf( b.t,lag.max=28,ylim=c(-0.5,1) )
-pacf( b.t,lag.max=28,ylim=c(-0.5,1) )
-acf( diff(b.t),lag.max=28,ylim=c(-0.5,1) )
-pacf( diff(b.t),lag.max=28,ylim=c(-0.5,1) )
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-3: Compute logit(beta_t) during the period t_bgn:t_end
@@ -119,7 +98,7 @@ ga.out <- ga.cpt_ts( y=lb.t,
              fitness=fit.PLTar_BIC,
              gen.size=200,max.itr=200,p.mut=0.05,       # gen.size=200,max.itr=125,p.mut=0.05,
              seed=10*(i-1)+543,
-             is.graphic=TRUE,
+             is.graphic=FALSE,
              is.print=FALSE,
              is.export=FALSE
           )
@@ -176,38 +155,12 @@ summary( lb.t_detrd )
 #       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
 # -0.4419521 -0.0673531  0.0166310 -0.0002396  0.0833731  0.4230481
 
-# Sample ACF and PACF of detrended logit(beta.t) series. This shows an AR(1) or MA(1) autocorrelation.
-dev.new()
-par( mfrow=c(2,1),mex=0.75 )
-acf( lb.t_detrd,lag.max=20,ylim=c(-0.5,1) )
-pacf( lb.t_detrd,lag.max=20,ylim=c(-0.5,1) )
-
 # Find the final residual series fromm PLT-AR(1) model fit
 w.t <- resid( fit.PLTar_GA )
 summary( w.t )
 #      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
 # -0.309596 -0.070166  0.014012 -0.000465  0.062372  0.439193
 
-dev.new( width=8,height=4 )
-par( mfrow=c(1,1),mex=0.75 )
-plot.ts( w.t,type="o",ylim=c(-0.50,0.50),xlab="Time",main="Residual series" )
-
-dev.new()
-par( mfrow=c(2,1),mex=0.75 )
-acf( w.t,lag.max=20,ylim=c(-0.5,1) )
-pacf( w.t,lag.max=20,ylim=c(-0.5,1) )
-
-# Check normality for the final residual series
-dev.new( width=10,height=6 )
-par( mfrow=c(1,2),mex=0.75 )
-hist( w.t,freq=FALSE,                                         # histogram of final residual series
-      breaks=seq(-0.5,0.5,0.05),
-      col="grey85",ylim=c(0,6),
-      main="Residual Histogram")
-u <- seq(-0.5,0.5,length=500)
-lines( u,dnorm(u,mean=mean(w.t),sd=sd(w.t)),lty=1,col="red" ) # add theoretical normal density
-qqnorm( w.t )                                                 # normal Q-Q plot
-qqline( w.t,col="red" )                                       # add a reference line
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 2-4: Forecasting
@@ -246,7 +199,7 @@ colnames(out_trj.bootp) <- c("d01","d02","d03","d04","d05","d06","d07","d08","d0
                              "d21","d22","d23","d24","d25","d26","d27","d28")
 
 # Save the results
-write.table( out_trj.bootp,file=paste(WD.out,"Out_prog3/out_logit-beta_trj_bootp.csv",sep=""),
+write.table( out_trj.bootp,file=paste(WD.out,"/out_logit-beta_trj_bootp.csv",sep=""),
              sep=",",quote=FALSE,row.names=FALSE,col.names=TRUE )
 
 set.seed(123)
@@ -261,10 +214,7 @@ colnames(out_trj.rnorm) <- c("d01","d02","d03","d04","d05","d06","d07","d08","d0
                              "d21","d22","d23","d24","d25","d26","d27","d28")
 
 # Save the results
-write.table( out_trj.rnorm,file=paste(WD.out,"out_logit-beta_trj_rnorm.csv",sep=""),
+write.table( out_trj.rnorm,file=paste(WD.out,"/out_logit-beta_trj_rnorm.csv",sep=""),
              sep=",",quote=FALSE,row.names=FALSE,col.names=TRUE )
 
-# Display 50 trajectories of beta.t for next 28 days
-df.beta_trj.bootp <- read.csv( file=paste(WD.out,"out_logit-beta_trj_bootp.csv",sep=""),header=TRUE )
-df.beta_trj.rnorm <- read.csv( file=paste(WD.out,"out_logit-beta_trj_rnorm.csv",sep=""),header=TRUE )
 

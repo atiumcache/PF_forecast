@@ -7,13 +7,20 @@ from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(state_abbrev, location_code: str, reference_date):
+def main(state_abbrev, location_code: str, reference_date: str):
 
-    all_data = DataReader(state_abbrev, location_code)
+    all_data = DataReader(state_abbrev, location_code, reference_date)
+
 
     endpoint = 79
     time_span = [0, endpoint]
     forecast_span = [endpoint, endpoint + 26]
+
+    print("Est. State:", np.concatenate(
+            (
+                all_data.estimated_state[forecast_span[0]],
+                all_data.observations[forecast_span[0]],
+            )))
 
     def beta(t):
         """Functional form of beta to use for integration"""
@@ -85,7 +92,7 @@ def calculate_horizon_sums(data: pd.DataFrame) -> dict:
         4: data.iloc[-7:].sum(axis=0).values,
         3: data.iloc[-14:-7].sum(axis=0).values,
         2: data.iloc[-21:-14].sum(axis=0).values,
-        1: data.iloc[-28:-21].sum(axis=0).values
+        1: data.iloc[-28:-21].sum(axis=0).values,
     }
     print("Calculated horizon sums:", horizons)
     return horizons
@@ -129,7 +136,10 @@ def save_output_to_csv(
         reference_date: Date to predict from.
         horizon_sums: Dict containing weekly prediction quantiles.
     """
-    csv_path = "./datasets/hosp_forecasts/" + reference_date + "-PF-flu-predictions.csv"
+    dir_path = "./datasets/hosp_forecasts/"
+    os.makedirs(dir_path, exist_ok=True)
+    csv_path = dir_path + reference_date + "-PF-flu-predictions.csv"
+    print(csv_path )
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
 
@@ -191,9 +201,10 @@ def rhs_h(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
 
 
 class DataReader:
-    def __init__(self, state_abbrev: str, loc_code: str):
+    def __init__(self, state_abbrev: str, loc_code: str, ref_date: str):
         self.state_abbrev = state_abbrev
         self.loc_code = loc_code
+        self.ref_date = ref_date
         self.predicted_beta = None
         self.observations = None
         self.estimated_state = None
@@ -202,49 +213,54 @@ class DataReader:
 
     def read_in_data(self):
         self.predicted_beta = pd.read_csv(
-            f"./datasets/beta_forecast_output/{self.loc_code}out_logit-beta_trj_rnorm.csv"
+            f"./datasets/beta_forecast_output/{self.loc_code}/{self.ref_date}/out_logit-beta_trj_rnorm.csv"
         ).to_numpy()
         self.predicted_beta = np.delete(self.predicted_beta, 0, 1)
 
         self.observations = pd.read_csv(
             f"./datasets/hosp_data/hosp_{self.loc_code}_filtered.csv"
-        ).to_numpy()
+        )
+        self.observations = self.observations.drop(columns="Unnamed: 0").to_numpy()
         self.observations = np.delete(self.observations, 0, 1)
 
-        self.estimated_state = pd.read_csv(f"./datasets/pf_results/{self.loc_code}_ESTIMATED_STATE.csv").to_numpy()
+        self.estimated_state = pd.read_csv(
+            f"./datasets/pf_results/{self.loc_code}_ESTIMATED_STATE.csv"
+        ).to_numpy()
         self.estimated_state = np.delete(self.estimated_state, 0, 1)
 
-        self.pf_beta = pd.read_csv(f"./datasets/pf_results/{self.loc_code}_average_beta.csv").to_numpy()
+        self.pf_beta = pd.read_csv(
+            f"./datasets/pf_results/{self.loc_code}_average_beta.csv"
+        ).to_numpy()
         self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
 
 
 QUANTILE_MARKS = 1.00 * np.array(
-            [
-                0.010,
-                0.025,
-                0.050,
-                0.100,
-                0.150,
-                0.200,
-                0.250,
-                0.300,
-                0.350,
-                0.400,
-                0.450,
-                0.500,
-                0.550,
-                0.600,
-                0.650,
-                0.700,
-                0.750,
-                0.800,
-                0.850,
-                0.900,
-                0.950,
-                0.975,
-                0.990,
-            ]
-        )
+    [
+        0.010,
+        0.025,
+        0.050,
+        0.100,
+        0.150,
+        0.200,
+        0.250,
+        0.300,
+        0.350,
+        0.400,
+        0.450,
+        0.500,
+        0.550,
+        0.600,
+        0.650,
+        0.700,
+        0.750,
+        0.800,
+        0.850,
+        0.900,
+        0.950,
+        0.975,
+        0.990,
+    ]
+)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
-import os
+from os import makedirs
 from typing import Callable
 
 import pandas as pd
-from os import mkdir
 
 from Abstract.Algorithm import Algorithm
 from Abstract.Integrator import Integrator
@@ -36,7 +35,7 @@ class TimeDependentAlgo(Algorithm):
 
         for _ in range(self.ctx.particle_count):
             """Setup the particles at t = 0, important we make a copy of the params dictionary
-             before using it to setup each particle."""
+            before using it to setup each particle."""
 
             p_params = params.copy()
             """Call the priors to generate values for the estimated params and set their values in the new params."""
@@ -142,8 +141,14 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}", end="\r")
             self.ctx.clock.tick()
 
-        os.mkdir("./datasets/pf_results")
+        makedirs("./datasets/pf_results", exist_ok=True)
         pd.DataFrame(beta).to_csv(f"./datasets/pf_results/{loc_code}_average_beta.csv")
-        pd.DataFrame(beta_quantiles).to_csv(f"./datasets/pf_results/{loc_code}_beta_quantiles.csv")
-        pd.DataFrame(observations).to_csv(f"./datasets/pf_results/{loc_code}_particle_observation.csv")
-        pd.DataFrame(state).to_csv(f"./datasets/pf_results/{loc_code}_ESTIMATED_STATE.csv")
+        pd.DataFrame(beta_quantiles).to_csv(
+            f"./datasets/pf_results/{loc_code}_beta_quantiles.csv"
+        )
+        pd.DataFrame(observations).to_csv(
+            f"./datasets/pf_results/{loc_code}_particle_observation.csv"
+        )
+        pd.DataFrame(state).to_csv(
+            f"./datasets/pf_results/{loc_code}_ESTIMATED_STATE.csv"
+        )

@@ -43,6 +43,7 @@ class Particle:
 @dataclass
 class Context:
     """Metadata about the algorithm"""
+
     location_code: str
     weights: NDArray[np.float64]
     particle_count: int = field(default=1000)

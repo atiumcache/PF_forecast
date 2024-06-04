@@ -1,10 +1,10 @@
+import os
 import unittest
 from datetime import datetime, timedelta
 from unittest import TestCase
 
-import pandas as pd
 import numpy as np
-import os
+import pandas as pd
 
 from LSODA_forecast import generate_target_end_dates, save_output_to_csv
 
@@ -29,13 +29,35 @@ class TestSaveOutputToCSV(unittest.TestCase):
         self.location_code = "72"
         self.reference_date = "2023-10-21"
         self.csv_path = self.reference_date + "-PF-flu-predictions.csv"
-        self.hosp_data = pd.DataFrame({
-            'value': [88.208672420882, 90.123456789012, 92.987654321098, 85.123456789012, 87.987654321098,
-                      86.123456789012, 91.987654321098, 89.123456789012, 84.987654321098, 83.123456789012,
-                      82.987654321098, 81.123456789012, 80.987654321098, 79.123456789012, 78.987654321098,
-                      77.123456789012, 76.987654321098, 75.123456789012, 74.987654321098, 73.123456789012,
-                      72.987654321098, 71.123456789012, 70.987654321098]
-        })
+        self.hosp_data = pd.DataFrame(
+            {
+                "value": [
+                    88.208672420882,
+                    90.123456789012,
+                    92.987654321098,
+                    85.123456789012,
+                    87.987654321098,
+                    86.123456789012,
+                    91.987654321098,
+                    89.123456789012,
+                    84.987654321098,
+                    83.123456789012,
+                    82.987654321098,
+                    81.123456789012,
+                    80.987654321098,
+                    79.123456789012,
+                    78.987654321098,
+                    77.123456789012,
+                    76.987654321098,
+                    75.123456789012,
+                    74.987654321098,
+                    73.123456789012,
+                    72.987654321098,
+                    71.123456789012,
+                    70.987654321098,
+                ]
+            }
+        )
 
         # Expected quantile marks
         self.quantile_marks = 1.00 * np.array(
@@ -80,7 +102,13 @@ class TestSaveOutputToCSV(unittest.TestCase):
 
         # Check if the columns exist
         expected_columns = [
-            "reference_date", "horizon", "target_end_date", "location", "output_type", "output_type_id", "value"
+            "reference_date",
+            "horizon",
+            "target_end_date",
+            "location",
+            "output_type",
+            "output_type_id",
+            "value",
         ]
         self.assertTrue(all([col in output_df.columns for col in expected_columns]))
 
@@ -101,4 +129,3 @@ class TestSaveOutputToCSV(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
