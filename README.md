@@ -1,5 +1,5 @@
-# Particle Filter --- Forecasting and Automation
-The goal of this project is to predict new flu cases using a particle filter and trend forecasting. 
+# Particle Filter --- Forecasting Hospitalizations
+The goal of this project is to predict new flu cases using a particle filter and trend forecasting. We model the state of our system using a traditional SIR model, and infer the transmission rate using a particle filter.
 
 We will set up an automated pipeline to:
 - Collect new hospitalization data.
