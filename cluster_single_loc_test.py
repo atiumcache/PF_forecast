@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    logging.basicConfig(filename='output.log', level=logging.INFO)
     # Initialize location mappings and 'predict-from' dates.
     # Each date corresponds to a reference date that we will make predictions from.
     locations = pd.read_csv("./datasets/locations.csv").iloc[
@@ -38,7 +39,7 @@ def main():
             )
             os.makedirs(output_dir, exist_ok=True)
 
-            subprocess.check_call(
+            """subprocess.check_call(
                 [
                     "Rscript",
                     "./r_scripts/beta_trend_forecast.R",
@@ -46,7 +47,7 @@ def main():
                     output_dir,
                     location_code,
                 ]
-            )
+            )"""
             logger.info(f'Completed R script for location {location_code}: {date}')
 
             # Generate hospitalization forecasts

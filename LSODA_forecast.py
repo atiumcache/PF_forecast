@@ -139,7 +139,6 @@ def save_output_to_csv(
     dir_path = "./datasets/hosp_forecasts/"
     os.makedirs(dir_path, exist_ok=True)
     csv_path = dir_path + reference_date + "-PF-flu-predictions.csv"
-    print(csv_path )
     reference_date_dt = datetime.strptime(reference_date, "%Y-%m-%d")
     target_end_dates = generate_target_end_dates(reference_date_dt)
 
@@ -166,9 +165,8 @@ def save_output_to_csv(
         horizon_sums,
         QUANTILE_MARKS,
     )
-    print("Final DataFrame to be saved:", output)
+
     output.to_csv(csv_path, index=False)
-    print(f"File {csv_path} updated with new data from location {location_code}.")
 
 
 def rhs_h(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
