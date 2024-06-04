@@ -1,6 +1,8 @@
+import os
 from typing import Callable
 
 import pandas as pd
+from os import mkdir
 
 from Abstract.Algorithm import Algorithm
 from Abstract.Integrator import Integrator
@@ -140,6 +142,7 @@ class TimeDependentAlgo(Algorithm):
             print(f"Iteration: {self.ctx.clock.time}", end="\r")
             self.ctx.clock.tick()
 
+        os.mkdir("./datasets/pf_results")
         pd.DataFrame(beta).to_csv(f"./datasets/pf_results/{loc_code}_average_beta.csv")
         pd.DataFrame(beta_quantiles).to_csv(f"./datasets/pf_results/{loc_code}_beta_quantiles.csv")
         pd.DataFrame(observations).to_csv(f"./datasets/pf_results/{loc_code}_particle_observation.csv")
