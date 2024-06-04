@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --output=/dev/null
+#SBATCH --output=/scratch
 
 # set the number of nodesT
 #SBATCH --nodes=1
