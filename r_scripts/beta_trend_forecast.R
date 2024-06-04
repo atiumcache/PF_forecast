@@ -15,16 +15,25 @@ if (length(args) < 1) {
 
 working_dir <- args[1]
 output_dir <- args[2]
-state_abbreviation <- args[3]
+location_code <- args[3]
 
 # Setup directories
 WD <- working_dir
 WD.out <- output_dir
 
 # Load required packages
-library( dplyr )
-library( ggplot2 )
-library(glue)
+if(!require(dplyr)){
+    install.packages("dplyr")
+    library(dplyr)
+}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+    library(ggplot2)
+}
+if(!require(glue)){
+    install.packages("glue")
+    library(glue)
+}
 
 # Load the R code for the piecewise linear trends model and GA
 source( file=paste(WD, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
@@ -34,28 +43,22 @@ source( file=paste(WD, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the AZ daily new influenza hospitalizations data
-data_path_extension <- glue("/datasets/hosp_data/{state_abbreviation}_")
-df.flu <- read.csv( file=paste(WD.out,"/datasets/hosp_data/AZ_FLU_HOSPITALIZATIONS.csv",sep=""),header=TRUE )
+data_path_extension <- glue("/datasets/hosp_data/hosp_{location_code}.csv")
+df.flu <- read.csv( file=paste(WD, data_path_extension ,sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 
 df.flu$time_1 <- df.flu$time_0+1                          # [CAUTION] time starts at 1 instead of 0
 dim( df.flu )
 # [1] 223   3
 
-# Data visualization
-dev.new( width=10, height=4 )
-ggplot( df.flu, aes(x=time_0,y=hosp) ) +
-  geom_line( color="#00AFBB", linewidth=0.75 ) +
-  ylab( "Hospitalizations" ) +
-  xlab( "Time" ) +
-  theme_bw()
 
 #*[-----------------------------------------------------------------------------------------------]*#
 ### Step 1-1: Read the beta_t series
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the estimated beta series
-df.beta <- read.csv( file=paste(WD.out,"average_beta.csv",sep=""),header=TRUE )
+beta_path_extension <- glue("/datasets/pf_results/{loc_code}_average_beta.csv")
+df.beta <- read.csv( file=paste(WD, beta_path_extension, sep=""), header=TRUE )
 colnames( df.beta ) <- c("time_0","beta.t")
 
 df.beta$time_1 <- df.beta$time_0+1                        # [CAUTION] time starts at 1 instead of 0
@@ -65,7 +68,6 @@ dim( df.beta )
 summary( df.beta$beta.t )
 #    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.03161 0.07473 0.12346 0.12185 0.16631 0.26578
-
 
 
 #*[-----------------------------------------------------------------------------------------------]*#
@@ -147,15 +149,6 @@ ga.sol <- c(4, 29, 33, 40, 44)
 fit.PLTar_GA <- fit.PLTar( y=lb.t, cp=ga.sol )
 fit.PLTar_GA
 
-#arima(x = y, order = c(1, 0, 0), xreg = cbind(t, D.m), include.mean = TRUE, 
-#    method = "CSS-ML")
-#
-#Coefficients:
-#         ar1  intercept       t  D.m.Series 1  D.m.Series 2  D.m.Series 3  D.m.Series 4
-#      0.4509    -0.6711  0.0130        0.2955       -0.4478        0.2609       -0.1655
-# s.e.  0.1149     0.0846  0.0048        0.0390        0.0571        0.0587        0.0451
-#
-# sigma^2 estimated as 0.01713:  log likelihood = 36.76,  aic = -57.51
 
 # Display the fitted PLT model
 t.t <- time( lb.t )                                     # times associated with logit(b.t)
@@ -268,105 +261,10 @@ colnames(out_trj.rnorm) <- c("d01","d02","d03","d04","d05","d06","d07","d08","d0
                              "d21","d22","d23","d24","d25","d26","d27","d28")
 
 # Save the results
-write.table( out_trj.rnorm,file=paste(WD.out,"Out_prog3/out_logit-beta_trj_rnorm.csv",sep=""),
+write.table( out_trj.rnorm,file=paste(WD.out,"out_logit-beta_trj_rnorm.csv",sep=""),
              sep=",",quote=FALSE,row.names=FALSE,col.names=TRUE )
 
 # Display 50 trajectories of beta.t for next 28 days
-df.beta_trj.bootp <- read.csv( file=paste(WD.out,"Out_prog3/out_logit-beta_trj_bootp.csv",sep=""),header=TRUE )
-df.beta_trj.rnorm <- read.csv( file=paste(WD.out,"Out_prog3/out_logit-beta_trj_rnorm.csv",sep=""),header=TRUE )
-
-dev.new( width=10,height=5 )
-par( mfrow=c(1,1),mex=0.75 )
-ts.plot( b.t, b.t_fct.prd, type="o", col=1:2, ylim=c(0,0.3), main="beta.t with 28 days predicted (bootstrap)")
-lines( b.t_trd,col="orange" )
-lines( b.t_act,col="gray50" )
-for (g in 1:50) {
-  b.t_trj <- ts( as.numeric(df.beta_trj.bootp[g,]), start=t_end+1 )
-  lines( b.t_trj,col="blue",lty="dashed" )
-}
-abline( v=ga.sol[-1], col="green", lty=2 )
-legend( "topright", lty=c("solid","solid","solid"),
-        legend=c("Actual","Predicted","Simulated"),col=c("black","red","blue") )
-
-dev.new( width=10,height=5 )
-par( mfrow=c(1,1),mex=0.75 )
-ts.plot( b.t, b.t_fct.prd, type="o", col=1:2, ylim=c(0,0.3), main="beta.t with 28 days predicted (rnorm)")
-lines( b.t_trd,col="orange" )
-lines( b.t_act,col="gray50" )
-for (g in 1:50) {
-  b.t_trj <- ts( as.numeric(df.beta_trj.rnorm[g,]), start=t_end+1 )
-  lines( b.t_trj,col="blue",lty="dashed" )
-}
-abline( v=ga.sol[-1], col="green", lty=2 )
-legend( "topright", lty=c("solid","solid","solid"),
-        legend=c("Actual","Predicted","Simulated"),col=c("black","red","blue") )
-
-# Figure of 10 trajectories
-dev.new( width=10,height=5 )
-par( mfrow=c(1,1),mex=0.75, cex=1.2 )
-ts.plot( b.t, b.t_fct.prd, col=1:2, ylim=c(0,0.3) )
-lines( b.t_trd,col="red" )
-lines( b.t_act,col="gray50" )
-for (g in 1:10) {
-  b.t_trj <- ts( as.numeric(df.beta_trj.rnorm[g,]), start=t_end+1 )
-  lines( b.t_trj,col="blue",lty="dashed" )
-}
-abline( v=ga.sol[-1], col="purple", lty=2 )
-legend( "topright", lty=c("solid","solid","solid"),
-        legend=c("Actual","Predicted","Simulated"),col=c("black","red","blue") )
-
-
-
-
-
-
-
-
-#*[-----------------------------------------------------------------------------------------------]*#
-### Step 3-1: Find changepoints in beta_t for PCS model with AR(1) during period t_bgn:t_end
-#*[-----------------------------------------------------------------------------------------------]*#
-
-# Detect changepoints using GA
-i <- 21                                                 # i is used for a seed number
-ga.out <- ga.cpt_ts( y=lb.t,
-             fitness=fit.PCSar_BIC,
-             gen.size=200,max.itr=200,p.mut=0.05,       # gen.size=200,max.itr=200,p.mut=0.05,
-             seed=10*(i-1)+543,
-             is.graphic=TRUE,
-             is.print=FALSE,
-             is.export=FALSE
-          )
-
-ga.sol <- ga.out$solution                               # GA estimated changepoints
-ga.bic <- ga.out$val.sol[length(ga.out$val.sol)]        # optimized value of penalized likelihood
-
-ga.sol                                                  # no changepoints detected
-ga.bic
-
-fit.PCSar( y=lb.t, cp=ga.sol )
-fit.PCSar_BIC( y=lb.t, cp=ga.sol )
-
-#*[-----------------------------------------------------------------------------------------------]*#
-### Step 3-2: Fit PCS model with AR(1) and GA changepoints to logit(beta_t)
-#*[-----------------------------------------------------------------------------------------------]*#
-
-# Fit a piecewise linear trends model with AR(1) errors and GA changepoints
-ga.sol <- c(4, 29, 33, 40, 44)                          # a trial with GA from piecewise linear trends
-
-fit.PCSar_GA <- fit.PCSar( y=lb.t, cp=ga.sol )
-fit.PCSar_GA
-
-# Display the fitted PLT model
-t.t <- time( lb.t )                                     # times associated with logit(b.t)
-lb.t_trd <- fit.PCSar_trends( y=lb.t, cp=ga.sol )       # piecewise cubic trends with changepoints
-
-dev.new( width=8,height=4 )
-ggplot() +
-  geom_line( aes(x=t.t,y=lb.t),color="#00AFBB",linewidth=0.75 ) +
-  geom_line( aes(x=t.t,y=lb.t_trd),color="blue",linewidth=0.75 ) +
-  geom_vline( xintercept=ga.sol[-1],lwd=0.5,lty=2,colour="tomato" ) +
-  ylab( "logit(beta_t)" ) +
-  xlab( "Time" ) +
-  theme_bw()
-
+df.beta_trj.bootp <- read.csv( file=paste(WD.out,"out_logit-beta_trj_bootp.csv",sep=""),header=TRUE )
+df.beta_trj.rnorm <- read.csv( file=paste(WD.out,"out_logit-beta_trj_rnorm.csv",sep=""),header=TRUE )
 

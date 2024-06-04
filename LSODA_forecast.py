@@ -7,9 +7,9 @@ from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(state_abbrev, location_code, reference_date):
+def main(state_abbrev, location_code: str, reference_date):
 
-    all_data = DataReader(state_abbrev)
+    all_data = DataReader(state_abbrev, location_code)
 
     endpoint = 79
     time_span = [0, endpoint]
@@ -59,7 +59,6 @@ def main(state_abbrev, location_code, reference_date):
         )
 
     def calculate_quantiles(simulated_quantiles):
-
         return list(np.quantile(simulated_quantiles, QUANTILE_MARKS))
 
     for i in range(len(timeseries)):
@@ -70,7 +69,7 @@ def main(state_abbrev, location_code, reference_date):
     weekly_quantile_predictions = calculate_horizon_sums(hosp_df)
 
     # Add the predictions to the corresponding csv file.
-    save_output_to_csv('04', '2024-03-28', weekly_quantile_predictions)
+    save_output_to_csv(location_code, reference_date, weekly_quantile_predictions)
 
 
 def generate_target_end_dates(start_date: datetime) -> list:
@@ -192,8 +191,9 @@ def rhs_h(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
 
 
 class DataReader:
-    def __init__(self, state_abbrev: str):
+    def __init__(self, state_abbrev: str, loc_code: str):
         self.state_abbrev = state_abbrev
+        self.loc_code = loc_code
         self.predicted_beta = None
         self.observations = None
         self.estimated_state = None
@@ -202,19 +202,19 @@ class DataReader:
 
     def read_in_data(self):
         self.predicted_beta = pd.read_csv(
-            "./datasets/Out_prog3/out_logit-beta_trj_rnorm.csv"
+            f"./datasets/beta_forecast_output/{self.loc_code}out_logit-beta_trj_rnorm.csv"
         ).to_numpy()
         self.predicted_beta = np.delete(self.predicted_beta, 0, 1)
 
         self.observations = pd.read_csv(
-            f"./datasets/{self.state_abbrev}_FLU_HOSPITALIZATIONS.csv"
+            f"./datasets/hosp_data/hosp_{self.loc_code}.csv"
         ).to_numpy()
         self.observations = np.delete(self.observations, 0, 1)
 
-        self.estimated_state = pd.read_csv("./datasets/ESTIMATED_STATE.csv").to_numpy()
+        self.estimated_state = pd.read_csv(f"./datasets/pf_results/{self.loc_code}_ESTIMATED_STATE.csv").to_numpy()
         self.estimated_state = np.delete(self.estimated_state, 0, 1)
 
-        self.pf_beta = pd.read_csv("./datasets/average_beta.csv").to_numpy()
+        self.pf_beta = pd.read_csv(f"./datasets/pf_results/{self.loc_code}_average_beta.csv").to_numpy()
         self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
 
 

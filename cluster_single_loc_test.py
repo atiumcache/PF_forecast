@@ -1,6 +1,4 @@
-"""The main script to run
-the Particle Filter, Beta Trend Forecast, and LSODA Hospitalization Forecast
-with parallel processing on the Monsoon HPC cluster."""
+"""Testing one location on the Monsoon cluster."""
 import pandas as pd
 import subprocess
 import os
@@ -18,6 +16,7 @@ def main():
     predict_from_dates = pd.read_csv("./datasets/predict_from_dates.csv")
 
     working_dir = os.getcwd()
+    output_dir = os.path.join(working_dir + "datasets/beta_forecast_output/")
 
     def run_script_on_one_state(location_code):
         for date in predict_from_dates["date"]:
@@ -26,7 +25,6 @@ def main():
 
             # R script expects args: [working_dir, output_dir, location_code]
             # Generate beta forecasts
-            output_dir = os.path.join(working_dir + f"datasets/beta_forecast_output/{location_code}/{date}")
             subprocess.call(['Rscript', './r_scripts/beta_trend_forecast.R', working_dir, output_dir, location_code])
 
             # Generate hospitalization forecasts
@@ -34,7 +32,7 @@ def main():
 
     # Use parallel processing to run each state's script on a different CPU core.
     with Pool as p:
-        p.map(run_script_on_one_state, location_to_state.keys())
+        p.map(run_script_on_one_state, '04')
 
 
 if __name__ == "__main__":

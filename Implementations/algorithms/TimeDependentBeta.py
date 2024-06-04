@@ -91,6 +91,9 @@ class TimeDependentAlgo(Algorithm):
         eta = []
         observations = []
         gamma = []
+        loc_code = self.ctx.location_code
+
+        print("Running particle filter on location:", loc_code)
 
         while self.ctx.clock.time < runtime:
 
@@ -136,8 +139,6 @@ class TimeDependentAlgo(Algorithm):
 
             print(f"Iteration: {self.ctx.clock.time}", end="\r")
             self.ctx.clock.tick()
-
-        loc_code = self.ctx.location_code
 
         pd.DataFrame(beta).to_csv(f"./datasets/pf_results/{loc_code}_average_beta.csv")
         pd.DataFrame(beta_quantiles).to_csv(f"./datasets/pf_results/{loc_code}_beta_quantiles.csv")
