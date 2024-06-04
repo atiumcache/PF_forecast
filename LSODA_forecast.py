@@ -207,7 +207,7 @@ class DataReader:
         self.predicted_beta = np.delete(self.predicted_beta, 0, 1)
 
         self.observations = pd.read_csv(
-            f"./datasets/hosp_data/hosp_{self.loc_code}.csv"
+            f"./datasets/hosp_data/hosp_{self.loc_code}_filtered.csv"
         ).to_numpy()
         self.observations = np.delete(self.observations, 0, 1)
 
