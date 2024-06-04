@@ -1,5 +1,5 @@
 # Particle Filter --- Forecasting and Automation
-The goal of this project is to predict new flu cases using particle filtering and trend forecasting. 
+The goal of this project is to predict new flu cases using a particle filter and trend forecasting. 
 
 We will set up an automated pipeline to:
 - Collect new hospitalization data.
@@ -8,13 +8,13 @@ We will set up an automated pipeline to:
 - Determine forecast accuracy by comparing the predictions against observed data.
 - Finally, compare accuracy results between particle filter and MCMC predictions. 
 
-We will utilize a bash script to automate this process on a HPC cluster. 
+We will utilize a bash script to automate and parallelize most of this process on a HPC cluster. 
 
 ### Collect New Hospitalization Data
 Download the new hospitalization reports and split the data into state-level data using the `process_new_data.py` script.
 
 ### Run the Particle Filter
-For each state, we run the particle filter `particle_filter.py` on the state-level data. This outputs an inferred transmission rate `β`. 
+For each location, we run the particle filter `particle_filter.py` on the state-level data. This outputs an inferred transmission rate `β`. 
 
 ### Forecasting
 The `prog3_cpt-PLT-prd_v0-4.R` script uses trend forecasting to predict the transmission rate `β` up to 28 days into the future.
