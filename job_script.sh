@@ -1,19 +1,18 @@
 #!/bin/bash
 
-#SBATCH --job-name=pf-flu-prediction
+#SBATCH --job-name=pf-flu-prediction-test
 #SBATCH --output=/scratch/apa235
 #SBATCH --nodes=1
 #SBATCH --mincpus=4
-#SBATCH --time=0-20:00:00
+#SBATCH --time=1:00:00
+#SBATCH --chdir=/projects/math_cheny/filter_forecast/
 
 # added echo statements for debugging
 
-echo "Working..."
-cd /projects/math_cheny/filter_forecast
-echo "Changed directory"
+srun echo "Working..."
 
 # Install python packages
-module load python3
+module load anaconda3/2024.02
 python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
 echo "Installed Python packages"
