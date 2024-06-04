@@ -1,4 +1,20 @@
-cd /projects/math_cheny/filter_forecast
+#!/bin/bash
+
+#SBATCH --output=/dev/null
+
+# set the number of nodesT
+#SBATCH --nodes=1
+
+# set the number of cpus per node.
+#SBATCH --mincpus=4
+
+# set max wallclock time for the entire fitting job (1 days)
+#SBATCH --time=0-20:00:00
+
+# set name of job
+#SBATCH --job-name=pf-flu-prediction
+
+cd /projects/math_cheny/filter_forecast || exit
 
 # Install python packages
 python3 -m ensurepip
