@@ -27,10 +27,7 @@ if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
     library(dplyr)
 }
-if(!require(ggplot2)){
-    install.packages("ggplot2", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(dplyr)
-}
+
 if(!require(glue)){
     install.packages("glue", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
     library(glue)
