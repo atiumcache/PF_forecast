@@ -29,9 +29,9 @@ if(!require(dplyr)){
     library(dplyr)
 }
 
-if(!require(glue)){
-    install.packages("glue", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
-    library(glue)
+if(!require(stringr)){
+    install.packages("stringr", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    library(stringr)
 }
 
 # Load the R code for the piecewise linear trends model and GA
@@ -42,7 +42,7 @@ source( file=paste(WD, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the AZ daily new influenza hospitalizations data
-data_path_extension <- glue("/datasets/hosp_data/hosp_{location_code}.csv")
+data_path_extension <- str_interp("/datasets/hosp_data/hosp_${location_code}.csv")
 df.flu <- read.csv( file=paste(WD, data_path_extension ,sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 
@@ -54,7 +54,7 @@ df.flu$time_1 <- df.flu$time_0+1                          # [CAUTION] time start
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the estimated beta series
-beta_path_extension <- glue("/datasets/pf_results/{location_code}_average_beta.csv")
+beta_path_extension <- str_interp("/datasets/pf_results/${location_code}_average_beta.csv")
 df.beta <- read.csv( file=paste(WD, beta_path_extension, sep=""), header=TRUE )
 colnames( df.beta ) <- c("time_0","beta.t")
 

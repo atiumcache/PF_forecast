@@ -17,7 +17,6 @@ python3 -m pip install -r ./requirements.txt
 echo -e "\n   Installed Python packages\n"
 
 module load R/4.2.3
-export PATH=$PATH:/home/yc424/R/4.2.3/
 echo -e "\n   Loaded R\n"
 
 echo -e "\n Running the Python script... \n"
