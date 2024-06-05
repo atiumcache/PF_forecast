@@ -22,14 +22,15 @@ WD <- working_dir
 WD.out <- output_dir
 
 # Load required packages
-.libPaths(c( .libPaths(), "/scratch/apa235/R_packages"))
+.libPaths("/scratch/apa235/R_packages")
+
 if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
     library(dplyr)
 }
 
 if(!require(glue)){
-    install.packages("glue", lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
+    install.packages("glue", dependencies=TRUE, lib="/scratch/apa235/R_packages", repos = "http://cran.us.r-project.org")
     library(glue)
 }
 
