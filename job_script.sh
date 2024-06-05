@@ -20,5 +20,5 @@ module load R/4.2.3
 echo -e "\n   Loaded R\n"
 
 echo -e "\n Running the Python script... \n"
-python3 cluster_single_loc_test.py
+python3 parallel_test.py
 echo -e "\n   Completed job.\n"
