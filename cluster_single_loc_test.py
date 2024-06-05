@@ -10,11 +10,16 @@ import LSODA_forecast
 import particle_filter
 import logging
 import datetime
+import argparse
 
 logger = logging.getLogger(__name__)
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('location_code', '--loc-code', type=str, required=True)
+    args = parser.parse_args()
+
     logging.basicConfig(filename="output.log", level=logging.INFO)
     # Initialize location mappings and 'predict-from' dates.
     # Each date corresponds to a reference date that we will make predictions from.
@@ -48,7 +53,7 @@ def main():
                     "Rscript",
                     "./r_scripts/beta_trend_forecast.R",
                     working_dir,
-                    output_dir,
+                    output_dir,:working_dir
                     location_code,
                 ]
             )
@@ -63,7 +68,7 @@ def main():
                 f"Completed LSODA_forecast for location {location_code}: {date}. Time: {datetime_now}"
             )
 
-    run_script_on_one_state("01")
+    run_script_on_one_state(args.location_code)
 
 
 if __name__ == "__main__":
