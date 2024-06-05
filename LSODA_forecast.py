@@ -15,11 +15,15 @@ def main(state_abbrev, location_code: str, reference_date: str):
     time_span = [0, endpoint]
     forecast_span = [endpoint, endpoint + 26]
 
-    print("Est. State:", np.concatenate(
+    print(
+        "Est. State:",
+        np.concatenate(
             (
                 all_data.estimated_state[forecast_span[0]],
                 all_data.observations[forecast_span[0]],
-            )))
+            )
+        ),
+    )
 
     def beta(t):
         """Functional form of beta to use for integration"""

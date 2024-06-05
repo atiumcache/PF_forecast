@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    logging.basicConfig(filename='output.log', level=logging.INFO)
+    logging.basicConfig(filename="output.log", level=logging.INFO)
     # Initialize location mappings and 'predict-from' dates.
     # Each date corresponds to a reference date that we will make predictions from.
     locations = pd.read_csv("./datasets/locations.csv").iloc[
@@ -32,7 +32,9 @@ def main():
             # Generate beta estimates from observed hospitalizations
             particle_filter.main(location_code, date)
             datetime_now = datetime.datetime.now()
-            logger.info(f'Completed PF for location {location_code}: {date}. Time: {datetime_now}')
+            logger.info(
+                f"Completed PF for location {location_code}: {date}. Time: {datetime_now}"
+            )
 
             # R script expects args: [working_dir, output_dir, location_code]
             # Generate beta forecasts
@@ -51,11 +53,15 @@ def main():
                 ]
             )
             datetime_now = datetime.datetime.now()
-            logger.info(f'Completed R script for location {location_code}: {date}. Time: {datetime_now}')
+            logger.info(
+                f"Completed R script for location {location_code}: {date}. Time: {datetime_now}"
+            )
 
             # Generate hospitalization forecasts
             LSODA_forecast.main(location_to_state[location_code], location_code, date)
-            logger.info(f'Completed LSODA_forecast for location {location_code}: {date}. Time: {datetime_now}')
+            logger.info(
+                f"Completed LSODA_forecast for location {location_code}: {date}. Time: {datetime_now}"
+            )
 
     run_script_on_one_state("01")
 
