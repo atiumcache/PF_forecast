@@ -14,11 +14,11 @@ echo -e "Starting up...\n"
 module load anaconda3/2024.02
 python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
-echo -e "\n   Installed Python packages\n"
+echo -e "\n Installed Python packages\n"
 
 module load R/4.2.3
-echo -e "\n   Loaded R\n"
+echo -e "\n Loaded R\n"
 
 echo -e "\n Running the Python script... \n"
-python3 parallel_test.py
-echo -e "\n   Completed job.\n"
+python3 parallel_all_states.py
+echo -e "\n Completed job.\n"
