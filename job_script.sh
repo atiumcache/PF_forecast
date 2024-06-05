@@ -9,8 +9,8 @@
 
 # added echo statements for debugging
 
-srun echo "Working..."
-
+srun echo "Starting up..."
+srun pwd
 # Install python packages
 module load anaconda3/2024.02
 python3 -m ensurepip

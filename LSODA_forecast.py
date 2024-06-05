@@ -11,7 +11,6 @@ def main(state_abbrev, location_code: str, reference_date: str):
 
     all_data = DataReader(state_abbrev, location_code, reference_date)
 
-
     endpoint = 79
     time_span = [0, endpoint]
     forecast_span = [endpoint, endpoint + 26]

@@ -20,6 +20,7 @@ def process_args():
 
 
 def get_population(state_code: str) -> int:
+    """Return a state's population."""
     df = pd.read_csv("./datasets/state_populations.csv")
     try:
         population = df.loc[df["state_code"] == int(state_code), "population"].values
@@ -31,7 +32,7 @@ def get_population(state_code: str) -> int:
 def get_previous_80_rows(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.DataFrame:
     """
     Returns a data frame containing 80 rows of a state's hospitalization data.
-    Data runs from input date to 80 days prior.
+    Data runs from input date to 79 days prior.
 
     :param df: A single state's hospitalization data.
     :param target_date: Date object in ISO 8601 format.
