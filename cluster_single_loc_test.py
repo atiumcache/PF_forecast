@@ -9,6 +9,7 @@ import pandas as pd
 import LSODA_forecast
 import particle_filter
 import logging
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,8 @@ def main():
         for date in predict_from_dates["date"]:
             # Generate beta estimates from observed hospitalizations
             particle_filter.main(location_code, date)
-            logger.info(f'Completed PF for location {location_code}: {date}')
+            datetime_now = datetime.datetime.now()
+            logger.info(f'Completed PF for location {location_code}: {date}. Time of completion: {datetime_now}')
 
             # R script expects args: [working_dir, output_dir, location_code]
             # Generate beta forecasts

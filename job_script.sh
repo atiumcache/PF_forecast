@@ -9,17 +9,18 @@
 
 # added echo statements for debugging
 
-srun echo "Starting up..."
+srun echo "Starting up...\n"
 srun pwd
 # Install python packages
 module load anaconda3/2024.02
 python3 -m ensurepip
 python3 -m pip install -r ./requirements.txt
-echo "Installed Python packages"
+echo "\n   Installed Python packages\n"
 
 module load R/4.2.3
 export PATH=$PATH:/home/yc424/R/4.2.3/
-echo "Loaded R"
+echo "\n   Loaded R\n"
 
+echo "\n Running the Python script... \n"
 python3 cluster_single_loc_test.py
-echo "Completed job."
+echo "\n   Completed job.\n"
