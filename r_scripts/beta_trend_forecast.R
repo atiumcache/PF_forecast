@@ -22,7 +22,7 @@ WD <- working_dir
 WD.out <- output_dir
 
 # Load required packages
-.libpaths(c( .libpaths(), "/scratch/apa235/R_packages"))
+.libPaths(c( .libPaths(), "/scratch/apa235/R_packages"))
 if(!require(dplyr)){
     install.packages("dplyr", lib="/scratch/apa235/R_packages")
     library(dplyr)
