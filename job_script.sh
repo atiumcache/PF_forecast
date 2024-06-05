@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=pf-flu-prediction-test
-#SBATCH --output=/scratch/apa235
+#SBATCH --output=/scratch/apa235/test_output.txt
 #SBATCH --nodes=1
 #SBATCH --mincpus=4
 #SBATCH --time=1:00:00

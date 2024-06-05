@@ -22,16 +22,17 @@ WD <- working_dir
 WD.out <- output_dir
 
 # Load required packages
+.libpaths(c( .libpaths(), "/scratch/apa235/R_packages"))
 if(!require(dplyr)){
-    install.packages("dplyr")
+    install.packages("dplyr", lib="/scratch/apa235/R_packages")
     library(dplyr)
 }
 if(!require(ggplot2)){
-    install.packages("ggplot2")
-    library(ggplot2)
+    install.packages("ggplot2", lib="/scratch/apa235/R_packages")
+    library(dplyr)
 }
 if(!require(glue)){
-    install.packages("glue")
+    install.packages("glue", lib="/scratch/apa235/R_packages")
     library(glue)
 }
 
