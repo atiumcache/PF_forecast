@@ -15,16 +15,6 @@ def main(state_abbrev, location_code: str, reference_date: str):
     time_span = [0, endpoint]
     forecast_span = [endpoint, endpoint + 26]
 
-    print(
-        "Est. State:",
-        np.concatenate(
-            (
-                all_data.estimated_state[forecast_span[0]],
-                all_data.observations[forecast_span[0]],
-            )
-        ),
-    )
-
     def beta(t):
         """Functional form of beta to use for integration"""
         if t < time_span[1]:
@@ -90,14 +80,12 @@ def generate_target_end_dates(start_date: datetime) -> list:
 def calculate_horizon_sums(data: pd.DataFrame) -> dict:
     """Add daily predictions to get each week's forecast.
     EX: A horizon of 2 corresponds to a prediction for 2 weeks into the future."""
-    print("Data for horizon sums calculation:", data)
     horizons = {
         4: data.iloc[-7:].sum(axis=0).values,
         3: data.iloc[-14:-7].sum(axis=0).values,
         2: data.iloc[-21:-14].sum(axis=0).values,
         1: data.iloc[-28:-21].sum(axis=0).values,
     }
-    print("Calculated horizon sums:", horizons)
     return horizons
 
 

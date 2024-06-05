@@ -25,15 +25,16 @@ def process_date(location_code, date, location_to_state, working_dir):
     )
     os.makedirs(output_dir, exist_ok=True)
 
-    subprocess.check_call(
-        [
-            "Rscript",
-            "./r_scripts/beta_trend_forecast.R",
-            working_dir,
-            output_dir,
-            location_code,
-        ]
+    result = subprocess.run(
+        ["Rscript", "./r_scripts/beta_trend_forecast.R", working_dir, output_dir, location_code],
+        capture_output=True,
+        text=True
     )
+
+    if result.returncode != 0:
+        logger.error(f"R script failed for location {location_code}, date {date}: {result.stderr}")
+        return
+
     datetime_now = datetime.datetime.now()
     logger.info(
         f"Completed R script for location {location_code}: {date}. Time: {datetime_now}"
