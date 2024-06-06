@@ -3,8 +3,8 @@
 #SBATCH --job-name=pf-flu-prediction
 #SBATCH --output=/scratch/apa235/filter_forecast_output.txt
 #SBATCH --nodes=1
-#SBATCH --mincpus=32
-#SBATCH --time=20:00:00
+#SBATCH --mincpus=28
+#SBATCH --time=24:00:00
 #SBATCH --chdir=/projects/math_cheny/filter_forecast/
 #SBATCH --mem=32GB
 
