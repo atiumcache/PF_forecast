@@ -1,3 +1,12 @@
+"""
+This is the main script to run the particle filter
+on a single date and location. 
+
+Outputs predicted beta values that can then be processed
+by the Trend Forecasting R script. 
+"""
+
+
 from datetime import date
 
 import pandas as pd
