@@ -1,3 +1,11 @@
+"""
+This script processes new data from HealthData.gov 
+and organizes the data by state. 
+
+Outputs the data to csv files in a directory
+defined by the destination_folder variable. 
+"""
+
 import os
 
 import pandas as pd

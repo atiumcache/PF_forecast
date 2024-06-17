@@ -1,3 +1,8 @@
+"""
+This script takes in predicted beta values from the trend forecasting R script. 
+The output is predicted new hospitalizations for 28 days into the future.
+"""
+
 import os
 from datetime import datetime, timedelta
 

@@ -1,3 +1,11 @@
+"""
+This is the main script to run the full forecasting pipeline
+on all locations.
+
+Uses multiprocessing to run the pipeline on all 
+dates in parallel for a single location.  
+"""
+
 import datetime
 import logging
 import os
