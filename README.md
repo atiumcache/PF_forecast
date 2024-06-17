@@ -17,7 +17,7 @@ Download the new hospitalization reports and split the data into state-level dat
 For each location, we run the particle filter `particle_filter.py` on the state-level data. This outputs an inferred transmission rate `β`. 
 
 ### Forecasting
-The `prog3_cpt-PLT-prd_v0-4.R` script uses trend forecasting to predict the transmission rate `β` up to 28 days into the future.
+The `beta_trend_forecast.R` script uses trend forecasting to predict the transmission rate `β` up to 28 days into the future.
 
 Then, `LSODA_forecast.py` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
 
@@ -27,13 +27,9 @@ Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts.
 More information on WIS can be found here:
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7880475/
 
-### Compare Against MCMC Forecasting
-We compare the WIS accuracy between particle filter and MCMC methods.
-
 ## Implementation Details
 
-See `cluster_main.py` for the logic that runs the program on the HPC cluster.
-
+See `forecast_all_states.py` for the logic that runs the program on the HPC cluster.
 
 ## Particle Filter Credits
 Particle filter code derived from:   
