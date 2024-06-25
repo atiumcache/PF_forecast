@@ -42,7 +42,7 @@ source( file=paste(WD, "/r_scripts/lib_ga-PLT_v1-0.R",sep="") )
 #*[-----------------------------------------------------------------------------------------------]*#
 
 # Read the AZ daily new influenza hospitalizations data
-data_path_extension <- glue("/datasets/hosp_data/hosp_{location_code}.csv")
+data_path_extension <- glue("/datasets/hosp_data/hosp_{location_code}_filtered.csv")
 df.flu <- read.csv( file=paste(WD, data_path_extension ,sep=""),header=TRUE )
 colnames( df.flu ) <- c("time_0","hosp")
 

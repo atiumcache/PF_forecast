@@ -77,7 +77,8 @@ class TimeDependentAlgo(Algorithm):
         Inputs: time series data and runtime.
         Outputs: csv files for parameter and state values.
         """
-        data1 = df.to_numpy()
+        data1 = df.to_numpy(dtype=float)
+
         data1 = np.delete(data1, 0, 1)
 
         """Arrays to hold all the output data"""
@@ -99,12 +100,7 @@ class TimeDependentAlgo(Algorithm):
         while self.ctx.clock.time < runtime:
 
             self.particles = self.integrator.propagate(self.particles, self.ctx)
-
-            obv = data1[
-                self.ctx.clock.time : self.ctx.clock.time
-                + (self.ctx.forward_estimation)
-            ]
-
+            obv = data1[self.ctx.clock.time]
             self.ctx.weights = self.resampler.compute_weights(
                 self.ctx, obv, self.particles
             )

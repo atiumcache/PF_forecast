@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from typing import Any
 
 import pandas as pd
 
@@ -19,7 +20,7 @@ def process_args():
     return parser.parse_args()
 
 
-def get_population(state_code: str) -> int:
+def get_population(state_code: str) -> int | None:
     """Return a state's population."""
     df = pd.read_csv("./datasets/state_populations.csv")
     try:
@@ -42,7 +43,38 @@ def get_previous_80_rows(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.Data
     df_sorted = df.sort_values(by="date")
     date_index = df_sorted[df_sorted["date"] == target_date].index[0]
     start_index = max(date_index - 80, 0)
-    result_df = df_sorted.iloc[start_index : date_index + 1]
+    result_df = df_sorted.iloc[start_index: date_index]
     result_df = result_df.drop(columns=["state", "date"], axis=1)
 
     return result_df
+
+
+def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.DataFrame:
+    """
+    Returns a data frame containing a state's hospitalization data from 2023-06-25 until the target date.
+
+    :param df: A single state's hospitalization data.
+    :param target_date: Date object in ISO 8601 format.
+    :return: The filtered df with the data from 2023-06-25 until the target date.
+    """
+    start_date = pd.to_datetime('2023-06-25')
+    target_date = pd.to_datetime(target_date)
+
+    # Ensure the date column is in datetime format
+    df["date"] = pd.to_datetime(df["date"])
+    df.set_index("date", inplace=True)
+
+    # Filter the DataFrame to include only rows from start_date to target_date
+    df_filtered = df.loc[start_date:target_date]
+
+    # Interpolate missing values only in 'previous_day_admission_influenza_confirmed'
+    df_filtered['previous_day_admission_influenza_confirmed'] = df_filtered[
+        'previous_day_admission_influenza_confirmed'].interpolate(method='linear', limit_direction='both')
+
+    # Drop the unnecessary columns
+    df_filtered.drop(columns=["state", "Unnamed: 0"], axis=1, inplace=True, errors="ignore")
+
+    # Reset the index to return 'date' as a column
+    df_filtered.reset_index(inplace=True)
+
+    return df_filtered
