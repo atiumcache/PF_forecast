@@ -31,7 +31,7 @@ def initialize_algo(state_population: int, loc_code: str):
             seed_size=0.005,
             forward_estimation=1,
             rng=np.random.default_rng(),
-            particle_count=10,
+            particle_count=100,
         ),
     )
 

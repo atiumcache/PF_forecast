@@ -83,8 +83,11 @@ def generate_target_end_dates(start_date: datetime) -> list:
 
 
 def calculate_horizon_sums(data: pd.DataFrame) -> dict:
-    """Add daily predictions to get each week's forecast.
-    EX: A horizon of 2 corresponds to a prediction for 2 weeks into the future."""
+    """
+    Add daily predictions to get each week's forecast.
+
+    EX: A horizon of 2 corresponds to a prediction for 2 weeks into the future.
+    """
     horizons = {
         4: data.iloc[-7:].sum(axis=0).values,
         3: data.iloc[-14:-7].sum(axis=0).values,

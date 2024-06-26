@@ -78,3 +78,36 @@ def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.Da
     df_filtered.reset_index(inplace=True)
 
     return df_filtered
+
+
+def get_beta_min_max_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function to get the appropriate range of data for the beta min/max calculation.
+    See Jupyter Noteboook min_max_beta_20240626.ipynb for usage.
+    
+    :param df: A single state's hospitalization data.
+    :return: The filtered df with data between the required dates.
+    """
+    start_date = pd.to_datetime('2022-02-01')
+    end_date = pd.to_datetime('2023-06-25')
+
+    # Ensure the date column is in datetime format
+    df["date"] = pd.to_datetime(df["date"])
+    df.set_index("date", inplace=True)
+
+    # Filter the DataFrame to include only rows from start_date to target_date
+    df_filtered = df.loc[start_date:end_date]
+
+    # Interpolate missing values only in 'previous_day_admission_influenza_confirmed'
+    df_filtered['previous_day_admission_influenza_confirmed'] = df_filtered[
+        'previous_day_admission_influenza_confirmed'].interpolate(method='linear', limit_direction='both')
+
+    # Drop the unnecessary columns
+    df_filtered.drop(columns=["state", "Unnamed: 0"], axis=1, inplace=True, errors="ignore")
+
+    # Reset the index to return 'date' as a column
+    df_filtered.reset_index(inplace=True)
+
+    return df_filtered
+    
+    

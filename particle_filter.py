@@ -2,7 +2,7 @@
 This is the main script to run the particle filter
 on a single date and location. 
 
-Outputs predicted beta values that can then be processed
+Outputs estimated beta values that can then be processed
 by the Trend Forecasting R script. 
 """
 import pandas as pd
@@ -23,7 +23,7 @@ def main(state_code: str, start_date: str) -> None:
     # This csv will be used by the trend forecasting.
     filtered_state_data.to_csv(f"./datasets/hosp_data/hosp_{state_code}_filtered.csv")
 
-    # Determine number of days for PF to forecast, based on length of data.
+    # Determine number of days for PF to estimate, based on length of data.
     time_steps = len(filtered_state_data)
 
     # Run the particle filter.
