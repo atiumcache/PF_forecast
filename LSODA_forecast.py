@@ -1,6 +1,12 @@
 """
 This script takes in predicted beta values from the trend forecasting R script. 
-The output is predicted new hospitalizations for 28 days into the future.
+The output is predicted new hospitalizations for 28 days into the future,
+in a weekly format (1, 2, 3, and 4 week predictions). A quantile range is
+given for each week, which represents the uncertainty in predictions.
+
+Output csv file path is defined in save_output_to_csv().
+
+Input file paths are defined in the DataReader class.
 """
 
 import os
@@ -12,69 +18,71 @@ from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(state_abbrev, location_code: str, reference_date: str):
-
+def main(state_abbrev: str, location_code: str, reference_date: str) -> None:
     all_data = DataReader(state_abbrev, location_code, reference_date)
 
-    endpoint = 79
+    endpoint = len(all_data.estimated_state) - 1
     time_span = [0, endpoint]
-    forecast_span = [endpoint, endpoint + 26]
+    days_to_forecast = 28
+    forecast_span = (endpoint + 1, endpoint + days_to_forecast)
+
+    print(np.shape(all_data.predicted_beta))
+    print(all_data.predicted_beta)
 
     def beta(t):
         """Functional form of beta to use for integration"""
         if t < time_span[1]:
             return all_data.pf_beta[t]
         else:
-            return all_data.predicted_beta[5, t - forecast_span[0]]
+            beta_to_return = all_data.predicted_beta[5, t - endpoint - 1]
+            return beta_to_return
 
     params = {"beta": beta, "gamma": 0.06, "hosp": 10, "L": 90, "D": 10}
 
     # Solve the system through the forecast time
-    forecast = solve_ivp(
-        fun=lambda t, z: rhs_h(t, z, params),
-        t_span=[forecast_span[0], forecast_span[1]],
-        y0=np.concatenate(
-            (
-                all_data.estimated_state[forecast_span[0]],
-                all_data.observations[forecast_span[0]],
-            )
-        ),
-        t_eval=np.linspace(
-            forecast_span[0], forecast_span[1], forecast_span[1] - forecast_span[0]
-        ),
-        method="RK45",
-    ).y
+    forecast = solve_system_through_forecast(all_data, forecast_span,
+                                             params, endpoint)
+
+    print("Forecast:", forecast)
+
+    # Daily difference in hosp compartment is new hospitalizations
+    forecast_new_hosp = np.diff(forecast[4, :])
 
     # Generate a negative binomial distribution over the observed and forecasted.
-    forecast_new_hosp = np.diff(forecast[4, :])
-    timeseries = np.copy(
+    time_series = np.copy(
         np.concatenate(
             (all_data.observations[: time_span[1]].squeeze(), forecast_new_hosp)
         )
     )
-    num_samples = 10000
-    sim_results = np.zeros((num_samples, len(timeseries)))
-    r_param = 40
-    r_param = np.ceil(r_param)
-    quantiles_hosp = []
+    sim_results = generate_nbinom(time_series)
 
-    for i in range(len(timeseries)):
-        sim_results[:, i] = nbinom.rvs(
-            n=r_param, p=r_param / (r_param + timeseries[i]), size=num_samples
-        )
+    quantiles_hosp = [
+        calculate_quantiles(sim_results[:, i]) for i in range(len(time_series))
+    ]
 
-    def calculate_quantiles(simulated_quantiles):
-        return list(np.quantile(simulated_quantiles, QUANTILE_MARKS))
-
-    for i in range(len(timeseries)):
-        quantiles_hosp.append(calculate_quantiles(sim_results[:, i]))
-
+    # Convert daily hospitalizations into weekly hospitalizations
     quantiles_hosp = np.array(quantiles_hosp, dtype=int)
     hosp_df = pd.DataFrame(quantiles_hosp)
     weekly_quantile_predictions = calculate_horizon_sums(hosp_df)
 
     # Add the predictions to the corresponding csv file.
     save_output_to_csv(location_code, reference_date, weekly_quantile_predictions)
+
+
+def generate_nbinom(timeseries):
+    num_samples = 10000
+    sim_results = np.zeros((num_samples, len(timeseries)))
+    r_param = 40
+    r_param = np.ceil(r_param)
+    for i in range(len(timeseries)):
+        sim_results[:, i] = nbinom.rvs(
+            n=r_param, p=r_param / (r_param + timeseries[i]), size=num_samples
+        )
+    return sim_results
+
+
+def calculate_quantiles(simulated_quantiles):
+    return list(np.quantile(simulated_quantiles, QUANTILE_MARKS))
 
 
 def generate_target_end_dates(start_date: datetime) -> list:
@@ -212,7 +220,6 @@ class DataReader:
         self.predicted_beta = pd.read_csv(
             f"./datasets/beta_forecast_output/{self.loc_code}/{self.ref_date}/out_logit-beta_trj_rnorm.csv"
         ).to_numpy()
-        self.predicted_beta = np.delete(self.predicted_beta, 0, 1)
 
         self.observations = pd.read_csv(
             f"./datasets/hosp_data/hosp_{self.loc_code}_filtered.csv"
@@ -229,6 +236,40 @@ class DataReader:
             f"./datasets/pf_results/{self.loc_code}_average_beta.csv"
         ).to_numpy()
         self.pf_beta = np.delete(self.pf_beta, 0, 1).squeeze()
+
+
+def solve_system_through_forecast(
+    all_data: DataReader, forecast_span: tuple[int, int], params: dict,
+        endpoint: int
+) -> np.array:
+    """Solve the system through the forecast time span.
+
+    Args:
+        forecast_span: a tuple containing the forecast span (start and end point).
+        params: dictionary of system parameters
+        all_data: object containing all data
+        endpoint: the final index in the pf data
+
+    Return:
+        np.array of system states: [S, I, R, H, new_H]
+        Each state (S, I, ...) is itself a np.array of length days_to_forecast.
+    """
+    solution = solve_ivp(
+        fun=lambda t, z: rhs_h(t, z, params),
+        t_span=[forecast_span[0], forecast_span[1]],
+        y0=np.concatenate(
+            (
+                all_data.estimated_state[endpoint],
+                all_data.observations[endpoint],
+            )
+        ),
+        t_eval=np.linspace(
+            forecast_span[0], forecast_span[1], forecast_span[1] - forecast_span[0]
+        ),
+        method="RK45",
+    )
+
+    return solution.y
 
 
 QUANTILE_MARKS = 1.00 * np.array(
@@ -258,7 +299,6 @@ QUANTILE_MARKS = 1.00 * np.array(
         0.990,
     ]
 )
-
 
 if __name__ == "__main__":
     main("AZ", "04", "2024-03-28")

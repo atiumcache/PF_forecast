@@ -5,6 +5,7 @@ on a single date and location.
 Outputs estimated beta values that can then be processed
 by the Trend Forecasting R script. 
 """
+
 import pandas as pd
 
 from filter_forecast.algo_init import initialize_algo
