@@ -10,7 +10,9 @@ Input file paths are defined in the DataReader class.
 """
 
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -18,8 +20,8 @@ from scipy.integrate import solve_ivp
 from scipy.stats import nbinom
 
 
-def main(state_abbrev: str, location_code: str, reference_date: str) -> None:
-    all_data = DataReader(state_abbrev, location_code, reference_date)
+def main(location_code: str, reference_date: str) -> None:
+    all_data = DataReader(location_code, reference_date)
 
     endpoint = len(all_data.estimated_state) - 1
     time_span = [0, endpoint]
@@ -29,7 +31,7 @@ def main(state_abbrev: str, location_code: str, reference_date: str) -> None:
     print(np.shape(all_data.predicted_beta))
     print(all_data.predicted_beta)
 
-    def beta(t):
+    def functional_beta(t):
         """Functional form of beta to use for integration"""
         if t < time_span[1]:
             return all_data.pf_beta[t]
@@ -37,7 +39,7 @@ def main(state_abbrev: str, location_code: str, reference_date: str) -> None:
             beta_to_return = all_data.predicted_beta[5, t - endpoint - 1]
             return beta_to_return
 
-    params = {"beta": beta, "gamma": 0.06, "hosp": 10, "L": 90, "D": 10}
+    params = SystemParameters(beta=functional_beta)
 
     # Solve the system through the forecast time
     forecast = solve_system_through_forecast(all_data, forecast_span,
@@ -67,6 +69,15 @@ def main(state_abbrev: str, location_code: str, reference_date: str) -> None:
 
     # Add the predictions to the corresponding csv file.
     save_output_to_csv(location_code, reference_date, weekly_quantile_predictions)
+
+
+@dataclass
+class SystemParameters:
+    beta: Callable  # transmission rate
+    gamma: float = 0.075  # proportion of infectious individuals hospitalized
+    hosp: float = 7  # average duration of hospital stay
+    L: int = 60  # duration in recovered state
+    D: int = 7  # duration
 
 
 def generate_nbinom(timeseries):
@@ -176,7 +187,7 @@ def save_output_to_csv(
     output.to_csv(csv_path, index=False)
 
 
-def rhs_h(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
+def rhs_h(t: float, state: np.ndarray, parameters: SystemParameters) -> np.ndarray:
     """
     Model definition for the integrator.
 
@@ -188,26 +199,24 @@ def rhs_h(t: float, state: np.ndarray, parameters: dict) -> np.ndarray:
     S, I, R, H, new_H = state  # unpack the state variables
     N = S + I + R + H  # compute the total population
 
-    new_H = (1 / parameters["D"]) * (parameters["gamma"]) * I
+    new_H = (1 / parameters.D) * (parameters.gamma) * I
 
     """The state transitions of the ODE model is below"""
-    dS = -parameters["beta"](int(t)) * (S * I) / N + (1 / parameters["L"]) * R
-    dI = parameters["beta"](int(t)) * S * I / N - (1 / parameters["D"]) * I
+    dS = -parameters.beta(int(t)) * (S * I) / N + (1 / parameters.L) * R
+    dI = parameters.beta(int(t)) * S * I / N - (1 / parameters.D) * I
     dR = (
-        (1 / parameters["hosp"]) * H
-        + ((1 / parameters["D"]) * (1 - (parameters["gamma"])) * I)
-        - (1 / parameters["L"]) * R
+        (1 / parameters.hosp) * H
+        + ((1 / parameters.D) * (1 - parameters.gamma) * I)
+        - (1 / parameters.L) * R
     )
-    dH = (1 / parameters["D"]) * (parameters["gamma"]) * I - (
-        1 / parameters["hosp"]
-    ) * H
+    dH = (1 / parameters.D) * parameters.gamma * I - (
+        1 / parameters.hosp) * H
 
     return np.array([dS, dI, dR, dH, new_H])
 
 
 class DataReader:
-    def __init__(self, state_abbrev: str, loc_code: str, ref_date: str):
-        self.state_abbrev = state_abbrev
+    def __init__(self, loc_code: str, ref_date: str):
         self.loc_code = loc_code
         self.ref_date = ref_date
         self.predicted_beta = None
@@ -239,7 +248,7 @@ class DataReader:
 
 
 def solve_system_through_forecast(
-    all_data: DataReader, forecast_span: tuple[int, int], params: dict,
+    all_data: DataReader, forecast_span: tuple[int, int], params: SystemParameters,
         endpoint: int
 ) -> np.array:
     """Solve the system through the forecast time span.
@@ -264,7 +273,7 @@ def solve_system_through_forecast(
             )
         ),
         t_eval=np.linspace(
-            forecast_span[0], forecast_span[1], forecast_span[1] - forecast_span[0]
+            forecast_span[0], forecast_span[1], 28
         ),
         method="RK45",
     )
@@ -301,4 +310,4 @@ QUANTILE_MARKS = 1.00 * np.array(
 )
 
 if __name__ == "__main__":
-    main("AZ", "04", "2024-03-28")
+    main("04", "2023-10-28")
