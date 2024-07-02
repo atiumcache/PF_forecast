@@ -13,7 +13,7 @@ import pandas as pd
 
 def main():
     """Load new hospitalization data."""
-    full_data_file = "./COVID-19_Reported_Patient_Impact_and_Hospital_Capacity_by_State_Timeseries__RAW_.csv"
+    full_data_file = "./datasets/COVID_Reported_Data.csv"
     destination_folder = "./datasets/hosp_data/"
     os.makedirs(destination_folder, exist_ok=True)
 
