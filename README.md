@@ -12,13 +12,15 @@ We utilize a bash script (`./job_script.sh`) to automate and parallelize
 most of this process on a HPC cluster. 
 
 ### Collect New Hospitalization Data
-Download the new hospitalization reports and split the data into state-level data using the `process_new_data.py` script.
+Download the new hospitalization reports and split the data into 
+state-level data using the `./filter_forecast/process_new_data.py` script.
 
 ### Run the Particle Filter
 For each location, we run the particle filter `particle_filter.py` on the state-level data. This outputs an inferred transmission rate `β`. 
 
 ### Forecasting
-The `beta_trend_forecast.R` script uses changepoint detection and trend 
+The `./r_scripts/beta_trend_forecast.R` script uses changepoint detection and 
+trend 
 forecasting to predict the transmission rate `β` for 28 days into the future.
 
 Then, `LSODA_forecast.py` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
@@ -33,7 +35,8 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7880475/
 
 ## Implementation Details
 
-See `forecast_all_states.py` for the logic that runs the program on the HPC cluster.
+See `forecast_all_states.py` for the logic that runs the full pipeline on the 
+HPC cluster.
 
 ## Particle Filter Credits
 Particle filter code derived from:   
