@@ -26,7 +26,7 @@ forecasting to predict the transmission rate `β` for 28 days into the future.
 Then, `LSODA_forecast.py` uses the predicted `β` to forecast hospitalization rates 28 days into the future.
 
 ### Determine Accuracy
-Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts. This is performed in the [Flu Forecast Accuracy repository]('https://github.
+Use Weighted Interval Scores (WIS) to determine the accuracy of our forecasts. This is performed in the [Flu Forecast Accuracy repository](https://github.
 com/atiumcache/flu-forecast-accuracy'). We also compare this method with 
 MCMC forecasting.
 
