@@ -9,7 +9,7 @@ by the Trend Forecasting R script.
 import pandas as pd
 
 from filter_forecast.algo_init import initialize_algo
-from filter_forecast.helpers import get_data_since_week_26, get_previous_80_rows
+from filter_forecast.helpers import get_data_since_week_26
 from filter_forecast.state import State
 
 
