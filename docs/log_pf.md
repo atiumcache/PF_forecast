@@ -28,3 +28,9 @@ class ModelParameters:
 - L: The latency period, representing the average time between exposure to the virus and the onset of infectiousness.                            
 - D: The duration of the infectious period, indicating the average time an individual remains infectious.                                        
 
+## Update \ Propagate
+At each time step, we propagate the particles forward one time step based on our state transition function. 
+
+The update is split into two steps to allow us to compute the gradient at each time step for sensitivity analysis. 
+
+## Weights

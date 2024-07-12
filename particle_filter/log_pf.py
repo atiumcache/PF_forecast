@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple
+from datetime import datetime
 
 import jax.numpy as jnp
 import numpy as np
@@ -8,27 +9,8 @@ import jax
 from jax.experimental.ode import odeint
 from jax.typing import ArrayLike
 
-
-@dataclass
-class InitSettings:
-    """Defines the initial settings of the particle filter.
-
-    Attributes:
-        num_particles: Number of particles in the filter.
-        population: Population of the location.
-        time_steps: How many days to run the particle filter.
-        dt: Granularity of numerical integration.
-        beta_prior: Range of values for each particle's initial beta
-            to be sampled from.
-        seed_size: Determines the ratio of population initially infected. See get_initial_state.
-    """
-    num_particles: int
-    population: int
-    time_steps: int
-    dt: float = field(default_factory=lambda: 1.0)
-    beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.1,
-                                                                     0.15))
-    seed_size: float = field(default_factory=lambda: 0.005)
+from particle_filter.setup_pf import get_logger
+from particle_filter.init_settings import InitSettings
 
 
 @dataclass
@@ -36,6 +18,7 @@ class ModelParameters:
     """
     SIRH model parameters, for the RHS function.
     """
+
     gamma: float = field(default_factory=lambda: 0.06)
     mu: float = field(default_factory=lambda: 0.004)
     q: float = field(default_factory=lambda: 0.1)
@@ -48,24 +31,53 @@ class ModelParameters:
 
 
 @dataclass
+class ObservationData:
+    """Stores the observed/reported data.
+
+    Hospitalization case counts."""
+    observations: ArrayLike
+
+    def get_observation(self, t: int) -> int:
+        """Returns the observation at time t.
+
+        An observation is the new hospitalizations case count
+        on day t.
+        """
+        return self.observations[t]
+
+
+@dataclass
 class ParticleCloud:
+    """Represents a cloud of particles.
+
+    Attributes:
+        settings: Global filter settings for initialization.
+        params: Model parameters for the transition function.
+        states: A NxT array of system states at each time step, where
+            N is size of state vector, T is length of time series.
+        weights: A 1-D array of particle weights. Length is number of particles.
+        betas: An NxT array of beta values. N is number of particles, T is length of time series.
+    """
+
     settings: InitSettings
     params: ModelParameters = field(init=False)
     states: ArrayLike = field(init=False)
     weights: ArrayLike = field(init=False)
     betas: ArrayLike = field(init=False)
-    observations: ArrayLike = field(init=False)
+    hosp_estimates: ArrayLike = field(init=False)
 
     def __post_init__(self):
         self.params = ModelParameters()
-        self.states = jnp.array([self.get_initial_state() for _ in
-                                 range(self.settings.num_particles)])
+        self.states = jnp.array(
+            [self.get_initial_state() for _ in range(self.settings.num_particles)]
+        )
 
         self.weights = jnp.zeros(self.settings.num_particles)
 
-        betas = [np.random.uniform(self.settings.beta_prior[0],
-                                   self.settings.beta_prior[1])
-                 for _ in range(self.settings.num_particles)]
+        betas = [
+            np.random.uniform(self.settings.beta_prior[0], self.settings.beta_prior[1])
+            for _ in range(self.settings.num_particles)
+        ]
 
         self.betas = jnp.array(betas)
 
@@ -74,35 +86,50 @@ class ParticleCloud:
 
         # state = [S, I, R, H, new_H]
         state = [population, 0, 0, 0, 0]
-        infected_seed = np.random.uniform(0, self.settings.seed_size *
-                                          population)
+        infected_seed = np.random.uniform(0, self.settings.seed_size * population)
         # Move
         state[1] += infected_seed
         state[0] -= infected_seed
 
         return state
 
-    def update_all_particles(self, t: int):
-        """Propagate all particles forward one time step."""
-        for state in self.states:
-            state = self.update_single_particle(state, t, self.settings.dt)
+    def update_all_particles(self, t: int) -> None:
+        """Propagate all particles forward one time step.
+        
+        Args:
+            t: current time step
+        """
+        for i in range(self.settings.num_particles):
+            state = self.states[i]
+            beta = self.betas[i]
+            state[i] = self._update_single_particle(state, t, beta, self.settings.dt)
 
-    def update_single_particle(self, i: int, t: int, dt: float) -> ArrayLike:
+    def _update_single_particle(self, state: ArrayLike, t: int, beta: float, dt: float) -> ArrayLike:
         """For a single particle, step the state forward 1 time step.
 
-        Helper function for update_all_particles."""
+        Helper function for update_all_particles.
+        
+        """
         total_change = 0
         for _ in range(int(1 / dt)):
-            total_change += self.state_transition(self.states[i], t,
-                                               self.betas[i]) * dt
+            total_change += self.state_transition(state, t, beta) * dt
         return total_change
 
-    def compute_single_weight(self):
-        pass
+    def _compute_single_weight(
+        self, reported_data: int
+    ) -> float:
+        weight = norm.logpdf()
 
-    def compute_all_weights(self):
+        return weight
+
+    def compute_all_weights(self, reported_data: int):
+        """Update the weights for every particle."""
         self.weights = jnp.zeros(self.settings.num_particles)
-
+        for i in range(self.settings.num_particles):
+            
+            self.weights[i] = _compute_single_weight()
+            
+        
 
     def state_transition(self, state: ArrayLike, t: int, beta: float):
         """
@@ -125,33 +152,39 @@ class ParticleCloud:
         dS = -beta * (S * I) / N + (1 / self.params.L) * R
         dI = beta * S * I / N - (1 / self.params.D) * I
         dR = (
-                (1 / self.params.hosp) * H
-                + ((1 / self.params.D) * (1 - self.params.gamma) * I)
-                - (1 / self.params.L) * R
+            (1 / self.params.hosp) * H
+            + ((1 / self.params.D) * (1 - self.params.gamma) * I)
+            - (1 / self.params.L) * R
         )
         dH = (1 / self.params.D) * self.params.gamma * I - (1 / self.params.hosp * H)
 
         return jnp.array([dS, dI, dR, dH, new_H])
 
 
-def run_pf(settings: InitSettings):
+def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) -> None:
     particles = ParticleCloud(settings)
-    model_params = ModelParameters()
+    obs_data = ObservationData(observation_data)
 
-    for t in range(settings.time_steps):
+    logger = get_logger()
+
+    for t in range(runtime):
 
         print(f"Iteration: {t + 1} \r")
 
         if t != 0:
-            for i in range(settings.num_particles):
-                particles.update_all_particles(t)
+            particles.update_all_particles(t)
+        
+        reported_data = obs_data.get_observation(t)
+        particles.compute_all_weights(reported_data=reported_data)
 
 
 def compute_weights():
     pass
 
 
-def RHS_H(state: jnp.ndarray, t: float, params: ModelParameters, beta: float) -> np.ndarray:
+def RHS_H(
+    state: jnp.ndarray, t: float, params: ModelParameters, beta: float
+) -> np.ndarray:
     """Integrator for the SIRH model from Alex's SDH project.
 
     Args:
@@ -174,9 +207,9 @@ def RHS_H(state: jnp.ndarray, t: float, params: ModelParameters, beta: float) ->
     dS = -beta * (S * I) / N + (1 / params.L) * R
     dI = beta * S * I / N - (1 / params.D) * I
     dR = (
-            (1 / params.hosp) * H
-            + ((1 / params.D) * (1 - params.gamma) * I)
-            - (1 / params.L) * R
+        (1 / params.hosp) * H
+        + ((1 / params.D) * (1 - params.gamma) * I)
+        - (1 / params.L) * R
     )
     dH = (1 / params.D) * params.gamma * I - (1 / params.hosp) * H
 
@@ -198,8 +231,7 @@ def jacobian(δ: jnp.ndarray):
     Δ = jnp.zeros(n)
     Δ[0] = δ[0]
     for i in range(1, n):
-        Δ[i] = max(δ[i], Δ[i - 1]) + jnp.log(1 + jnp.exp(-1 * jnp.abs(δ[i] -
-                                                                      Δ[i - 1])))
+        Δ[i] = max(δ[i], Δ[i - 1]) + jnp.log(1 + jnp.exp(-1 * jnp.abs(δ[i] - Δ[i - 1])))
     return Δ
 
 
