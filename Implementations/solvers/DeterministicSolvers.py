@@ -20,7 +20,7 @@ I forget why actually, this might be fixable.
 def RHS_H(
     t: float, state: NDArray[np.float_], param: Dict[str, float]
 ) -> NDArray[np.float_]:
-    """Integator for the SIRH model from Alex's SDH project.
+    """Integrator for the SIRH model from Alex's SDH project.
 
     Args:
 

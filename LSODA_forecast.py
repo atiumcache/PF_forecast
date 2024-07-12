@@ -42,8 +42,7 @@ def main(location_code: str, reference_date: str) -> None:
     params = SystemParameters(beta=functional_beta)
 
     # Solve the system through the forecast time
-    forecast = solve_system_through_forecast(all_data, forecast_span,
-                                             params, endpoint)
+    forecast = solve_system_through_forecast(all_data, forecast_span, params, endpoint)
 
     print("Forecast:", forecast)
 
@@ -209,8 +208,7 @@ def rhs_h(t: float, state: np.ndarray, parameters: SystemParameters) -> np.ndarr
         + ((1 / parameters.D) * (1 - parameters.gamma) * I)
         - (1 / parameters.L) * R
     )
-    dH = (1 / parameters.D) * parameters.gamma * I - (
-        1 / parameters.hosp) * H
+    dH = (1 / parameters.D) * parameters.gamma * I - (1 / parameters.hosp) * H
 
     return np.array([dS, dI, dR, dH, new_H])
 
@@ -248,8 +246,10 @@ class DataReader:
 
 
 def solve_system_through_forecast(
-    all_data: DataReader, forecast_span: tuple[int, int], params: SystemParameters,
-        endpoint: int
+    all_data: DataReader,
+    forecast_span: tuple[int, int],
+    params: SystemParameters,
+    endpoint: int,
 ) -> np.array:
     """Solve the system through the forecast time span.
 
@@ -272,9 +272,7 @@ def solve_system_through_forecast(
                 all_data.observations[endpoint],
             )
         ),
-        t_eval=np.linspace(
-            forecast_span[0], forecast_span[1], 28
-        ),
+        t_eval=np.linspace(forecast_span[0], forecast_span[1], 28),
         method="RK45",
     )
 
