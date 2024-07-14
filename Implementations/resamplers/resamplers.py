@@ -18,7 +18,8 @@ class NBinomResample(Resampler):
     def compute_weights(
         self, ctx: Context, observation: NDArray, particleArray: List[Particle]
     ) -> NDArray[np.float64]:
-        """Computes the prior weights of the particles given an observation at time t from the time series.
+        """Computes the prior weights of the particles given an observation at time t from the
+        time series.
 
         Args:
             ctx: The Algorithm's Context, in case metadata is needed.

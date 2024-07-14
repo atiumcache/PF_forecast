@@ -1,4 +1,4 @@
-from particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.init_settings import InitSettings
 import logging
 from datetime import datetime
 import pytz

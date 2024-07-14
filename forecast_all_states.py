@@ -16,7 +16,7 @@ from typing import Dict, List
 import pandas as pd
 
 import LSODA_forecast
-import particle_filter
+from filter_forecast import particle_filter
 
 logger = logging.getLogger(__name__)
 

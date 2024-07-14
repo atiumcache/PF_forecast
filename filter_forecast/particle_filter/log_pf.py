@@ -1,16 +1,12 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
-from datetime import datetime
 
 import jax.numpy as jnp
 import numpy as np
 import jax.scipy.stats.norm as norm
-import jax
-from jax.experimental.ode import odeint
 from jax.typing import ArrayLike
 
-from particle_filter.setup_pf import get_logger
-from particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.setup_pf import get_logger
+from filter_forecast.particle_filter.init_settings import InitSettings
 
 
 @dataclass
@@ -32,9 +28,8 @@ class ModelParameters:
 
 @dataclass
 class ObservationData:
-    """Stores the observed/reported data.
+    """Stores the observed/reported data (Hospitalization case counts)."""
 
-    Hospitalization case counts."""
     observations: ArrayLike
 
     def get_observation(self, t: int) -> int:
@@ -82,6 +77,10 @@ class ParticleCloud:
         self.betas = jnp.array(betas)
 
     def get_initial_state(self):
+        """Gets an initial state for one particle.
+
+        The entire population is susceptible. Then, we draw from uniform
+        random to infect some portion of the susceptible population."""
         population = self.settings.population
 
         # state = [S, I, R, H, new_H]
@@ -90,12 +89,33 @@ class ParticleCloud:
         # Move
         state[1] += infected_seed
         state[0] -= infected_seed
-
         return state
+
+    def _update_single_particle(
+        self, state: ArrayLike, t: int, beta: float, dt: float
+    ) -> ArrayLike:
+        """For a single particle, step the state forward 1 time step.
+
+        Helper function for update_all_particles. Each particle's update is
+        separated out to accommodate for gradient calculations in the future.
+
+        Args:
+             state: the current state of the particle at time t.
+             t: the current time step
+             beta: the current beta value for the particle
+             dt: granularity for numerical integration
+
+        Returns:
+            New state at time (t + 1).
+        """
+        total_change = 0
+        for _ in range(int(1 / dt)):
+            total_change += self.state_transition(state, t, beta) * dt
+        return total_change
 
     def update_all_particles(self, t: int) -> None:
         """Propagate all particles forward one time step.
-        
+
         Args:
             t: current time step
         """
@@ -104,32 +124,28 @@ class ParticleCloud:
             beta = self.betas[i]
             state[i] = self._update_single_particle(state, t, beta, self.settings.dt)
 
-    def _update_single_particle(self, state: ArrayLike, t: int, beta: float, dt: float) -> ArrayLike:
-        """For a single particle, step the state forward 1 time step.
-
-        Helper function for update_all_particles.
-        
-        """
-        total_change = 0
-        for _ in range(int(1 / dt)):
-            total_change += self.state_transition(state, t, beta) * dt
-        return total_change
-
     def _compute_single_weight(
-        self, reported_data: int
+        self, reported_data: int, particle_estimate: float | int
     ) -> float:
-        weight = norm.logpdf()
+        """Computes the un-normalized weight of a single particle.
 
-        return weight
+        Args:
+            reported_data: Reported new hospitalization case counts at
+                current time step.
+
+        Returns:
+            An un-normalized weight for a single particle.
+        """
+        weight = norm.logpdf(reported_data, particle_estimate, self.params.R)
+        return float(weight)
 
     def compute_all_weights(self, reported_data: int):
         """Update the weights for every particle."""
         self.weights = jnp.zeros(self.settings.num_particles)
         for i in range(self.settings.num_particles):
-            
-            self.weights[i] = _compute_single_weight()
-            
-        
+            hosp_estimate = self.hosp_estimates[i]
+            new_weight = self._compute_single_weight(reported_data, hosp_estimate)
+            self.weights = self.weights.at[i].set(new_weight)
 
     def state_transition(self, state: ArrayLike, t: int, beta: float):
         """
@@ -173,7 +189,7 @@ def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) ->
 
         if t != 0:
             particles.update_all_particles(t)
-        
+
         reported_data = obs_data.get_observation(t)
         particles.compute_all_weights(reported_data=reported_data)
 
