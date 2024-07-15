@@ -3,6 +3,7 @@ import numpy as np
 import jax.numpy as jnp
 from filter_forecast.particle_filter import log_pf
 from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.output_handler import OutputHandler
 
 
 class TestParticleCloud(unittest.TestCase):
@@ -35,9 +36,10 @@ class TestParticleCloud(unittest.TestCase):
 
     def test_update_single_particle(self):
         initial_state = self.particle_cloud.states[0].copy()
-        self.particle_cloud._update_single_particle(
-            [1, 2, 3, 4, 5], 0, 0.1, self.settings.dt
+        new_state = self.particle_cloud._update_single_particle(
+            self.particle_cloud.states[0], 0, 0.1, self.settings.dt
         )
+        self.particle_cloud.states = self.particle_cloud.states.at[0].set(new_state)
         updated_state = self.particle_cloud.states[0]
         self.assertFalse(jnp.array_equal(initial_state, updated_state))
 
@@ -48,36 +50,63 @@ class TestParticleCloud(unittest.TestCase):
         self.assertFalse(jnp.array_equal(initial_states, updated_states))
 
     def test_observation_class(self):
-        hosp_cases = np.array([3, 5, 6, 3, 8, 9, 121, 7])
+        hosp_cases = jnp.array([3, 5, 6, 3, 8, 9, 121, 7])
         observations = log_pf.ObservationData(observations=hosp_cases)
         self.assertEqual(observations.get_observation(2), 6)
 
     def test_compute_single_weight(self):
         reported_data = 17
         particle_estimates = [17, 23]
-        weight1 = self.particle_cloud._compute_single_weight(reported_data,
-                                                             particle_estimates[0])
-        weight2 = self.particle_cloud._compute_single_weight(reported_data,
-                                                             particle_estimates[1])
+        weight1 = self.particle_cloud._compute_single_weight(
+            reported_data, particle_estimates[0]
+        )
+        weight2 = self.particle_cloud._compute_single_weight(
+            reported_data, particle_estimates[1]
+        )
         # better estimate should have bigger weight
-        self.assertTrue(weight1 > weight2, msg="The better estimate has a "
-                                               "lower weight.")
+        self.assertTrue(
+            weight1 > weight2, msg="The better estimate has a " "lower weight."
+        )
         self.assertIsInstance(weight1, float)
         self.assertIsInstance(weight2, float)
 
     def test_compute_all_weights(self):
         self.particle_cloud.hosp_estimates = jnp.zeros(
-            self.particle_cloud.settings.num_particles)
-        self.particle_cloud.hosp_estimates = jnp.ones(self.particle_cloud.settings.num_particles)
+            self.particle_cloud.settings.num_particles
+        )
+        self.particle_cloud.hosp_estimates = jnp.ones(
+            self.particle_cloud.settings.num_particles
+        )
         best_estimate_index = 1
-        self.particle_cloud.hosp_estimates = (
-            self.particle_cloud.hosp_estimates.at[best_estimate_index].set(10))
+        self.particle_cloud.hosp_estimates = self.particle_cloud.hosp_estimates.at[
+            best_estimate_index
+        ].set(10)
         reported_data = 20
         self.particle_cloud.compute_all_weights(reported_data)
         max_index = jnp.argmax(self.particle_cloud.weights)
-        self.assertEqual(max_index, best_estimate_index, "The best estimate "
-                                                         "does not have the "
-                                                         "highest weight.")
+        self.assertEqual(
+            max_index,
+            best_estimate_index,
+            "The best estimate " "does not have the " "highest weight.",
+        )
+
+    def test_normalize_weights(self):
+        self.particle_cloud.weights = jnp.ones(
+            self.particle_cloud.settings.num_particles
+        )
+        self.particle_cloud.weights = self.particle_cloud.weights.at[1].set(5)
+        high_weight_index = jnp.argmax(self.particle_cloud.weights)
+        self.particle_cloud.normalize_weights()
+        high_norm_weight_index = jnp.argmax(self.particle_cloud.weights)
+        self.assertEqual(
+            high_weight_index,
+            high_norm_weight_index,
+            "The index with the highest weight was not retained after normalization.",
+        )
+
+    def test_output_handler(self):
+        handler = OutputHandler(self.settings, 5)
+        handler.set_destination_directory()
 
 
 if __name__ == "__main__":
