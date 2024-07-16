@@ -18,6 +18,8 @@ class OutputHandler:
     def output_average_betas(self, all_betas: ArrayLike) -> None:
         self.validate_betas_shape(all_betas)
         self.get_average_betas(all_betas)
+        df = pd.DataFrame(self.avg_betas)
+        df.to_csv(self.destination_dir + "/average_betas.csv", index=False)
 
     def validate_betas_shape(self, all_betas: ArrayLike) -> None:
         expected_shape = (self.settings.num_particles, self.runtime)
@@ -26,5 +28,5 @@ class OutputHandler:
 
     def get_average_betas(self, all_betas: ArrayLike) -> None:
         self.avg_betas = np.zeros(self.runtime)
-        for i in range(self.runtime)
+        for i in range(self.runtime):
             self.avg_betas[0] = np.mean(all_betas, axis=0)
