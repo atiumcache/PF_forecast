@@ -5,11 +5,14 @@ import jax.numpy as jnp
 import numpy as np
 import jax.scipy.stats.norm as norm
 from jax.typing import ArrayLike
+from jax import Array
+import jax.random as random
 
 from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
 from filter_forecast.particle_filter.setup_pf import get_logger
 from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.transition import Transition, OUModel
 
 
 @dataclass
@@ -39,27 +42,22 @@ class ParticleCloud:
         betas: An NxT array of beta values. N is number of particles, T is length of time series.
     """
 
-    settings: InitSettings
-    params: ModelParameters = field(init=False)
-    states: ArrayLike = field(init=False)
-    weights: ArrayLike = field(init=False)
-    betas: ArrayLike = field(init=False)
-    hosp_estimates: ArrayLike = field(init=False)
-
-    def __post_init__(self):
-        self.params = ModelParameters()
+    def __init__(self, settings: InitSettings, transition: Transition):
+        self.settings = settings
+        self.model = transition
         self.states = jnp.array(
             [self.get_initial_state() for _ in range(self.settings.num_particles)]
         )
-
         self.weights = jnp.zeros(self.settings.num_particles)
-
-        betas = [
+        self.betas = jnp.array([
             np.random.uniform(self.settings.beta_prior[0], self.settings.beta_prior[1])
             for _ in range(self.settings.num_particles)
-        ]
+        ])
+        self.hosp_estimates = jnp.zeros(self.settings.num_particles)
 
-        self.betas = jnp.array(betas)
+    def __post_init__(self):
+        seed = 43
+        self.key = random.PRNGKey(seed)
 
     def get_initial_state(self):
         """Gets an initial state for one particle.
@@ -78,7 +76,7 @@ class ParticleCloud:
 
     def _update_single_particle(
         self, state: ArrayLike, t: int, beta: float, dt: float
-    ) -> ArrayLike:
+    ) -> Array:
         """For a single particle, step the state forward 1 time step.
 
         Helper function for update_all_particles. Each particle's update is
@@ -96,20 +94,23 @@ class ParticleCloud:
         """
         num_steps = int(1 / dt)
         for _ in range(num_steps):
-            state += self.state_transition(state, t, beta) * dt
+            state += self.model.det_component(state, t, beta) * dt
+            state += self.model.sto_component(state, dt, self.key)
         return state
 
-    def update_all_particles(self, t: int) -> None:
-        """Propagate all particles forward one time step.
+    def update_all_particles(self, t: int) -> Array:
+        """Propagate all particle state vectors forward one time step.
 
-        Args:
-            t: current time step
-        """
-        # Vectorizing the update function
-        new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0, None))(
-            self.states, t, self.betas, self.settings.dt
-        )
-        self.states = new_states
+         Args:
+             t: current time step
+
+         Returns:
+             New states array.
+         """
+         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0, None))(
+             self.states, t, self.betas, self.settings.dt
+         )
+         return new_states
 
     def _compute_single_weight(
         self, reported_data: int, particle_estimate: float | int
@@ -126,13 +127,22 @@ class ParticleCloud:
         weight = norm.logpdf(reported_data, particle_estimate, self.params.R)
         return float(weight)
 
-    def compute_all_weights(self, reported_data: int):
-        """Update the weights for every particle."""
-        self.weights = jnp.zeros(self.settings.num_particles)
-        for i in range(self.settings.num_particles):
-            hosp_estimate = self.hosp_estimates[i]
-            new_weight = self._compute_single_weight(reported_data, hosp_estimate)
-            self.weights = self.weights.at[i].set(new_weight)
+    def compute_all_weights(self, reported_data: int | float) -> Array:
+        """Update the weights for every particle.
+
+         Args:
+             reported_data: Reported new hospitalization case counts at
+                 current time step.
+
+         Returns:
+             Array of new weights.
+         """
+         new_weights = jnp.zeros(self.settings.num_particles)
+         for i in range(self.settings.num_particles):
+             hosp_estimate = self.hosp_estimates[i]
+             new_weight = self._compute_single_weight(reported_data, hosp_estimate)
+             new_weights = new_weights.at[i].set(new_weight)
+         return new_weights
 
     def normalize_weights(self):
         """Normalize the weights using the Jacobian algorithm."""
@@ -154,38 +164,10 @@ class ParticleCloud:
         # TODO: finish resampling logic
         # copy? convert particles to classes so copying is easier?
 
-    def state_transition(self, state: ArrayLike, t: int, beta: float):
-        """
-        Integrator for the SIRH model from Alex's SDH project.
-
-        Args:
-            t: A float value representing the current time point.
-            state: A NDArray holding the current state of the system to integrate.
-            beta: A float value representing the beta parameter.
-
-        Returns:
-            A NDArray of numerical derivatives of the state.
-        """
-        S, I, R, H, new_H = state  # unpack the state variables
-        N = S + I + R + H  # compute the total population
-
-        new_H = (1 / self.params.D) * self.params.gamma * I
-
-        """The state transitions of the ODE model are below"""
-        dS = -beta * (S * I) / N + (1 / self.params.L) * R
-        dI = beta * S * I / N - (1 / self.params.D) * I
-        dR = (
-            (1 / self.params.hosp) * H
-            + ((1 / self.params.D) * (1 - self.params.gamma) * I)
-            - (1 / self.params.L) * R
-        )
-        dH = (1 / self.params.D) * self.params.gamma * I - (1 / self.params.hosp * H)
-
-        return jnp.array([dS, dI, dR, dH, new_H])
-
 
 def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) -> None:
-    particles = ParticleCloud(settings)
+    particles = ParticleCloud(settings, transition=OUModel(
+        model_params=ModelParameters()))
     obs_data = ObservationData(observation_data)
 
     logger = get_logger()
@@ -208,7 +190,7 @@ def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) ->
     output_handler.output_average_betas(particles.betas)
 
 
-def jacobian(little_delta: ArrayLike) -> ArrayLike:
+def jacobian(little_delta: ArrayLike) -> Array:
     """
     The Jacobian algorithm, used in log likelihood normalization and
     resampling processes.
@@ -230,7 +212,7 @@ def jacobian(little_delta: ArrayLike) -> ArrayLike:
     return big_delta
 
 
-def log_norm(log_weights: ArrayLike) -> ArrayLike:
+def log_norm(log_weights: ArrayLike) -> Array:
     """
     Normalizes the probability space using the Jacobian algorithm as
     defined in jacobian().

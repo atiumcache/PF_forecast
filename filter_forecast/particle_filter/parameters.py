@@ -15,5 +15,3 @@ class ModelParameters:
     hosp: int = field(default_factory=lambda: 10)
     L: int = field(default_factory=lambda: 90)
     D: int = field(default_factory=lambda: 10)
-    # Sigma determines the magnitude of the stochastic component
-    sigma: float = field(default_factory=lambda: 0.005)
