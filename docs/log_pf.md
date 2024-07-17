@@ -10,8 +10,9 @@ A particle filter represent the PDF of some state vector $X_t$ at time $t$. In o
 $$X_t = [S, I, R, H, \text{new } H]$$
 
 ## ParticleCloud Class
-We represent the particles in a `ParticleCloud` class. The `ParticleCloud` has attributes:
+We represent the particles in a `ParticleCloud` class. A `ParticleCloud` has the following attributes:
 - settings: Global settings for the filter, an instance of `InitSettings`. See below for more info.
+- 
 
 ### Parameters
 #### Filter Parameters
@@ -26,12 +27,19 @@ class InitSettings:
     beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.15))
     seed_size: float = field(default_factory=lambda: 0.005)
 ```
+The `population` is the population of the location/territory that we are currently working with. A `location_code` corresponds to the locations codes found in `/datasets/locations.csv`. 
 
+The `dt` attribute determines the number of intermediary steps that the ODE/SDE system will be solved. The default is 1, which solves the system exactly one time per day. A lower value for `dt` will increase the numerical accuracy, while also increasing the computational cost of updating a particle. 
+
+The `beta_prior` is our prior belief about an inital beta value. Each particle's \beta value is a uniform draw from this range. 
+
+The `seed_size` determines the initial proportion of infected individuals in the population. 
 
 #### Model Parameters
 A `ModelParameters` class is passed into `Transition` object, which defines the SDE system for our particles. 
 
-All parameters have default values. Interpretations of the parameters are below. 
+All parameters have default values. Interpretations of the parameters are below.
+
 ```python
 @dataclass
 class ModelParameters:
