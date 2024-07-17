@@ -7,8 +7,9 @@ title: Log PF
 
 # Log-Domain Particle Filter
 
-A particle filter represent the PDF of some state vector $X_t$ at time $t$. In our case, the state vector is:
-$$[S, I, R, H, \text{new } H]$$
+A particle filter represent the PDF of some state vector \(X_t\) at time t. In our case, the state vector is:
+
+$$X_t = [S, I, R, H, \text{new } H]$$
 
 ## Parameters
 ```
@@ -44,4 +45,10 @@ At each time step, we propagate the particles forward one time step based on our
 
 The update is split into two steps to allow us to compute the gradient at each time step for sensitivity analysis. 
 
-## Weights
+## Calculating Weights
+
+## Normalizing Weights
+
+## Resampling
+
+## Perturbations
