@@ -2,4 +2,4 @@
 title: Overview
 ---
 
-[Log PF](/log_pf)
+[Log PF](/PF_forecast/log_pf)

@@ -36,9 +36,9 @@ class ParticleCloud:
     Attributes:
         settings: Global filter settings for initialization.
         params: Model parameters for the transition function.
-        states: A NxT array of system states at each time step, where
-            N is size of state vector, T is length of time series.
-        weights: A 1-D array of particle weights. Length is number of particles.
+        states: A MxT array of system states at each time step, where
+            M is of state vector, T is length of time series.
+        weights: An array of particle weights. Length is number of particles.
         betas: An NxT array of beta values. N is number of particles, T is length of time series.
     """
 
@@ -59,7 +59,7 @@ class ParticleCloud:
         seed = 43
         self.key = random.PRNGKey(seed)
 
-    def get_initial_state(self):
+    def _get_initial_state(self):
         """Gets an initial state for one particle.
 
         The entire population is susceptible. Then, we draw from uniform
@@ -90,7 +90,7 @@ class ParticleCloud:
              dt: granularity for numerical integration
 
         Returns:
-            New state at time (t + 1).
+            New state vector for a single particle.
         """
         num_steps = int(1 / dt)
         for _ in range(num_steps):
@@ -105,7 +105,8 @@ class ParticleCloud:
              t: current time step
 
          Returns:
-             New states array.
+             MxN array of states for each particle at time t, where M is
+             dimension of state vector, N is number of particles.
          """
          new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0, None))(
              self.states, t, self.betas, self.settings.dt
@@ -116,6 +117,7 @@ class ParticleCloud:
         self, reported_data: int, particle_estimate: float | int
     ) -> float:
         """Computes the un-normalized weight of a single particle.
+        Helper function for compute_all_weights.
 
         Args:
             reported_data: Reported new hospitalization case counts at
@@ -135,7 +137,7 @@ class ParticleCloud:
                  current time step.
 
          Returns:
-             Array of new weights.
+             NDArray of new weights, where N is number of particles.
          """
          new_weights = jnp.zeros(self.settings.num_particles)
          for i in range(self.settings.num_particles):
@@ -164,6 +166,9 @@ class ParticleCloud:
         # TODO: finish resampling logic
         # copy? convert particles to classes so copying is easier?
 
+    def perturb_betas(self):
+
+
 
 def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) -> None:
     particles = ParticleCloud(settings, transition=OUModel(
@@ -184,6 +189,7 @@ def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) ->
         particles.compute_all_weights(reported_data=reported_data)
         particles.normalize_weights()
         particles.resample()
+        particles.perturb_betas()
 
     output_handler = OutputHandler(settings, runtime)
     output_handler.set_destination_directory('./output/')

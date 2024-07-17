@@ -50,8 +50,19 @@ class Transition(ABC):
         raise NotImplementedError
 
 
+class GaussianNoiseModel(Transition):
+    def __init__(self, model_params: ModelParameters, sigma=10):
+        super().__init__(model_params)
+        self.sigma = sigma  # Volatility of the noise
+
+    def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
+        noise = self.sigma * random.normal(key, shape=jnp.shape(state))
+        return noise * jnp.sqrt(dt)
+
+
 class OUModel(Transition):
-    def __init__(self, model_params: ModelParameters, theta=0.15, mu=0.0, sigma=0.01):
+    def __init__(self, model_params: ModelParameters, theta=0.005, mu=0.0,
+                 sigma=0.01):
         super().__init__(model_params)
         self.theta = theta  # Speed of reversion
         self.mu = mu  # Long-term mean

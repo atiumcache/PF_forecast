@@ -1,9 +1,16 @@
 ---
 title: Log PF
 ---
+<script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 
-# Log-Domain Particle Fitler
+# Log-Domain Particle Filter
 
+A particle filter represent the PDF of some state vector $X_t$ at time $t$. In our case, the state vector is:
+$$[S, I, R, H, \text{new } H]$$
+
+## Parameters
 ```
 @dataclass
 class ModelParameters:
