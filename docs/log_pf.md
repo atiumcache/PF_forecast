@@ -1,18 +1,20 @@
 ---
 title: Log PF
 ---
-<script type="text/javascript" async
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
-<script type="text/javascript" async src="./assets/mathjax_settings.js"></script>
+<script src="./assets/mathjax_settings.js" async></script>
 
 # Log-Domain Particle Filter
 
-A particle filter represent the PDF of some state vector \(X_t\) at time t. In our case, the state vector is:
+A particle filter represent the PDF of some state vector $X_t$ at time $t$. In our case, the state vector is:
 
 $$X_t = [S, I, R, H, \text{new } H]$$
 
-## Parameters
+## ParticleCloud Class
+
+### Parameters
+A `ModelParameters` class is passed into `Transition` object, which defines the SDE system for our particles. 
+
+All parameters have default values. Interpretations of the parameters are below. 
 ```
 @dataclass
 class ModelParameters:
@@ -41,15 +43,24 @@ class ModelParameters:
 - L: The latency period, representing the average time between exposure to the virus and the onset of infectiousness.                            
 - D: The duration of the infectious period, indicating the average time an individual remains infectious.                                        
 
-## Update \ Propagate
+### Update \ Propagate
 At each time step, we propagate the particles forward one time step based on our state transition function. 
 
-The update is split into two steps to allow us to compute the gradient at each time step for sensitivity analysis. 
+The update is split into two functions to allow us to compute the gradient at each time step for sensitivity analysis. 
 
-## Calculating Weights
+#### Update Single Particle
+The `update_single_particle` method takes in a particle's current state, and returns a new, updated state. 
 
-## Normalizing Weights
+The method calls out to our transition model's SDE system, which is broken up into deterministic and stochastic components. If `dt = 1`, then this process occurs once. Otherwise, finer granularity can be achieved by decreasing `dt`, but this comes with computational cost. 
 
-## Resampling
+#### Update All Particles
+The `update_all_particles` method calls out to `update_single_particle` for each particle. We use `jax.vmap` to map the 
 
-## Perturbations
+
+### Calculating Weights
+We calculate the weight
+### Normalizing Weights
+
+### Resampling
+
+### Perturbations
