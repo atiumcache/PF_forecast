@@ -61,8 +61,7 @@ class GaussianNoiseModel(Transition):
 
 
 class OUModel(Transition):
-    def __init__(self, model_params: ModelParameters, theta=0.005, mu=0.0,
-                 sigma=0.01):
+    def __init__(self, model_params: ModelParameters, theta=0.005, mu=0.0, sigma=0.01):
         super().__init__(model_params)
         self.theta = theta  # Speed of reversion
         self.mu = mu  # Long-term mean
@@ -71,14 +70,14 @@ class OUModel(Transition):
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
         """The stochastic component of the SDE model using an OU process.
 
-         Args:
-             state: A NDArray holding the current state of the system.
-             dt: A float value representing the time step.
-             key: A PRNGKey for random number generation.
+        Args:
+            state: A NDArray holding the current state of the system.
+            dt: A float value representing the time step.
+            key: A PRNGKey for random number generation.
 
-         Returns:
-             A NDArray of stochastic increments.
-         """
+        Returns:
+            A NDArray of stochastic increments.
+        """
         S, I, R, H, new_H = state  # unpack the state variables
 
         # Generate random noise
@@ -89,7 +88,8 @@ class OUModel(Transition):
         dI = self.theta * (self.mu - I) * dt + self.sigma * jnp.sqrt(dt) * noise[1]
         dR = self.theta * (self.mu - R) * dt + self.sigma * jnp.sqrt(dt) * noise[2]
         dH = self.theta * (self.mu - H) * dt + self.sigma * jnp.sqrt(dt) * noise[3]
-        dNew_H = self.theta * (self.mu - new_H) * dt + self.sigma * jnp.sqrt(dt) * noise[4]
+        dNew_H = (
+            self.theta * (self.mu - new_H) * dt + self.sigma * jnp.sqrt(dt) * noise[4]
+        )
 
         return jnp.array([dS, dI, dR, dH, dNew_H])
-

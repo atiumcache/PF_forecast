@@ -4,6 +4,7 @@ import jax.numpy as jnp
 import os
 import pandas as pd
 
+import filter_forecast.particle_filter.particle_cloud
 from filter_forecast.particle_filter import log_pf
 from filter_forecast.particle_filter.init_settings import InitSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
@@ -19,7 +20,9 @@ class TestParticleCloud(unittest.TestCase):
             dt=1.0,
             seed_size=0.005,
         )
-        self.particle_cloud = log_pf.ParticleCloud(self.settings)
+        self.particle_cloud = (
+            filter_forecast.particle_filter.particle_cloud.ParticleCloud(self.settings)
+        )
 
     def test_initialization(self):
         self.assertEqual(
@@ -111,10 +114,14 @@ class TestParticleCloud(unittest.TestCase):
 class TestOutputHandler(unittest.TestCase):
 
     def setUp(self):
-        self.settings = InitSettings(num_particles=10, population=10000, location_code='04')
+        self.settings = InitSettings(
+            num_particles=10, population=10000, location_code="04"
+        )
         self.runtime = 5
         self.handler = OutputHandler(self.settings, self.runtime)
-        self.handler.set_destination_directory("/tmp")  # Set a temporary directory for testing
+        self.handler.set_destination_directory(
+            "/tmp"
+        )  # Set a temporary directory for testing
 
     def test_set_destination_directory(self):
         self.handler.set_destination_directory("/new_dir")
@@ -145,7 +152,9 @@ class TestOutputHandler(unittest.TestCase):
         output_file = os.path.join(self.handler.destination_dir, "average_betas.csv")
         self.assertTrue(os.path.exists(output_file))
         df = pd.read_csv(output_file)
-        np.testing.assert_array_almost_equal(df.values.flatten(), self.handler.avg_betas)
+        np.testing.assert_array_almost_equal(
+            df.values.flatten(), self.handler.avg_betas
+        )
 
     def tearDown(self):
         # Clean up the temporary file created during the test

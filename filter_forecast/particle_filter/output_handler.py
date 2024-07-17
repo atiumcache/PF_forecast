@@ -24,7 +24,9 @@ class OutputHandler:
     def validate_betas_shape(self, all_betas: ArrayLike) -> None:
         expected_shape = (self.settings.num_particles, self.runtime)
         if all_betas.shape != expected_shape:
-            raise ValueError(f"Expected shape {expected_shape}, but got {all_betas.shape}")
+            raise ValueError(
+                f"Expected shape {expected_shape}, but got {all_betas.shape}"
+            )
 
     def get_average_betas(self, all_betas: ArrayLike) -> None:
         self.avg_betas = np.zeros(self.runtime)

@@ -6,6 +6,7 @@ class ModelParameters:
     """
     SIRH model parameters, for the RHS function.
     """
+
     gamma: float = field(default_factory=lambda: 0.06)
     mu: float = field(default_factory=lambda: 0.004)
     q: float = field(default_factory=lambda: 0.1)
