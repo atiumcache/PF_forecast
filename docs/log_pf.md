@@ -10,17 +10,31 @@ A particle filter represent the PDF of some state vector $X_t$ at time $t$. In o
 $$X_t = [S, I, R, H, \text{new } H]$$
 
 ## ParticleCloud Class
+We represent the particles in a `ParticleCloud` class. The `ParticleCloud` has attributes:
+- settings: Global settings for the filter, an instance of `InitSettings`. See below for more info.
 
 ### Parameters
+#### Filter Parameters
+
+```python
+@dataclass
+class InitSettings:
+    num_particles: int
+    population: int
+    location_code: str
+    dt: float = field(default_factory=lambda: 1.0)
+    beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.15))
+    seed_size: float = field(default_factory=lambda: 0.005)
+```
+
+
+#### Model Parameters
 A `ModelParameters` class is passed into `Transition` object, which defines the SDE system for our particles. 
 
 All parameters have default values. Interpretations of the parameters are below. 
-```
+```python
 @dataclass
 class ModelParameters:
-    """
-    SIRH model parameters, for the RHS function.
-    """
     gamma: float = field(default_factory=lambda: 0.06)
     mu: float = field(default_factory=lambda: 0.004)
     q: float = field(default_factory=lambda: 0.1)
@@ -54,7 +68,7 @@ The `update_single_particle` method takes in a particle's current state, and ret
 The method calls out to our transition model's SDE system, which is broken up into deterministic and stochastic components. If `dt = 1`, then this process occurs once. Otherwise, finer granularity can be achieved by decreasing `dt`, but this comes with computational cost. 
 
 #### Update All Particles
-The `update_all_particles` method calls out to `update_single_particle` for each particle. We use `jax.vmap` to map the 
+The `update_all_particles` method calls out to `update_single_particle` for each particle. We use `jax.vmap` to map the function to a collection of iterable arguments: the current state vectors and beta values (t and dt remain constant for all particles). This is a vectorized function mapping.  
 
 
 ### Calculating Weights

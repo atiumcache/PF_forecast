@@ -4,7 +4,7 @@ from typing import Tuple
 
 @dataclass
 class InitSettings:
-    """Defines the initial settings of the particle filter.
+    """Defines global settings for the particle filter.
 
     Attributes:
         num_particles: Number of particles in the filter.
