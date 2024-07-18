@@ -32,7 +32,6 @@ class Transition(ABC):
 
         new_H = (1 / self.params.D) * self.params.gamma * I
 
-        """The state transitions of the ODE model are below"""
         dS = -beta * (S * I) / N + (1 / self.params.L) * R
         dI = beta * S * I / N - (1 / self.params.D) * I
         dR = (
@@ -46,16 +45,29 @@ class Transition(ABC):
 
     @abstractmethod
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
-        """The stochastic component of the SDE model."""
+        """The stochastic component of the SDE model.
+
+        Must be defined by each concrete implementation of the Transition class."""
         raise NotImplementedError
 
 
 class GaussianNoiseModel(Transition):
-    def __init__(self, model_params: ModelParameters, sigma=10):
+    def __init__(self, model_params: ModelParameters, sigma=0.001):
         super().__init__(model_params)
         self.sigma = sigma  # Volatility of the noise
 
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
+        """A simple gaussian noise is added to each element of the state vector.
+        The magnitude of the noise is controlled by sigma.
+
+        Args:
+            state: A NDArray holding the current state of the system.
+            dt: A float value representing the time step.
+            key: A PRNGKey for random number generation.
+
+        Return:
+            A NDArray of stochastic increments.
+        """
         noise = self.sigma * random.normal(key, shape=jnp.shape(state))
         return noise * jnp.sqrt(dt)
 
