@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-from filter_forecast.particle_filter.parameters import ModelParameters
 import jax.numpy as jnp
 import jax.random as random
-from jax.typing import ArrayLike
 from jax import Array
+from jax.typing import ArrayLike
 
+from filter_forecast.particle_filter.parameters import ModelParameters
 
 # for typing hints
 KeyArray = Array

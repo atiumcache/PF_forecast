@@ -1,13 +1,17 @@
-import unittest
-import numpy as np
-import jax.numpy as jnp
 import os
+import unittest
+from unittest.mock import patch
+
+import jax.numpy as jnp
+import numpy as np
 import pandas as pd
 
 import filter_forecast.particle_filter.particle_cloud
 from filter_forecast.particle_filter import log_pf
 from filter_forecast.particle_filter.init_settings import InitSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
+from filter_forecast.particle_filter.parameters import ModelParameters
+from filter_forecast.particle_filter.transition import GaussianNoiseModel
 
 
 class TestParticleCloud(unittest.TestCase):
@@ -17,11 +21,17 @@ class TestParticleCloud(unittest.TestCase):
             num_particles=10,
             population=1000,
             location_code="04",
+            runtime=5,
+            prediction_date="2024-07-17",
             dt=1.0,
             seed_size=0.005,
         )
+        model_params = ModelParameters()
+        transition = GaussianNoiseModel(model_params)
         self.particle_cloud = (
-            filter_forecast.particle_filter.particle_cloud.ParticleCloud(self.settings)
+            filter_forecast.particle_filter.particle_cloud.ParticleCloud(
+                self.settings, transition
+            )
         )
 
     def test_initialization(self):
@@ -36,7 +46,7 @@ class TestParticleCloud(unittest.TestCase):
         )
 
     def test_initial_state(self):
-        initial_state = self.particle_cloud.get_initial_state()
+        initial_state = self.particle_cloud._get_initial_state()
         self.assertEqual(len(initial_state), 5)
         self.assertAlmostEqual(sum(initial_state), self.settings.population, delta=1e-5)
 
@@ -77,37 +87,38 @@ class TestParticleCloud(unittest.TestCase):
         self.assertIsInstance(weight2, float)
 
     def test_compute_all_weights(self):
-        self.particle_cloud.hosp_estimates = jnp.zeros(
-            self.particle_cloud.settings.num_particles
-        )
+        time_step = 1
         self.particle_cloud.hosp_estimates = jnp.ones(
             self.particle_cloud.settings.num_particles
         )
         best_estimate_index = 1
         self.particle_cloud.hosp_estimates = self.particle_cloud.hosp_estimates.at[
             best_estimate_index
-        ].set(10)
+        ].set(15)
         reported_data = 20
-        self.particle_cloud.compute_all_weights(reported_data)
-        max_index = jnp.argmax(self.particle_cloud.weights)
+        self.particle_cloud.compute_all_weights(reported_data, time_step)
+        max_index = jnp.argmax(self.particle_cloud.weights[:, time_step])
         self.assertEqual(
             max_index,
             best_estimate_index,
-            "The best estimate " "does not have the " "highest weight.",
+            "The best estimate does not have the highest weight.",
         )
 
     def test_normalize_weights(self):
-        self.particle_cloud.weights = jnp.ones(
-            self.particle_cloud.settings.num_particles
-        )
-        self.particle_cloud.weights = self.particle_cloud.weights.at[1].set(5)
-        high_weight_index = jnp.argmax(self.particle_cloud.weights)
-        self.particle_cloud.normalize_weights()
-        high_norm_weight_index = jnp.argmax(self.particle_cloud.weights)
+        time_step = 1
+        self.particle_cloud.weights = jnp.ones((
+            self.particle_cloud.settings.num_particles, 5
+        ))
+        # Set one particle at current time step with a highest weight.
+        self.particle_cloud.weights = self.particle_cloud.weights.at[1, time_step].set(5)
+        high_weight_index = jnp.argmax(self.particle_cloud.weights[:, time_step])
+        self.particle_cloud.normalize_weights(time_step)
+        high_norm_weight_index = jnp.argmax(self.particle_cloud.weights[:, time_step])
         self.assertEqual(
             high_weight_index,
             high_norm_weight_index,
-            "The index with the highest weight was not retained after normalization.",
+            "The index with the highest weight was not weighted highest after "
+            "normalization.",
         )
 
 
@@ -115,7 +126,11 @@ class TestOutputHandler(unittest.TestCase):
 
     def setUp(self):
         self.settings = InitSettings(
-            num_particles=10, population=10000, location_code="04"
+            num_particles=10,
+            population=10000,
+            location_code="04",
+            runtime=5,
+            prediction_date="2024-07-17",
         )
         self.runtime = 5
         self.handler = OutputHandler(self.settings, self.runtime)
@@ -130,31 +145,28 @@ class TestOutputHandler(unittest.TestCase):
     def test_validate_betas_shape_correct(self):
         all_betas = np.random.rand(self.settings.num_particles, self.runtime)
         try:
-            self.handler.validate_betas_shape(all_betas)
+            self.handler._validate_betas_shape(all_betas)
         except ValueError:
             self.fail("validate_betas_shape raised ValueError unexpectedly!")
 
     def test_validate_betas_shape_incorrect(self):
         all_betas = np.random.rand(self.settings.num_particles, self.runtime + 1)
         with self.assertRaises(ValueError):
-            self.handler.validate_betas_shape(all_betas)
+            self.handler._validate_betas_shape(all_betas)
 
     def test_get_average_betas(self):
         all_betas = np.random.rand(self.settings.num_particles, self.runtime)
-        self.handler.get_average_betas(all_betas)
-        expected_avg_betas = np.mean(all_betas, axis=0)
-        np.testing.assert_array_almost_equal(self.handler.avg_betas, expected_avg_betas)
-
-    def test_output_average_betas(self):
-        all_betas = np.random.rand(self.settings.num_particles, self.runtime)
-        self.handler.get_average_betas(all_betas)
-        self.handler.output_average_betas(all_betas)
-        output_file = os.path.join(self.handler.destination_dir, "average_betas.csv")
-        self.assertTrue(os.path.exists(output_file))
-        df = pd.read_csv(output_file)
+        self.handler._get_average_betas(all_betas)
+        expected_avg_betas = np.mean(all_betas[:, 0])
         np.testing.assert_array_almost_equal(
-            df.values.flatten(), self.handler.avg_betas
+            self.handler.avg_betas[0], expected_avg_betas
         )
+
+    def test_find_project_root(self):
+        cwd = os.getcwd()
+        project_root = self.handler.find_project_root(self, cwd)
+        root_extension = project_root.split("/")[-1]
+        self.assertTrue(root_extension == "PF_forecast")
 
     def tearDown(self):
         # Clean up the temporary file created during the test

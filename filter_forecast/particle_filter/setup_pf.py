@@ -1,7 +1,9 @@
-from filter_forecast.particle_filter.init_settings import InitSettings
 import logging
 from datetime import datetime
+
 import pytz
+
+from filter_forecast.particle_filter.init_settings import InitSettings
 
 
 def get_settings(state_population: int, loc_code: str) -> InitSettings:

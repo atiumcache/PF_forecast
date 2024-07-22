@@ -1,10 +1,7 @@
 import unittest
-from unittest.mock import patch, MagicMock
-import numpy as np
-import pandas as pd
-from datetime import datetime
-from scipy.integrate import solve_ivp
-from LSODA_forecast import *
+from unittest.mock import MagicMock, patch
+
+from filter_forecast.hosp_forecast.LSODA_forecast import *
 
 
 class TestForecastingScript(unittest.TestCase):

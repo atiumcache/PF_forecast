@@ -5,12 +5,10 @@ import numpy as np
 from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
 from Implementations.perturbers.perturbers import MultivariatePerturbations
 from Implementations.resamplers.resamplers import NBinomResample
-from Implementations.solvers.DeterministicSolvers import (
-    EulerSolver,
-    LSODACalvettiSolver,
-    LSODASolver,
-    LSODASolverSEIARHD,
-)
+from Implementations.solvers.DeterministicSolvers import (EulerSolver,
+                                                          LSODACalvettiSolver,
+                                                          LSODASolver,
+                                                          LSODASolverSEIARHD)
 from utilities.Utils import ESTIMATION, Context
 
 
