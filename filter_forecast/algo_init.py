@@ -2,8 +2,10 @@ from functools import partial
 
 import numpy as np
 
-from deprecated.Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
-from deprecated.Implementations.perturbers.perturbers import MultivariatePerturbations
+from deprecated.Implementations.algorithms.TimeDependentBeta import \
+    TimeDependentAlgo
+from deprecated.Implementations.perturbers.perturbers import \
+    MultivariatePerturbations
 from deprecated.Implementations.resamplers.resamplers import NBinomResample
 from deprecated.Implementations.solvers.DeterministicSolvers import LSODASolver
 from utilities.Utils import ESTIMATION, Context

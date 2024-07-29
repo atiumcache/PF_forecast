@@ -25,5 +25,5 @@ class InitSettings:
     runtime: int
     prediction_date: str
     dt: float = field(default_factory=lambda: 1.0)
-    beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.15))
+    beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.25))
     seed_size: float = field(default_factory=lambda: 0.005)

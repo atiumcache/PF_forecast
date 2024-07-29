@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 
-import jax.numpy as jnp
-import jax.random as random
-from jax import Array
 from jax.typing import ArrayLike
+from tqdm import tqdm
 
 from filter_forecast.particle_filter.init_settings import InitSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
 from filter_forecast.particle_filter.particle_cloud import ParticleCloud
 from filter_forecast.particle_filter.setup_pf import get_logger
-from filter_forecast.particle_filter.transition import GaussianNoiseModel, OUModel
+from filter_forecast.particle_filter.transition import (GaussianNoiseModel,
+                                                        OUModel)
 
 
 @dataclass
@@ -51,8 +50,7 @@ def run_pf(
     # Initialize an object that stores the hospitalization data.
     observed_data = ObservationData(observation_data)
 
-    for t in range(runtime):
-        print(f"Iteration: {t + 1} \r")
+    for t in tqdm(range(runtime), desc="Running Particle Filter"):
 
         # If t = 0, then we just initialized the particles.
         # Thus, we do not need to update.
