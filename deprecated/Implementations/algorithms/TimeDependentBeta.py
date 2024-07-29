@@ -3,11 +3,10 @@ from typing import Callable
 
 import pandas as pd
 
-from Abstract.Algorithm import Algorithm
-from Abstract.Integrator import Integrator
-from Abstract.Perturb import Perturb
-from Abstract.Resampler import Resampler
-from utilities.sankey import visualize_particles
+from deprecated.Abstract.Algorithm import Algorithm
+from deprecated.Abstract.Integrator import Integrator
+from deprecated.Abstract.Perturb import Perturb
+from deprecated.Abstract.Resampler import Resampler
 from utilities.Utils import *
 from utilities.Utils import Context
 

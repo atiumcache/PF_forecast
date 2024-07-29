@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import jax
 import numpy as np
-from jax import Array
+from jax import Array, float0
 from jax import numpy as jnp
 from jax import random as random
 from jax._src.basearray import ArrayLike
@@ -34,6 +34,7 @@ class ParticleCloud:
     Examples:
         weights[i, t] will return the ith particle's weight at time t.
         betas[:, t] will return all particles' beta values at time t.
+        states[:, 5, t] will return all particles' new_H counts at time t.
     """
 
     def __init__(self, settings: InitSettings, transition: Transition):
@@ -44,29 +45,20 @@ class ParticleCloud:
         self.key = random.PRNGKey(seed)
 
         initial_states = jnp.array(
-            [
-                self._get_initial_state()
-                for
-                _
-                in
-                range(self.settings.num_particles)]
+            [self._get_initial_state() for _ in range(self.settings.num_particles)]
         )
         print(f"Initial states shape: {initial_states.shape}")
 
         self.states = jnp.zeros(
             (
                 self.settings.num_particles,
-                initial_states.shape[
-                    -1],
+                initial_states.shape[-1],
                 self.settings.runtime,
             )
         )
         print(f"States shape after initialization: {self.states.shape}")
 
-        self.states = self.states.at[
-                      :,
-                      :,
-                      0].set(initial_states)
+        self.states = self.states.at[:, :, 0].set(initial_states)
         print(f"States shape after setting initial states: {self.states.shape}")
 
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
@@ -76,12 +68,11 @@ class ParticleCloud:
         betas_initial = np.random.uniform(
             beta_prior[0], beta_prior[1], size=self.settings.num_particles
         )
-        print('Initial Betas:', betas_initial)
-        self.betas = jnp.zeros((self.settings.num_particles,
-                            self.settings.runtime))
+        print("Initial Betas:", betas_initial)
+        self.betas = jnp.zeros((self.settings.num_particles, self.settings.runtime))
         # Assign the betas array to self.betas
         self.betas = self.betas.at[:, 0].set(betas_initial)
-        print('Initial beta array', self.betas.shape)
+        print("Initial beta array", self.betas.shape)
 
         self.hosp_estimates = jnp.zeros(self.settings.num_particles)
 
@@ -94,37 +85,67 @@ class ParticleCloud:
 
         # state = [S, I, R, H, new_H]
         state = [population, 0, 0, 0, 0]
-        infected_seed = np.random.uniform(0, self.settings.seed_size * population)
+        # TODO: Replace np with JAX random, pass in subkey.
+        infected_seed = np.random.uniform(1, self.settings.seed_size *
+                                          population)
         # Move
         state[1] += infected_seed
         state[0] -= infected_seed
-        return state
+        return jnp.array(state)
 
     def _update_single_particle(
-        self, state: ArrayLike, t: int, beta: float, dt: float
+        self, state: ArrayLike, t: int, beta: float0, dt: float
     ) -> Array:
-        """For a single particle, step the state forward 1 time step.
+        """For a single particle, step the state forward 1 discrete time step.
 
         Helper function for update_all_particles. Each particle's update is
-        performed separately to accommodate for gradient/sensitivity
-        calculations in the future.
+        performed separately to accommodate for individual gradient/sensitivity
+        calculations.
 
         Args:
-             state: the current state of the particle at time t.
-             t: the current time step. Could be used for time-dependent ODEs or parameters.
-             beta: the current beta value for the particle
-             dt: granularity for numerical integration
+            state: the current state of the particle at time t.
+            t: the current time step.
+            beta: the current beta value for the particle
+            dt: granularity for numerical integration
 
         Returns:
             New state vector for a single particle.
         """
         num_steps = int(1 / dt)
         for _ in range(num_steps):
-            state += self.model.det_component(state, t, beta) * dt
-            state += self.model.sto_component(state, dt, self.key)
+            det_update = self.model.det_component(state, t, beta) * dt
+            print(f"Deterministic Update: {det_update}")
+            state += det_update
+
+            # TODO: Add in the stochastic component
+            # state += self.model.sto_component(state, dt, self.key)
         return state
 
     def update_all_particles(self, t: int) -> None:
+        """Updates the state vector for all particles.
+
+        Args:
+            t: the current time step.
+
+        Returns:
+            None. Particles are updated in place.
+        """
+
+        new_states = jnp.zeros((self.settings.num_particles,
+                               len(self.states[0, :, 0])))
+        for p in range(self.settings.num_particles):
+            new_state = self._update_single_particle(
+                self.states[p, :, t], t, self.betas[p, t], self.settings.dt
+            )
+            print(new_state)
+            new_states = new_states.at[p].set(new_state)
+
+        print(new_states)
+        self.states = self.states.at[:, :, t + 1].set(new_states)
+        new_hosp_estimates = self.states[:, 5, t]
+        self.hosp_estimates = new_hosp_estimates
+
+    def update_all_particles_vmap(self, t: int) -> None:
         """Propagate all particle state vectors forward one time step.
 
         Args:
@@ -140,7 +161,10 @@ class ParticleCloud:
         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0, None))(
             self.states[:, :, t], t, self.betas[:, t], self.settings.dt
         )
+        print(new_states)
         self.states = self.states.at[:, :, t + 1].set(new_states)
+        new_hosp_estimates = self.states[:, 5, t]
+        self.hosp_estimates = new_hosp_estimates
 
     def _compute_single_weight(
         self, reported_data: int, particle_estimate: float | int
@@ -179,18 +203,28 @@ class ParticleCloud:
             new_weights = new_weights.at[i].set(new_weight)
         self.weights = self.weights.at[:, t].set(new_weights)
 
-    def normalize_weights(self, t: int):
+    def normalize_weights(self, t: int) -> None:
         """Normalize the weights using the Jacobian algorithm.
         Updates the instance weights directly.
 
         Args:
             t: current time step
+
+        Returns:
+            None. Directly updates the instance weights.
         """
         norm_weights = log_norm(self.weights[:, t])
         self.weights = self.weights.at[:, t].set(norm_weights)
 
-    def resample(self, t: int):
-        """Systematic resampling algorithm."""
+    def resample(self, t: int) -> None:
+        """Systematic resampling algorithm.
+
+        Args:
+            t: current time step
+
+        Returns:
+            None. Directly updates the instance states and beta values.
+        """
         resampling_indices = jnp.zeros(self.settings.num_particles, dtype=int)
         cdf_log = jacobian(self.weights[:, t])
 
@@ -203,22 +237,25 @@ class ParticleCloud:
                 i += 1
             resampling_indices = resampling_indices.at[j].set(i)
 
-        print('Indices:', resampling_indices)
+        print("Resampling Indices:", resampling_indices)
 
         self.states = self.states.at[:, :, t].set(self.states[
-                                                      resampling_indices, :,
-                                                  t])
-        print('Betas before:', self.betas)
-        self.betas = self.betas.at[:, t].set(self.betas[resampling_indices, t])
-        print('Betas after:', self.betas, '\n')
+                                                   resampling_indices, :, t])
+        print("Betas before:", self.betas)
+        self.betas = self.betas.at[:, t].set(self.betas[resampling_indices,
+        t])
+        print("Betas after:", self.betas, "\n")
 
-    def perturb_betas(self, t: int, scale_factor: float = np.sqrt(0.001)) -> \
-            None:
+    def perturb_betas(self, t: int, scale_factor: float = np.sqrt(0.001)) -> None:
         """Perturbs the beta values by adding gaussian noise."""
         # noise: Array = random.normal(self.key, shape=self.betas[:, t].shape) * scale_factor
         # old_betas = self.betas[:, t]
         # self.betas = self.betas.at[:, t].set(old_betas + noise)
-        new_betas = np.exp(np.random.normal(np.log(self.betas[:, t]),scale=np.sqrt(0.001)))
+
+        # TODO: replace np with JAX.
+        new_betas = np.exp(
+            np.random.normal(np.log(self.betas[:, t]), scale=scale_factor)
+        )
         self.betas = self.betas.at[:, t].set(new_betas)
 
 

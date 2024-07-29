@@ -4,7 +4,7 @@ from typing import List
 
 import numpy as np
 
-from Abstract.Integrator import Integrator
+from deprecated.Abstract.Integrator import Integrator
 from utilities.Utils import Context, Particle
 
 

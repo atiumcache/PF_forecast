@@ -1,10 +1,7 @@
 import math
 from typing import List
 
-import numpy as np
-from numpy.typing import NDArray
-
-from Abstract.Resampler import Resampler
+from deprecated.Abstract.Resampler import Resampler
 from utilities.likelihood_functions import *
 from utilities.Utils import Context, Particle, jacob, log_norm
 

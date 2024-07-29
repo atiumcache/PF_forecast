@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import numpy as np
 
-from Abstract.Perturb import Perturb
+from deprecated.Abstract.Perturb import Perturb
 from utilities.Utils import ESTIMATION, Context, Particle, jacob
 
 """Multivariate normal perturbations to all parameters and state variables after log transform"""

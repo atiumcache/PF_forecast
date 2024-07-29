@@ -106,11 +106,13 @@ class TestParticleCloud(unittest.TestCase):
 
     def test_normalize_weights(self):
         time_step = 1
-        self.particle_cloud.weights = jnp.ones((
-            self.particle_cloud.settings.num_particles, 5
-        ))
+        self.particle_cloud.weights = jnp.ones(
+            (self.particle_cloud.settings.num_particles, 5)
+        )
         # Set one particle at current time step with a highest weight.
-        self.particle_cloud.weights = self.particle_cloud.weights.at[1, time_step].set(5)
+        self.particle_cloud.weights = self.particle_cloud.weights.at[1, time_step].set(
+            5
+        )
         high_weight_index = jnp.argmax(self.particle_cloud.weights[:, time_step])
         self.particle_cloud.normalize_weights(time_step)
         high_norm_weight_index = jnp.argmax(self.particle_cloud.weights[:, time_step])

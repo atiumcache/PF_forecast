@@ -3,9 +3,9 @@ from typing import Dict, List
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.integrate import odeint, solve_ivp
+from scipy.integrate import solve_ivp
 
-from Abstract.Integrator import Integrator
+from deprecated.Abstract.Integrator import Integrator
 from utilities.Utils import Context, Particle
 
 """Integrators for various SIR style models and using various integrators, all deterministic."""

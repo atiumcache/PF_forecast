@@ -2,13 +2,10 @@ from functools import partial
 
 import numpy as np
 
-from Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
-from Implementations.perturbers.perturbers import MultivariatePerturbations
-from Implementations.resamplers.resamplers import NBinomResample
-from Implementations.solvers.DeterministicSolvers import (EulerSolver,
-                                                          LSODACalvettiSolver,
-                                                          LSODASolver,
-                                                          LSODASolverSEIARHD)
+from deprecated.Implementations.algorithms.TimeDependentBeta import TimeDependentAlgo
+from deprecated.Implementations.perturbers.perturbers import MultivariatePerturbations
+from deprecated.Implementations.resamplers.resamplers import NBinomResample
+from deprecated.Implementations.solvers.DeterministicSolvers import LSODASolver
 from utilities.Utils import ESTIMATION, Context
 
 

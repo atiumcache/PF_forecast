@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List
 
-from Abstract.Integrator import Integrator
-from Abstract.Perturb import Perturb
-from Abstract.Resampler import Resampler
+from deprecated.Abstract.Integrator import Integrator
+from deprecated.Abstract.Perturb import Perturb
+from deprecated.Abstract.Resampler import Resampler
 from utilities.Utils import Context, Particle
 
 
