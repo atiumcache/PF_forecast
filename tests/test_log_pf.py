@@ -7,11 +7,10 @@ from jax import random
 import numpy as np
 import pandas as pd
 
-import \
-    filter_forecast.particle_filter.observation_data
+import filter_forecast.particle_filter.observation_data
 import filter_forecast.particle_filter.particle_cloud
-from filter_forecast.particle_filter import particle_filter_main
-from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter import main_particle_filter
+from filter_forecast.particle_filter.global_settings import GlobalSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
 from filter_forecast.particle_filter.transition import GaussianNoiseModel
@@ -20,12 +19,12 @@ from filter_forecast.particle_filter.transition import GaussianNoiseModel
 class TestParticleCloud(unittest.TestCase):
 
     def setUp(self):
-        self.settings = InitSettings(
+        self.settings = GlobalSettings(
             num_particles=10,
             population=1000,
             location_code="04",
             runtime=5,
-            prediction_date="2024-07-17",
+            final_date="2024-07-17",
             dt=1.0,
             seed_size=0.005,
         )
@@ -71,7 +70,9 @@ class TestParticleCloud(unittest.TestCase):
 
     def test_observation_class(self):
         hosp_cases = jnp.array([3, 5, 6, 3, 8, 9, 121, 7])
-        observations = filter_forecast.particle_filter.observation_data.ObservationData(observations=hosp_cases)
+        observations = filter_forecast.particle_filter.observation_data.ObservationData(
+            observations=hosp_cases
+        )
         self.assertEqual(observations.get_observation(2), 6)
 
     def test_compute_single_weight(self):
@@ -131,12 +132,12 @@ class TestParticleCloud(unittest.TestCase):
 class TestOutputHandler(unittest.TestCase):
 
     def setUp(self):
-        self.settings = InitSettings(
+        self.settings = GlobalSettings(
             num_particles=10,
             population=10000,
             location_code="04",
             runtime=5,
-            prediction_date="2024-07-17",
+            final_date="2024-07-17",
         )
         self.runtime = 5
         self.handler = OutputHandler(self.settings, self.runtime)

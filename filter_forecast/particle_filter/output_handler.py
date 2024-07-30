@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from jax.typing import ArrayLike
 
-from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.global_settings import GlobalSettings
 
 
 class OutputHandler:
-    def __init__(self, settings: InitSettings, runtime: int) -> None:
+    def __init__(self, settings: GlobalSettings, runtime: int) -> None:
         self.settings = settings
         self.runtime: int = runtime
         self.destination_dir: str = None
@@ -23,7 +23,7 @@ class OutputHandler:
         self._get_average_betas(all_betas)
 
         loc_code = self.settings.location_code
-        date = self.settings.prediction_date
+        date = self.settings.final_date
 
         df = pd.DataFrame(self.avg_betas)
 

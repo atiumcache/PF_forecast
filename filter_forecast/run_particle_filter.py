@@ -10,22 +10,27 @@ import pandas as pd
 
 from filter_forecast.helpers import get_data_since_week_26
 from filter_forecast.state import State
+from filter_forecast.particle_filter.initialize import initialize_particle_filter
 
 
-def main(location_code: str, start_date: str) -> None:
+def main(location_code: str, target_date: str) -> None:
 
     state = State(location_code)
 
-    start_date = pd.to_datetime(start_date)
+    target_date = pd.to_datetime(target_date)
 
-    filtered_state_data = get_data_since_week_26(state.hosp_data, start_date)
-
-    # This csv will be used by the trend forecasting.
-    filtered_state_data.to_csv(
-        f"./output/hosp_data/hosp" f"_{location_code}_filtered.csv"
-    )
+    filtered_state_data = get_data_since_week_26(state.hosp_data, target_date)
+    observations = filtered_state_data['previous_day_admission_influenza_confirmed'].to_numpy()
 
     # Determine number of days for PF to estimate, based on length of data.
     time_steps = len(filtered_state_data)
 
     # Run the particle filter.
+    pf_algo = initialize_particle_filter(
+        state_population=state.population,
+        location_code=location_code,
+        target_date=target_date.strftime('%Y-%m-%d'),
+        runtime=time_steps,
+        num_particles=10
+    )
+    pf_algo.run(observations)

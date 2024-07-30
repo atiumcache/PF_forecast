@@ -8,7 +8,7 @@ from jax import random as random
 from jax._src.basearray import ArrayLike
 from jax.scipy.stats import norm as norm
 
-from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.global_settings import GlobalSettings
 from filter_forecast.particle_filter.transition import Transition
 
 
@@ -40,7 +40,7 @@ class ParticleCloud:
         states[:, 5, t] will return all particles' new_H counts at time t.
     """
 
-    def __init__(self, settings: InitSettings, transition: Transition):
+    def __init__(self, settings: GlobalSettings, transition: Transition):
         self.settings = settings
         self.model = transition
 

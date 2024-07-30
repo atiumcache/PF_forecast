@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytz
 
-from filter_forecast.particle_filter.init_settings import InitSettings
+from filter_forecast.particle_filter.global_settings import GlobalSettings
 
 
 def get_logger():

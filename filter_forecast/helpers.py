@@ -49,9 +49,10 @@ def get_previous_80_rows(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.Data
     return result_df
 
 
-def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.DataFrame:
+def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp):
     """
-    Returns a data frame containing a state's hospitalization data from 2023-06-25 until the target date.
+    Returns an array containing a state's hospitalization data from 2023-06-25
+    until the target date.
 
     :param df: A single state's hospitalization data.
     :param target_date: Date object in ISO 8601 format.
@@ -80,7 +81,8 @@ def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp) -> pd.Da
     # Reset the index to return 'date' as a column
     df_filtered.reset_index(inplace=True)
 
-    return df_filtered
+    return df_filtered[('previous_day_admission_influenza_confirmed'
+                        '')].to_numpy()[0]
 
 
 def get_beta_min_max_data(df: pd.DataFrame) -> pd.DataFrame:
