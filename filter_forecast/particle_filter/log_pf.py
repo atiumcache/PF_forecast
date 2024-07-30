@@ -8,8 +8,7 @@ from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
 from filter_forecast.particle_filter.particle_cloud import ParticleCloud
 from filter_forecast.particle_filter.setup_pf import get_logger
-from filter_forecast.particle_filter.transition import (GaussianNoiseModel,
-                                                        OUModel)
+from filter_forecast.particle_filter.transition import GaussianNoiseModel, OUModel
 
 
 @dataclass
@@ -27,9 +26,7 @@ class ObservationData:
         return self.observations[t]
 
 
-def run_pf(
-    settings: InitSettings, observation_data: ArrayLike, runtime: int
-) -> None:
+def run_pf(settings: InitSettings, observation_data: ArrayLike, runtime: int) -> None:
     """Main logic for running the particle filter.
 
     Args:
@@ -48,7 +45,7 @@ def run_pf(
     # Initialize an object that stores the hospitalization data.
     observed_data = ObservationData(observation_data)
 
-    for t in tqdm(range(runtime), desc="Running Particle Filter", colour='green'):
+    for t in tqdm(range(runtime), desc="Running Particle Filter", colour="green"):
 
         # If t = 0, then we just initialized the particles.
         # Thus, we do not need to update.

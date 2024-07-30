@@ -12,6 +12,9 @@ from filter_forecast.particle_filter.init_settings import InitSettings
 from filter_forecast.particle_filter.transition import Transition
 
 
+KeyArray = Array
+
+
 @dataclass
 class ParticleCloud:
     """Represents a cloud of particles. Includes methods for updating
@@ -44,8 +47,11 @@ class ParticleCloud:
         seed = 43
         self.key = random.PRNGKey(seed)
 
+        self.key, *initial_state_keys = random.split(
+            self.key, self.settings.num_particles + 1
+        )
         initial_states = jnp.array(
-            [self._get_initial_state() for _ in range(self.settings.num_particles)]
+            [self._get_initial_state(k) for k in initial_state_keys]
         )
 
         self.states = jnp.zeros(
@@ -71,25 +77,30 @@ class ParticleCloud:
 
         self.hosp_estimates = jnp.zeros(self.settings.num_particles)
 
-    def _get_initial_state(self):
+    def _get_initial_state(self, key: KeyArray) -> Array:
         """Gets an initial state for one particle.
 
         The entire population is susceptible. Then, we draw from uniform
-        random to infect some portion of the susceptible population."""
+        random to infect some portion of the susceptible population.
+
+        Args:
+            key: A JAX PRNG key
+
+        Returns:
+            Initial state vector.
+        """
         population = self.settings.population
 
         # state = [S, I, R, H, new_H]
         state = [population, 0, 0, 0, 0]
-        # TODO: Replace np with JAX random, pass in subkey.
-        infected_seed = np.random.uniform(1, self.settings.seed_size * population)
-        # Move
+        infected_seed = random.uniform(
+            key=key, minval=1, maxval=self.settings.seed_size * population
+        )
         state[1] += infected_seed
         state[0] -= infected_seed
         return jnp.array(state)
 
-    def _update_single_particle(
-        self, state: ArrayLike, t: int, beta: float0
-    ) -> Array:
+    def _update_single_particle(self, state: ArrayLike, t: int, beta: float0) -> Array:
         """For a single particle, step the state forward 1 discrete time step.
 
         Helper function for update_all_particles. Each particle's update is
@@ -109,7 +120,6 @@ class ParticleCloud:
             state += self.model.det_component(state, t, beta) * self.settings.dt
             state += self.model.sto_component(state, self.settings.dt, self.key)
         return state
-
 
     def update_all_particles(self, t: int) -> None:
         """Propagate all particle state vectors forward one time step.

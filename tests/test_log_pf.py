@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 import jax.numpy as jnp
+from jax import random
 import numpy as np
 import pandas as pd
 
@@ -46,7 +47,8 @@ class TestParticleCloud(unittest.TestCase):
         )
 
     def test_initial_state(self):
-        initial_state = self.particle_cloud._get_initial_state()
+        key = random.PRNGKey(0)
+        initial_state = self.particle_cloud._get_initial_state(key)
         self.assertEqual(len(initial_state), 5)
         self.assertAlmostEqual(sum(initial_state), self.settings.population, delta=1e-5)
 
