@@ -29,7 +29,7 @@ class OutputHandler:
 
         root_dir = self.find_project_root(self, current_path=os.getcwd())
         output_dir = os.path.join(root_dir, self.destination_dir)
-        output_path = os.path.join(output_dir, f"{loc_code}_" f"{date}_avg_betas.csv")
+        output_path = os.path.join(output_dir, f"{loc_code}/" f"{date}_avg_betas.csv")
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 

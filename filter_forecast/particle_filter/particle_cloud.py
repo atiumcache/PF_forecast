@@ -118,7 +118,8 @@ class ParticleCloud:
         num_steps = int(1 / self.settings.dt)
         for _ in range(num_steps):
             state += self.model.det_component(state, t, beta) * self.settings.dt
-            state += self.model.sto_component(state, self.settings.dt, self.key)
+            self.key, subkey = random.split(self.key)
+            state += self.model.sto_component(state, self.settings.dt, subkey)
         return state
 
     def update_all_particles(self, t: int) -> None:

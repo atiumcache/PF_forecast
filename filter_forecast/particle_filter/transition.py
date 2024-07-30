@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import jax.numpy as jnp
 import jax.random as random
-from jax import Array
+from jax import Array, jit
 from jax.typing import ArrayLike
 
 from filter_forecast.particle_filter.parameters import ModelParameters
@@ -58,7 +58,7 @@ class Transition(ABC):
 
 
 class GaussianNoiseModel(Transition):
-    def __init__(self, model_params: ModelParameters, sigma=0.001):
+    def __init__(self, model_params: ModelParameters, sigma: float = 0.001):
         super().__init__(model_params)
         self.sigma = sigma  # Volatility of the noise
 

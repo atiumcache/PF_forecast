@@ -7,8 +7,10 @@ from jax import random
 import numpy as np
 import pandas as pd
 
+import \
+    filter_forecast.particle_filter.observation_data
 import filter_forecast.particle_filter.particle_cloud
-from filter_forecast.particle_filter import log_pf
+from filter_forecast.particle_filter import particle_filter_main
 from filter_forecast.particle_filter.init_settings import InitSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
@@ -69,7 +71,7 @@ class TestParticleCloud(unittest.TestCase):
 
     def test_observation_class(self):
         hosp_cases = jnp.array([3, 5, 6, 3, 8, 9, 121, 7])
-        observations = log_pf.ObservationData(observations=hosp_cases)
+        observations = filter_forecast.particle_filter.observation_data.ObservationData(observations=hosp_cases)
         self.assertEqual(observations.get_observation(2), 6)
 
     def test_compute_single_weight(self):
