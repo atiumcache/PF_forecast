@@ -29,7 +29,7 @@ class ObservationData:
 
 def run_pf(
     settings: InitSettings, observation_data: ArrayLike, runtime: int
-) -> ArrayLike:
+) -> None:
     """Main logic for running the particle filter.
 
     Args:
@@ -41,8 +41,6 @@ def run_pf(
     Returns:
         None. Output data is saved to a CSV file.
     """
-
-    # Initialize the particles
     particles = ParticleCloud(
         settings, transition=GaussianNoiseModel(model_params=ModelParameters())
     )
@@ -50,16 +48,16 @@ def run_pf(
     # Initialize an object that stores the hospitalization data.
     observed_data = ObservationData(observation_data)
 
-    for t in tqdm(range(runtime), desc="Running Particle Filter"):
+    for t in tqdm(range(runtime), desc="Running Particle Filter", colour='green'):
 
         # If t = 0, then we just initialized the particles.
         # Thus, we do not need to update.
         if t != 0:
             particles.update_all_particles(t)
 
-        observation = observed_data.get_observation(t)
+        case_report = observed_data.get_observation(t)
 
-        particles.compute_all_weights(reported_data=observation, t=t)
+        particles.compute_all_weights(reported_data=case_report, t=t)
         particles.normalize_weights(t=t)
         particles.resample(t=t)
         particles.perturb_betas(t=t)
@@ -67,6 +65,3 @@ def run_pf(
     output_handler = OutputHandler(settings, runtime)
     output_handler.set_destination_directory("output/")
     output_handler.output_average_betas(all_betas=particles.betas)
-
-    # TODO: Remove this return. It is for testing purposes.
-    return output_handler.avg_betas

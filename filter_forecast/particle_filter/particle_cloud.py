@@ -88,7 +88,7 @@ class ParticleCloud:
         return jnp.array(state)
 
     def _update_single_particle(
-        self, state: ArrayLike, t: int, beta: float0, dt: float
+        self, state: ArrayLike, t: int, beta: float0
     ) -> Array:
         """For a single particle, step the state forward 1 discrete time step.
 
@@ -100,20 +100,20 @@ class ParticleCloud:
             state: the current state of the particle at time t.
             t: the current time step.
             beta: the current beta value for the particle
-            dt: granularity for numerical integration
 
         Returns:
             New state vector for a single particle.
         """
-        num_steps = int(1 / dt)
+        num_steps = int(1 / self.settings.dt)
         for _ in range(num_steps):
-            det_update = self.model.det_component(state, t, beta) * dt
-            state += det_update
-            state += self.model.sto_component(state, dt, self.key)
+            state += self.model.det_component(state, t, beta) * self.settings.dt
+            state += self.model.sto_component(state, self.settings.dt, self.key)
         return state
 
     def update_all_particles_loop(self, t: int) -> None:
-        """Updates the state vector for all particles.
+        """Deprecated. Replaced by vmap version.
+
+        Updates the state vector for all particles.
 
         Args:
             t: the current time step.
@@ -125,7 +125,7 @@ class ParticleCloud:
         new_states = jnp.zeros((self.settings.num_particles, len(self.states[0, :, 0])))
         for p in range(self.settings.num_particles):
             new_state = self._update_single_particle(
-                self.states[p, :, t - 1], t, self.betas[p, t - 1], self.settings.dt
+                self.states[p, :, t - 1], t, self.betas[p, t - 1]
             )
             new_states = new_states.at[p].set(new_state)
 
@@ -148,9 +148,10 @@ class ParticleCloud:
         # We iterate over the 0th axes of states and betas.
         # Thus, we pass our function the state vector for each particle at
         # time t. And we pass the beta value for each particle at time t.
-        new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0, None))(
-            self.states[:, :, t - 1], t, self.betas[:, t - 1], self.settings.dt
+        new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0))(
+            self.states[:, :, t - 1], t, self.betas[:, t - 1]
         )
+
         self.states = self.states.at[:, :, t].set(new_states)
         self.betas = self.betas.at[:, t].set(self.betas[:, t - 1])
 
