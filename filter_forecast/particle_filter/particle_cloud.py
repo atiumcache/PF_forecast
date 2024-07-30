@@ -110,30 +110,6 @@ class ParticleCloud:
             state += self.model.sto_component(state, self.settings.dt, self.key)
         return state
 
-    def update_all_particles_loop(self, t: int) -> None:
-        """Deprecated. Replaced by vmap version.
-
-        Updates the state vector for all particles.
-
-        Args:
-            t: the current time step.
-
-        Returns:
-            None. Particles are updated in place.
-        """
-
-        new_states = jnp.zeros((self.settings.num_particles, len(self.states[0, :, 0])))
-        for p in range(self.settings.num_particles):
-            new_state = self._update_single_particle(
-                self.states[p, :, t - 1], t, self.betas[p, t - 1]
-            )
-            new_states = new_states.at[p].set(new_state)
-
-        self.states = self.states.at[:, :, t].set(new_states)
-        self.betas = self.betas.at[:, t].set(self.betas[:, t - 1])
-
-        new_hosp_estimates = self.states[:, 5, t].copy()
-        self.hosp_estimates = new_hosp_estimates
 
     def update_all_particles(self, t: int) -> None:
         """Propagate all particle state vectors forward one time step.
