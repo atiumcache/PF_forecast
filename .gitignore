@@ -4,6 +4,7 @@ datasets/hosp_data/
 datasets/hosp_forecasts/
 datasets/Out_prog3/
 datasets/pf_results/
+myenv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

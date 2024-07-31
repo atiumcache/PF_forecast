@@ -66,7 +66,7 @@ class ModelParameters:
 - L: The latency period, representing the average time between exposure to the virus and the onset of infectiousness.                            
 - D: The duration of the infectious period, indicating the average time an individual remains infectious.                                        
 
-### Update \ Propagate
+### Update / Propagate
 At each time step, we propagate the particles forward one time step based on our state transition function. 
 
 The update is split into two functions to allow us to compute the gradient at each time step for sensitivity analysis. 
@@ -82,7 +82,19 @@ The `update_all_particles` method calls out to `update_single_particle` for each
 
 ### Calculating Weights
 We calculate the weight
+
 ### Normalizing Weights
+We use a Jacobian algorithm to normalize weights. We will denote the log-normalization factor as $\^{W}_k$.
+For contrast, we denote the linear-normalization factors as $W_k$. 
+
+The normalization factor is the sum of all weights. In the linear domain, we just take the sum of all weights:
+$$W_k = \sum_{i=1}^N w_k^i$$
+
+So, we could calculate the log-normaliztion factor as follows:
+$$\^{W}_k = \ln(\sum_{i=1}^N e^{\^{w}_k^i})$$
+
+
+
 
 ### Resampling
 

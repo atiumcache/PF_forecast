@@ -33,7 +33,7 @@ class OutputHandler:
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        df.to_csv(output_path, index=False)
+        df.to_csv(output_path, index=False, header=False)
 
     def _validate_betas_shape(self, all_betas: ArrayLike) -> None:
         expected_shape = (self.settings.num_particles, self.runtime)
