@@ -5,18 +5,15 @@ import pandas as pd
 from jax.typing import ArrayLike
 
 from filter_forecast.particle_filter.global_settings import GlobalSettings
+import config
 
 
 class OutputHandler:
     def __init__(self, settings: GlobalSettings, runtime: int) -> None:
         self.settings = settings
         self.runtime: int = runtime
-        self.destination_dir: str = None
+        self.output_dir: str = config.PF_OUTPUT_DIR
         self.avg_betas = None
-
-    def set_destination_directory(self, destination: str):
-        """Sets a destination directory, relative to project root."""
-        self.destination_dir = destination
 
     def output_average_betas(self, all_betas: ArrayLike) -> None:
         self._validate_betas_shape(all_betas)
@@ -27,13 +24,11 @@ class OutputHandler:
 
         df = pd.DataFrame(self.avg_betas)
 
-        root_dir = self.find_project_root(self, current_path=os.getcwd())
-        output_dir = os.path.join(root_dir, self.destination_dir)
-        output_path = os.path.join(output_dir, f"{loc_code}/" f"{date}_avg_betas.csv")
+        output_file_path = os.path.join(self.output_dir, f"{loc_code}", f"{date}_avg_betas.csv")
 
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
 
-        df.to_csv(output_path, index=False, header=False)
+        df.to_csv(output_file_path, index=False, header=False)
 
     def _validate_betas_shape(self, all_betas: ArrayLike) -> None:
         expected_shape = (self.settings.num_particles, self.runtime)
@@ -46,15 +41,3 @@ class OutputHandler:
         self.avg_betas = np.zeros(self.runtime)
         for t in range(self.runtime):
             self.avg_betas[t] = np.mean(all_betas[:, t])
-
-    @staticmethod
-    def find_project_root(self, current_path: str) -> str:
-        while True:
-            if ".git" in os.listdir(current_path):
-                return current_path
-            parent_dir = os.path.abspath(os.path.join(current_path, os.pardir))
-            if parent_dir == current_path:  # Reached the root of the filesystem
-                raise FileNotFoundError(
-                    "'.git' directory not found in any parent directories."
-                )
-            current_path = parent_dir

@@ -146,7 +146,7 @@ class TestOutputHandler(unittest.TestCase):
 
     def test_set_destination_directory(self):
         self.handler.set_destination_directory("/new_dir")
-        self.assertEqual(self.handler.destination_dir, "/new_dir")
+        self.assertEqual(self.handler.output_dir, "/new_dir")
 
     def test_validate_betas_shape_correct(self):
         all_betas = np.random.rand(self.settings.num_particles, self.runtime)
@@ -176,7 +176,7 @@ class TestOutputHandler(unittest.TestCase):
 
     def tearDown(self):
         # Clean up the temporary file created during the test
-        output_file = os.path.join(self.handler.destination_dir, "average_betas.csv")
+        output_file = os.path.join(self.handler.output_dir, "average_betas.csv")
         if os.path.exists(output_file):
             os.remove(output_file)
 
