@@ -17,11 +17,11 @@ We represent the particles in a `ParticleCloud` class. A `ParticleCloud` has the
 - betas:
 
 ### Parameters
-#### Filter Parameters
+#### Global Parameters
 
 ```python
 @dataclass
-class InitSettings:
+class GlobalSettings:
     num_particles: int
     population: int
     location_code: str
@@ -74,7 +74,9 @@ The update is split into two functions to allow us to compute the gradient at ea
 #### Update Single Particle
 The `update_single_particle` method takes in a particle's current state, and returns a new, updated state. 
 
-The method calls out to our transition model's SDE system, which is broken up into deterministic and stochastic components. If `dt = 1`, then this process occurs once. Otherwise, finer granularity can be achieved by decreasing `dt`, but this comes with computational cost. 
+The method calls out to our transition model's SDE system, which is broken up into deterministic and stochastic components. 
+If `dt = 1`, then this process occurs once. 
+Otherwise, finer granularity can be achieved by decreasing `dt`, but this comes with a proportional computational cost. 
 
 #### Update All Particles
 The `update_all_particles` method calls out to `update_single_particle` for each particle. We use `jax.vmap` to map the function to a collection of iterable arguments: the current state vectors and beta values (t and dt remain constant for all particles). This is a vectorized function mapping.  
@@ -93,17 +95,12 @@ $$W_k = \sum_{i=1}^N w_k^i$$
 
 So, we could calculate the log-normalization factor as follows:
 
-$$W_k' = \ln(\sum_{i=1}^N {e^{w_k^{i}}})$$
+$$W_k' = \ln(\sum_{i=1}^N {e^{w'_k^{i}}})$$
 
 However, this requires a move from log to linear domain, and then back to log again. This could lead to numerical error. 
 
 Thus, we utilize the Jacobian algorithm defined in [this paper](https://www.researchgate.net/publication/323521063_Log-PF_Particle_Filtering_in_Logarithm_Domain). 
-
-The Jacobian defines the log of the sum of $n$ exponentials as follows:
-
-$$\ln(e^{w_1} + ... + e^{w_n}) = \max(ln(\Delta), w_n) + \ln(1 + e^{-|\ln(\Delta) - w_n|)$$
-
-Where $\Delta = e^{w_1} + ... + e^{w_{n-1}}$. 
+See Section 3 of the paper for the implementation and derivation. 
 
 The implemented algorithm is as follows:
 
@@ -130,7 +127,7 @@ def jacobian(input_array: ArrayLike) -> Array:
     return delta
 ```
 
-We see that the Jacobian function is an iterative process to build up the array of partial sums. 
+The Jacobian function is an iterative process to build up the array of partial sums. 
 Eventually, we get the full sum with $\Delta_n$, where $W'_k = \Delta_n$. 
 
 ### Resampling
