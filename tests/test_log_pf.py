@@ -9,7 +9,6 @@ import pandas as pd
 
 import filter_forecast.particle_filter.observation_data
 import filter_forecast.particle_filter.particle_cloud
-from filter_forecast.particle_filter import main_particle_filter
 from filter_forecast.particle_filter.global_settings import GlobalSettings
 from filter_forecast.particle_filter.output_handler import OutputHandler
 from filter_forecast.particle_filter.parameters import ModelParameters
