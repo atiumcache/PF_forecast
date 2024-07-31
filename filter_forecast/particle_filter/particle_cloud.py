@@ -232,32 +232,36 @@ class ParticleCloud:
         self.betas = self.betas.at[:, t].set(new_betas)
 
 
-def jacobian(little_delta: ArrayLike) -> Array:
+def jacobian(input_array: ArrayLike) -> Array:
     """
     The Jacobian algorithm, used in log likelihood normalization and
     resampling processes.
 
     Args:
-        little_delta: An array of values to sum
+        input_array: An array of values to sum.
 
     Returns:
-        The vector of partial sums of little_delta.
+        The vector of partial sums of the input array.
     """
-    n = len(little_delta)
-    big_delta = jnp.zeros(n)
-    big_delta = big_delta.at[0].set(little_delta[0])
+    n = len(input_array)
+    delta = jnp.zeros(n)
+    delta = delta.at[0].set(input_array[0])
     for i in range(1, n):
-        big_delta_i = max(little_delta[i], big_delta[i - 1]) + jnp.log(
-            1 + jnp.exp(-1 * jnp.abs(little_delta[i] - big_delta[i - 1]))
+        delta_i = max(input_array[i], delta[i - 1]) + jnp.log(
+            1 + jnp.exp(-1 * jnp.abs(input_array[i] - delta[i - 1]))
         )
-        big_delta = big_delta.at[i].set(big_delta_i)
-    return big_delta
+        delta = delta.at[i].set(delta_i)
+    return delta
 
 
 def log_norm(log_weights: ArrayLike) -> Array:
     """
     Normalizes the probability space using the Jacobian algorithm as
     defined in jacobian().
+
+    The Jacobian outputs an array of partial sums, where the
+    last element is the sum of all inputs. Thus, the normalization
+    factor is this last element.
     """
     normalized = jacobian(log_weights)[-1]
     log_weights -= normalized

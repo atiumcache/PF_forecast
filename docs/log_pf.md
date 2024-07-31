@@ -1,5 +1,5 @@
 ---
-title: Log PF
+title: Log Particle Filter
 ---
 <script src="./assets/mathjax_settings.js" async></script>
 
@@ -84,17 +84,54 @@ The `update_all_particles` method calls out to `update_single_particle` for each
 We calculate the weight
 
 ### Normalizing Weights
-We use a Jacobian algorithm to normalize weights. We will denote the log-normalization factor as $\^{W}_k$.
+We use a Jacobian algorithm to normalize weights. We will denote the log-normalization factor at time k as $W'_k$.
 For contrast, we denote the linear-normalization factors as $W_k$. 
 
 The normalization factor is the sum of all weights. In the linear domain, we just take the sum of all weights:
+
 $$W_k = \sum_{i=1}^N w_k^i$$
 
-So, we could calculate the log-normaliztion factor as follows:
-$$\^{W}_k = \ln(\sum_{i=1}^N e^{\^{w}_k^i})$$
+So, we could calculate the log-normalization factor as follows:
 
+$$W'_k = \ln(\sum_{i=1}^N e^{w'_k^i})$$
 
+However, this requires a move from log to linear domain, and then back to log again. This could lead to numerical error. 
 
+Thus, we utilize the Jacobian algorithm defined in [this paper](https://www.researchgate.net/publication/323521063_Log-PF_Particle_Filtering_in_Logarithm_Domain). 
+
+The Jacobian defines the log of the sum of $n$ exponentials as follows:
+
+$$\ln(e^{w'_1} + ... + e^{w'_n}) = \max(ln(\Delta), w'_n) + \ln(1 + e^{-|\ln(\Delta) - w'_n|)$$
+
+Where $\Delta = e^{w'_1} + ... + e^{w'_{n-1}}$. 
+
+The implemented algorithm is as follows:
+
+```python
+def jacobian(input_array: ArrayLike) -> Array:
+    """
+    The Jacobian algorithm, used in log likelihood normalization and
+    resampling processes.
+
+    Args:
+        input_array: An array of values to sum.
+
+    Returns:
+        The vector of partial sums of the input array.
+    """
+    n = len(input_array)
+    delta = jnp.zeros(n)
+    delta = delta.at[0].set(input_array[0])
+    for i in range(1, n):
+        delta_i = max(input_array[i], delta[i - 1]) + jnp.log(
+            1 + jnp.exp(-1 * jnp.abs(input_array[i] - delta[i - 1]))
+        )
+        delta = delta.at[i].set(delta_i)
+    return delta
+```
+
+We see that the Jacobian function is an iterative process to build up the array of partial sums. 
+Eventually, we get the full sum with $\Delta_n$, where $W'_k = \Delta_n$. 
 
 ### Resampling
 
