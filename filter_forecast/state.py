@@ -15,7 +15,7 @@ class State:
     def __init__(self, location_code: str):
         self.location_code = location_code.zfill(2)
         self.population = self.get_population(self.location_code)
-        hosp_csv_path = f"../datasets/hosp_data/hosp_{self.location_code}.csv"
+        hosp_csv_path = f"./datasets/hosp_data/hosp_{self.location_code}.csv"
         self.hosp_data = self.load_hospital_data(hosp_csv_path)
 
     @staticmethod
@@ -23,7 +23,7 @@ class State:
         if State.state_populations is None:
             try:
                 State.state_populations = pd.read_csv(
-                    "../datasets/state_populations.csv"
+                    "./datasets/state_populations.csv"
                 )
             except Exception as e:
                 print(f"Error loading state populations: {e}")

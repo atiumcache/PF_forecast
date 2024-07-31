@@ -93,7 +93,7 @@ $$W_k = \sum_{i=1}^N w_k^i$$
 
 So, we could calculate the log-normalization factor as follows:
 
-$$W'_k = \ln(\sum_{i=1}^N e^{w'_k^i})$$
+$$W'_k = \ln(\sum_{i=1}^N e^{w'_k^{i}})$$
 
 However, this requires a move from log to linear domain, and then back to log again. This could lead to numerical error. 
 

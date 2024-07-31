@@ -36,7 +36,9 @@ class ParticleFilterAlgo:
         observed_data = ObservationData(observation_data)
 
         # tqdm provides the console progress bar.
-        for t in tqdm(range(self.settings.runtime), desc="Running Particle Filter", colour="green"):
+        for t in tqdm(
+            range(self.settings.runtime), desc="Running Particle Filter", colour="green"
+        ):
 
             # If t = 0, then we just initialized the particles. Thus, no update.
             if t != 0:

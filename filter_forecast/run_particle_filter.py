@@ -20,7 +20,9 @@ def main(location_code: str, target_date: str, num_particles: int) -> None:
     target_date = pd.to_datetime(target_date)
 
     filtered_state_data = get_data_since_week_26(state.hosp_data, target_date)
-    observations = filtered_state_data['previous_day_admission_influenza_confirmed'].to_numpy()
+    observations = filtered_state_data[
+        "previous_day_admission_influenza_confirmed"
+    ].values
 
     # Determine number of days for PF to estimate, based on length of data.
     time_steps = len(observations)
@@ -29,8 +31,8 @@ def main(location_code: str, target_date: str, num_particles: int) -> None:
     pf_algo = initialize_particle_filter(
         state_population=state.population,
         location_code=location_code,
-        target_date=target_date.strftime('%Y-%m-%d'),
+        target_date=target_date.strftime("%Y-%m-%d"),
         runtime=time_steps,
-        num_particles=num_particles
+        num_particles=num_particles,
     )
     pf_algo.run(observations)

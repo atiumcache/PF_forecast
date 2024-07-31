@@ -13,12 +13,12 @@ import pandas as pd
 
 def main():
     """Load new hospitalization data."""
-    full_data_file = "../datasets/COVID_Reported_Data.csv"
-    destination_folder = "../datasets/hosp_data/"
+    full_data_file = "./datasets/COVID_Reported_Data.csv"
+    destination_folder = "./datasets/hosp_data/"
     os.makedirs(destination_folder, exist_ok=True)
 
     """Import locations"""
-    locations = pd.read_csv("../datasets/locations.csv", skiprows=0)
+    locations = pd.read_csv("./datasets/locations.csv", skiprows=0)
     locations = locations.drop([0])  # skip first row (national ID)
     location_to_state = {}
 

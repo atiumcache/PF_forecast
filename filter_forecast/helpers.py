@@ -69,20 +69,17 @@ def get_data_since_week_26(df: pd.DataFrame, target_date: pd.Timestamp):
     df_filtered = df.loc[start_date:target_date]
 
     # Interpolate missing values only in 'previous_day_admission_influenza_confirmed'
-    df_filtered["previous_day_admission_influenza_confirmed"] = df_filtered[
+    df_filtered.loc[:, "previous_day_admission_influenza_confirmed"] = df_filtered[
         "previous_day_admission_influenza_confirmed"
     ].interpolate(method="linear", limit_direction="both")
 
-    # Drop the unnecessary columns
-    df_filtered.drop(
-        columns=["state", "Unnamed: 0"], axis=1, inplace=True, errors="ignore"
-    )
+    # Create a new DataFrame with the desired columns
+    df_filtered = df_filtered.drop(["state", "Unnamed: 0"], axis=1, errors="ignore")
 
     # Reset the index to return 'date' as a column
     df_filtered.reset_index(inplace=True)
 
-    return df_filtered[('previous_day_admission_influenza_confirmed'
-                        '')].to_numpy()[0]
+    return df_filtered
 
 
 def get_beta_min_max_data(df: pd.DataFrame) -> pd.DataFrame:

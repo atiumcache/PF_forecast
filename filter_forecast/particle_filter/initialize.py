@@ -4,8 +4,11 @@ from filter_forecast.particle_filter.main_particle_filter import ParticleFilterA
 
 
 def initialize_particle_filter(
-    state_population: int, location_code: str, target_date: str,
-        num_particles: int, runtime: int
+    state_population: int,
+    location_code: str,
+    target_date: str,
+    num_particles: int,
+    runtime: int,
 ) -> ParticleFilterAlgo:
     """Initializes a ParticleFilterAlgo object."""
 
@@ -14,7 +17,7 @@ def initialize_particle_filter(
         population=state_population,
         location_code=location_code,
         final_date=target_date,
-        runtime=runtime
+        runtime=runtime,
     )
 
     model_parameters = ModelParameters()
