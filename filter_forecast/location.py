@@ -17,7 +17,9 @@ class Location:
     def __init__(self, location_code: str):
         self.location_code = location_code.zfill(2)
         self.population = self.get_population(self.location_code)
-        hosp_csv_path = os.path.join(config.DATASETS_DIR, 'hosp_data', f'hosp_{self.location_code}.csv')
+        hosp_csv_path = os.path.join(
+            config.DATASETS_DIR, "hosp_data", f"hosp_{self.location_code}.csv"
+        )
         self.hosp_data = self.load_hospital_data(hosp_csv_path)
 
     @staticmethod
@@ -29,7 +31,9 @@ class Location:
         """
         if Location.state_populations is None:
             try:
-                state_pops_path = os.path.join(config.DATASETS_DIR, 'state_populations.csv')
+                state_pops_path = os.path.join(
+                    config.DATASETS_DIR, "state_populations.csv"
+                )
                 Location.state_populations = pd.read_csv(state_pops_path)
             except Exception as e:
                 print(f"Error loading state populations: {e}")

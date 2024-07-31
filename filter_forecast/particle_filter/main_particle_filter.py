@@ -52,5 +52,4 @@ class ParticleFilterAlgo:
             particles.perturb_betas(t=t)
 
         output_handler = OutputHandler(self.settings, self.settings.runtime)
-        output_handler.set_destination_directory("output/pf_avg_betas/")
         output_handler.output_average_betas(all_betas=particles.betas)

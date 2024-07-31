@@ -93,7 +93,7 @@ $$W_k = \sum_{i=1}^N w_k^i$$
 
 So, we could calculate the log-normalization factor as follows:
 
-$$W'_k = \ln(\sum_{i=1}^N e^{w'_k^{i}})$$
+$$W_k' = \ln(\sum_{i=1}^N e^{w_k^{i}})$$
 
 However, this requires a move from log to linear domain, and then back to log again. This could lead to numerical error. 
 
@@ -101,9 +101,9 @@ Thus, we utilize the Jacobian algorithm defined in [this paper](https://www.rese
 
 The Jacobian defines the log of the sum of $n$ exponentials as follows:
 
-$$\ln(e^{w'_1} + ... + e^{w'_n}) = \max(ln(\Delta), w'_n) + \ln(1 + e^{-|\ln(\Delta) - w'_n|)$$
+$$\ln(e^{w_1} + ... + e^{w_n}) = \max(ln(\Delta), w_n) + \ln(1 + e^{-|\ln(\Delta) - w_n|)$$
 
-Where $\Delta = e^{w'_1} + ... + e^{w'_{n-1}}$. 
+Where $\Delta = e^{w_1} + ... + e^{w_{n-1}}$. 
 
 The implemented algorithm is as follows:
 

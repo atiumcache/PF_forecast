@@ -24,7 +24,9 @@ class OutputHandler:
 
         df = pd.DataFrame(self.avg_betas)
 
-        output_file_path = os.path.join(self.output_dir, f"{loc_code}", f"{date}_avg_betas.csv")
+        output_file_path = os.path.join(
+            self.output_dir, f"{loc_code}", f"{date}_avg_betas.csv"
+        )
 
         os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
 
