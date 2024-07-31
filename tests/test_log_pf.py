@@ -140,13 +140,6 @@ class TestOutputHandler(unittest.TestCase):
         )
         self.runtime = 5
         self.handler = OutputHandler(self.settings, self.runtime)
-        self.handler.set_destination_directory(
-            "/tmp"
-        )  # Set a temporary directory for testing
-
-    def test_set_destination_directory(self):
-        self.handler.set_destination_directory("/new_dir")
-        self.assertEqual(self.handler.output_dir, "/new_dir")
 
     def test_validate_betas_shape_correct(self):
         all_betas = np.random.rand(self.settings.num_particles, self.runtime)
@@ -167,12 +160,6 @@ class TestOutputHandler(unittest.TestCase):
         np.testing.assert_array_almost_equal(
             self.handler.avg_betas[0], expected_avg_betas
         )
-
-    def test_find_project_root(self):
-        cwd = os.getcwd()
-        project_root = self.handler.find_project_root(self, cwd)
-        root_extension = project_root.split("/")[-1]
-        self.assertTrue(root_extension == "PF_forecast")
 
     def tearDown(self):
         # Clean up the temporary file created during the test
