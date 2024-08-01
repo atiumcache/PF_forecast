@@ -83,7 +83,7 @@ The `update_all_particles` method calls out to `update_single_particle` for each
 
 
 ### Calculating Weights
-We calculate the weight
+We calculate the weights...
 
 ### Normalizing Weights
 We use a Jacobian algorithm to normalize weights. We will denote the log-normalization factor at time k as $W'_k$.
@@ -131,6 +131,13 @@ The Jacobian function is an iterative process to build up the array of partial s
 Eventually, we get the full sum with $\Delta_n$, where $W'_k = \Delta_n$. 
 
 ### Resampling
+The resampling step also utilizes the Jacobian algorithm to implement systematic resampling. 
 
+Calling `jacobian(weights)` returns an array of partial sums of the input weights. 
+Let $\Delta_i$ denote the partial sum of weights for $w_1$ through $w_i$. 
+
+We draw a random variable $u$ from uniform distribution, then build the rest of the equally-spaced resampling points from `u`. 
+
+Particle $j$ in the next time step is resampled from particle $i$, where $\Delta_i > u_j > \Delta_{i-1}$. 
 
 ### Perturbations
