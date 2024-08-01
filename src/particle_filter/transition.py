@@ -5,7 +5,7 @@ import jax.random as random
 from jax import Array, jit
 from jax.typing import ArrayLike
 
-from filter_forecast.particle_filter.parameters import ModelParameters
+from src.particle_filter.parameters import ModelParameters
 
 # for typing hints
 KeyArray = Array
@@ -29,12 +29,6 @@ class Transition(ABC):
         """
         S, I, R, H, new_H = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
-
-        # if S < 0 or I < 0 or R < 0 or H < 0 or new_H < 0:
-        #    raise ValueError("State variables must be non-negative.")
-
-        # if N <= 0:
-        #    raise ValueError("Total population N must be positive.")
 
         new_H = (1 / self.params.D) * self.params.gamma * I
 

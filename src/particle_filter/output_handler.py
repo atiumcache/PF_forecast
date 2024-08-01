@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from jax.typing import ArrayLike
 
-from filter_forecast.particle_filter.global_settings import GlobalSettings
-import config
+from src.particle_filter.global_settings import GlobalSettings
+import paths
 
 
 class OutputHandler:

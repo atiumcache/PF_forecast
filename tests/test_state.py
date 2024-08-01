@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from filter_forecast.location import Location
+from src.location import Location
 
 
 class TestState(unittest.TestCase):

@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import config
+import paths
 
 
 class Location:

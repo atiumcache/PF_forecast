@@ -15,8 +15,8 @@ from typing import Dict, List
 
 import pandas as pd
 
-from filter_forecast import particle_filter
-from filter_forecast.hosp_forecast import LSODA_forecast
+from src import particle_filter
+from src.hosp_forecast import LSODA_forecast
 
 logger = logging.getLogger(__name__)
 

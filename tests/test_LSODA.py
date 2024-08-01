@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from filter_forecast.hosp_forecast.LSODA_forecast import *
+from src.hosp_forecast.LSODA_forecast import *
 
 
 class TestForecastingScript(unittest.TestCase):

@@ -1,0 +1,12 @@
+# config.toml
+
+[filter_params]
+num_particles = 100
+dt = 1.0
+seed_size = 0.05
+
+[model_params]
+beta_prior = [0.1, 0.3]
+
+[logging]
+level = "DEBUG"

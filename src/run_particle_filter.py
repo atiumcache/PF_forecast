@@ -8,9 +8,9 @@ by the Trend Forecasting R script.
 
 import pandas as pd
 
-from filter_forecast.helpers import get_data_since_week_26
-from filter_forecast.location import Location
-from filter_forecast.particle_filter.initialize import initialize_particle_filter
+from src.helpers import get_data_since_week_26
+from src.location import Location
+from src.particle_filter.initialize import initialize_particle_filter
 
 
 def main(location_code: str, target_date: str, num_particles: int) -> None:
@@ -33,6 +33,5 @@ def main(location_code: str, target_date: str, num_particles: int) -> None:
         location_code=location_code,
         target_date=target_date.strftime("%Y-%m-%d"),
         runtime=time_steps,
-        num_particles=num_particles,
     )
     pf_algo.run(observations)

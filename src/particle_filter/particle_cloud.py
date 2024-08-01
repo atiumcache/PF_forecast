@@ -8,8 +8,8 @@ from jax import random as random
 from jax._src.basearray import ArrayLike
 from jax.scipy.stats import norm as norm
 
-from filter_forecast.particle_filter.global_settings import GlobalSettings
-from filter_forecast.particle_filter.transition import Transition
+from src.particle_filter.global_settings import GlobalSettings
+from src.particle_filter.transition import Transition
 
 
 KeyArray = Array
@@ -188,6 +188,7 @@ class ParticleCloud:
 
         Args:
             t: current time step
+
 
         Returns:
             None. Directly updates the instance weights.

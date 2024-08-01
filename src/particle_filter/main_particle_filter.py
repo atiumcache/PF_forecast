@@ -1,12 +1,12 @@
 from jax.typing import ArrayLike
 from tqdm import tqdm
 
-from filter_forecast.particle_filter.global_settings import GlobalSettings
-from filter_forecast.particle_filter.observation_data import ObservationData
-from filter_forecast.particle_filter.output_handler import OutputHandler
-from filter_forecast.particle_filter.parameters import ModelParameters
-from filter_forecast.particle_filter.particle_cloud import ParticleCloud
-from filter_forecast.particle_filter.transition import GaussianNoiseModel
+from src.particle_filter.global_settings import GlobalSettings
+from src.particle_filter.observation_data import ObservationData
+from src.particle_filter.output_handler import OutputHandler
+from src.particle_filter.parameters import ModelParameters
+from src.particle_filter.particle_cloud import ParticleCloud
+from src.particle_filter.transition import GaussianNoiseModel
 
 
 class ParticleFilterAlgo:
