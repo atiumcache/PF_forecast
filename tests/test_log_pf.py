@@ -29,10 +29,8 @@ class TestParticleCloud(unittest.TestCase):
         )
         model_params = ModelParameters()
         transition = GaussianNoiseModel(model_params)
-        self.particle_cloud = (
-            src.particle_filter.particle_cloud.ParticleCloud(
-                self.settings, transition
-            )
+        self.particle_cloud = src.particle_filter.particle_cloud.ParticleCloud(
+            self.settings, transition
         )
 
     def test_initialization(self):

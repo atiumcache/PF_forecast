@@ -12,7 +12,7 @@ class OutputHandler:
     def __init__(self, settings: GlobalSettings, runtime: int) -> None:
         self.settings = settings
         self.runtime: int = runtime
-        self.output_dir: str = config.PF_OUTPUT_DIR
+        self.output_dir: str = paths.PF_OUTPUT_DIR
         self.avg_betas = None
 
     def output_average_betas(self, all_betas: ArrayLike) -> None:
