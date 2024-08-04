@@ -4,10 +4,11 @@
 num_particles = 100
 dt = 1.0
 seed_size = 0.05
+beta_prior = [0.1, 0.3]
+ll_var_prior = [0.01, 0.1]
+infected_seed_size = 0.01
 
 [model_params]
-beta_prior = [0.1, 0.3]
-
 gamma = {value = 0.06, estimate = false}
 mu = {value = 0.004, estimate = false}
 q = {value = 0.1, estimate = false}
@@ -17,6 +18,7 @@ R = {value = 50.0, estimate = false}
 hosp = {value = 10, estimate = false}
 L = {value = 90, estimate = false}
 D = {value = 10, estimate = false}
+dW_volatility = {value = 0.1, estimate = false}
 
 # Params for the beta OU process
 beta_theta = {value = 0.1, is_fixed = true}

@@ -29,15 +29,11 @@ class ParticleCloud:
         weights: An (N, T) of particle weights, where
             N is number of particles,
             T is length of time series.
-        betas: An (N, T) array of beta values, where
-            N is number of particles,
-            T is length of time series.
         hosp_estimates: An array of hospital estimates. Length = num_particles.
 
     Examples:
         weights[i, t] will return the ith particle's weight at time t.
-        betas[:, t] will return all particles' beta values at time t.
-        states[:, 5, t] will return all particles' new_H counts at time t.
+        states[:, 4, t] will return all particles' new_H counts at time t.
     """
 
     def __init__(self, settings: GlobalSettings, transition: Transition):
@@ -63,18 +59,7 @@ class ParticleCloud:
         )
 
         self.states = self.states.at[:, :, 0].set(initial_states)
-
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
-
-        # Generate betas for each particle and each time step
-        beta_prior = self.settings.beta_prior
-        betas_initial = np.random.uniform(
-            beta_prior[0], beta_prior[1], size=self.settings.num_particles
-        )
-        self.betas = jnp.zeros((self.settings.num_particles, self.settings.runtime))
-        # Assign the betas array to self.betas
-        self.betas = self.betas.at[:, 0].set(betas_initial)
-
         self.hosp_estimates = jnp.zeros(self.settings.num_particles)
 
     def _get_initial_state(self, key: KeyArray) -> Array:
@@ -89,18 +74,31 @@ class ParticleCloud:
         Returns:
             Initial state vector.
         """
+        key1, key2, key3 = random.split(key, 3)
         population = self.settings.population
 
-        # state = [S, I, R, H, new_H]
-        state = [population, 0, 0, 0, 0]
+        # state = [S, I, R, H, new_H, beta, ll_var]
+        state = [population, 0, 0, 0, 0, 0, 0]
+
+        # Infect a portion of S compartment
         infected_seed = random.uniform(
-            key=key, minval=1, maxval=self.settings.seed_size * population
+            key=key1, minval=1, maxval=self.settings.seed_size * population
         )
         state[1] += infected_seed
         state[0] -= infected_seed
+
+        # Initialize beta and ll_var based on priors
+        beta_prior = self.settings.beta_prior
+        initial_beta = random.uniform(key=key2, minval=beta_prior[0], maxval=beta_prior[1])
+        state[5] = initial_beta
+
+        variance_prior = self.settings.ll_var_prior
+        initial_variance = random.uniform(key=key3, minval=variance_prior[0], maxval=variance_prior[1])
+        state[6] = initial_variance
+
         return jnp.array(state)
 
-    def _update_single_particle(self, state: ArrayLike, t: int, beta: float0) -> Array:
+    def _update_single_particle(self, state: ArrayLike, t: int) -> Array:
         """For a single particle, step the state forward 1 discrete time step.
 
         Helper function for update_all_particles. Each particle's update is
@@ -110,16 +108,16 @@ class ParticleCloud:
         Args:
             state: the current state of the particle at time t.
             t: the current time step.
-            beta: the current beta value for the particle
 
         Returns:
             New state vector for a single particle.
         """
         num_steps = int(1 / self.settings.dt)
         for _ in range(num_steps):
-            state += self.model.det_component(state, t, beta) * self.settings.dt
+            det_update = self.model.det_component(state, t) * self.settings.dt
             self.key, subkey = random.split(self.key)
-            state += self.model.sto_component(state, self.settings.dt, subkey)
+            sto_update = self.model.sto_component(state, self.settings.dt, subkey)
+            state += det_update + sto_update
         return state
 
     def update_all_particles(self, t: int) -> None:
@@ -135,8 +133,8 @@ class ParticleCloud:
         # We iterate over the 0th axes of states and betas.
         # Thus, we pass our function the state vector for each particle at
         # time t. And we pass the beta value for each particle at time t.
-        new_states = jax.vmap(self._update_single_particle, in_axes=(0, None, 0))(
-            self.states[:, :, t - 1], t, self.betas[:, t - 1]
+        new_states = jax.vmap(self._update_single_particle, in_axes=(0, None))(
+            self.states[:, :, t - 1], t
         )
 
         self.states = self.states.at[:, :, t].set(new_states)

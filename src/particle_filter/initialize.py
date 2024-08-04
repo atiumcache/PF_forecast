@@ -22,9 +22,14 @@ def initialize_particle_filter(
         location_code=location_code,
         final_date=target_date,
         runtime=runtime,
-        beta_prior=tuple(config["model_params"]["beta_prior"]),
+        dt=config["filter_params"]["dt"],
+        beta_prior=tuple(config["filter_params"]["beta_prior"]),
+        ll_var_prior=tuple(config["filter_params"]["ll_var_prior"]),
+        seed_size=config["filter_params"]["seed_size"],
     )
 
+    # Initializing ModelParameters automatically grabs
+    # params from the config.toml file.
     model_parameters = ModelParameters()
 
     pf_algo = ParticleFilterAlgo(

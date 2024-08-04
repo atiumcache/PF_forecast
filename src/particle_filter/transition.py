@@ -60,37 +60,13 @@ class Transition(ABC):
         raise NotImplementedError
 
 
-class GaussianNoiseModel(Transition):
-    def __init__(self, model_params: ModelParameters, sigma: float = 0.001):
-        super().__init__(model_params)
-        self.sigma = sigma  # Volatility of the noise
-
-    def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
-        """A simple gaussian noise is added to each element of the state vector.
-        The magnitude of the noise is controlled by sigma.
-
-        Args:
-            state: A NDArray holding the current state of the system.
-            dt: A float value representing the time step.
-            key: A PRNGKey for random number generation.
-
-        Return:
-            A NDArray of stochastic increments.
-        """
-        noise = self.sigma * random.normal(key, shape=jnp.shape(state))
-        return noise * jnp.sqrt(dt)
-
-
 class OUModel(Transition):
-    def __init__(self, model_params: ModelParameters, theta=0.005, mu=0.0, sigma=0.01):
-        super().__init__(model_params)
-        self.theta = theta  # Speed of reversion
-        self.mu = mu  # Long-term mean
-        self.sigma = sigma  # Volatility
+    def __init__(self, config_file: str):
+        super().__init__(config_file)
 
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
         """The stochastic component of the SDE model.
-        Utilizes Weiner process for state variables.
+        Utilizes Wiener process for state variables (S, I, R, H).
         Utilizes OU processes for time-variant parameters.
 
         Args:
@@ -107,11 +83,11 @@ class OUModel(Transition):
         noise = random.normal(key, shape=(4,))
         dW = jnp.sqrt(dt) * noise
 
-        # OU process for each state variable
-        dS = 0.1 * dW[0] * S
-        dI = 0.1 * dW[1] * I
-        dR = 0.1 * dW[2] * R
-        dH = 0.1 * dW[3] * H
+        # Wiener process for each state variable
+        dS = self.params.dW_volatility * dW[0] * S
+        dI = self.params.dW_volatility * dW[1] * I
+        dR = self.params.dW_volatility * dW[2] * R
+        dH = self.params.dW_volatility * dW[3] * H
 
         # Stochastic component for beta
         dW_beta = random.normal(key, shape=())  # single Wiener process for beta
@@ -121,6 +97,6 @@ class OUModel(Transition):
         dW_ll_var = random.normal(key, shape=())  # single Wiener process for sigma2
         d_ll_var = self.params.sigma2_eta * jnp.sqrt(dt) * dW_ll_var
 
-        # Note that new_H is derived from I, so we don't need to
+        # Note that new_H is derived from I, so we do not
         # perturb new_H --- dI already accounts for that.
         return jnp.array([dS, dI, dR, dH, 0, d_beta, d_ll_var])

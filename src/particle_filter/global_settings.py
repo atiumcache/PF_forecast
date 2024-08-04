@@ -18,7 +18,6 @@ class GlobalSettings:
             to be sampled from.
         seed_size: Determines the ratio of population initially infected. See get_initial_state.
     """
-
     num_particles: int
     population: int
     location_code: str
@@ -26,4 +25,5 @@ class GlobalSettings:
     runtime: int
     dt: float = field(default_factory=lambda: 1.0)
     beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.25))
+    ll_var_prior: Tuple[float, float] = field(default_factory=lambda: (0.01, 0.1))
     seed_size: float = field(default_factory=lambda: 0.005)
