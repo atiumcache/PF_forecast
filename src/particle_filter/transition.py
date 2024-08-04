@@ -47,10 +47,8 @@ class Transition(ABC):
         # OU process for beta
         d_beta = self.params.beta_theta * (self.params.beta_mu - beta)
 
-        # OU process for likelihood variance
-        d_var = self.params.ll_var_theta * (self.params.ll_var_mu - ll_var)
 
-        return jnp.array([dS, dI, dR, dH, new_H, d_beta, d_var])
+        return jnp.array([dS, dI, dR, dH, new_H, d_beta])
 
     @abstractmethod
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
@@ -93,10 +91,6 @@ class OUModel(Transition):
         dW_beta = random.normal(key, shape=())  # single Wiener process for beta
         d_beta = self.params.beta_sigma * jnp.sqrt(dt) * dW_beta
 
-        # Stochastic component for sigma2
-        dW_ll_var = random.normal(key, shape=())  # single Wiener process for sigma2
-        d_ll_var = self.params.sigma2_eta * jnp.sqrt(dt) * dW_ll_var
-
         # Note that new_H is derived from I, so we do not
         # perturb new_H --- dI already accounts for that.
-        return jnp.array([dS, dI, dR, dH, 0, d_beta, d_ll_var])
+        return jnp.array([dS, dI, dR, dH, 0, d_beta])

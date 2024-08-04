@@ -78,7 +78,7 @@ class ParticleCloud:
         population = self.settings.population
 
         # state = [S, I, R, H, new_H, beta, ll_var]
-        state = [population, 0, 0, 0, 0, 0, 0]
+        state = [population, 0, 0, 0, 0, 0]
 
         # Infect a portion of S compartment
         infected_seed = random.uniform(
@@ -91,10 +91,6 @@ class ParticleCloud:
         beta_prior = self.settings.beta_prior
         initial_beta = random.uniform(key=key2, minval=beta_prior[0], maxval=beta_prior[1])
         state[5] = initial_beta
-
-        variance_prior = self.settings.ll_var_prior
-        initial_variance = random.uniform(key=key3, minval=variance_prior[0], maxval=variance_prior[1])
-        state[6] = initial_variance
 
         return jnp.array(state)
 
@@ -140,7 +136,7 @@ class ParticleCloud:
         self.states = self.states.at[:, :, t].set(new_states)
         self.betas = self.betas.at[:, t].set(self.betas[:, t - 1])
 
-        new_hosp_estimates = self.states[:, 5, t].copy()
+        new_hosp_estimates = self.states[:, 4, t].copy()
         self.hosp_estimates = new_hosp_estimates
 
     def _compute_single_weight(
@@ -156,7 +152,7 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
-        weight = norm.logpdf(reported_data, particle_estimate, self.model.params.R)
+        weight = norm.logpdf(x=reported_data, loc=particle_estimate, scale=self.settings.ll_variance)
         return float(weight)
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
@@ -173,6 +169,7 @@ class ParticleCloud:
         new_weights = jnp.zeros(self.settings.num_particles)
 
         for p in range(self.settings.num_particles):
+            variance = self.states[p, 6, t]
             hosp_estimate = self.hosp_estimates[p]
             new_weight = self._compute_single_weight(
                 reported_data, float(hosp_estimate)
@@ -217,18 +214,6 @@ class ParticleCloud:
 
         self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
         self.betas = self.betas.at[:, t].set(self.betas[resampling_indices, t])
-
-    def perturb_betas(self, t: int, scale_factor: float = np.sqrt(0.001)) -> None:
-        """Perturbs the beta values by adding gaussian noise."""
-        # noise: Array = random.normal(self.key, shape=self.betas[:, t].shape) * scale_factor
-        # old_betas = self.betas[:, t]
-        # self.betas = self.betas.at[:, t].set(old_betas + noise)
-
-        # TODO: replace np with JAX.
-        new_betas = np.exp(
-            np.random.normal(np.log(self.betas[:, t]), scale=scale_factor)
-        )
-        self.betas = self.betas.at[:, t].set(new_betas)
 
 
 def jacobian(input_array: ArrayLike) -> Array:

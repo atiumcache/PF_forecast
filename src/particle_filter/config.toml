@@ -5,7 +5,6 @@ num_particles = 100
 dt = 1.0
 seed_size = 0.05
 beta_prior = [0.1, 0.3]
-ll_var_prior = [0.01, 0.1]
 infected_seed_size = 0.01
 
 [model_params]
@@ -24,11 +23,6 @@ dW_volatility = {value = 0.1, estimate = false}
 beta_theta = {value = 0.1, is_fixed = true}
 beta_mu = {value = 0.2, is_fixed = true}
 beta_sigma = {dist = "normal", loc = 0.01, scale = 0.005, is_fixed = false}
-
-# ll_var is the likelihood variance
-ll_var_theta = {value = 0.1, is_fixed = true}
-ll_var_mu = {value = 0.05, is_fixed = true}
-ll_var_sigma = {dist = "normal", loc = 0.01, scale = 0.005, is_fixed = false}
 
 
 [logging]
