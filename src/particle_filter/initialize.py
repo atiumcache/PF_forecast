@@ -11,7 +11,7 @@ def initialize_particle_filter(
     location_code: str,
     target_date: str,
     runtime: int,
-    ll_variance: float
+    ll_variance: float,
 ) -> ParticleFilterAlgo:
     """Initializes a ParticleFilterAlgo object."""
 

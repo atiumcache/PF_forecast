@@ -18,6 +18,7 @@ class GlobalSettings:
             to be sampled from.
         seed_size: Determines the ratio of population initially infected. See get_initial_state.
     """
+
     num_particles: int
     population: int
     location_code: str

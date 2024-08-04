@@ -30,7 +30,7 @@ class Transition(ABC):
         Returns:
             A NDArray of numerical derivatives of the state.
         """
-        S, I, R, H, new_H, beta, ll_var = state  # unpack the state variables
+        S, I, R, H, new_H, beta = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
 
         new_H = (1 / self.params.D) * self.params.gamma * I
@@ -46,7 +46,6 @@ class Transition(ABC):
 
         # OU process for beta
         d_beta = self.params.beta_theta * (self.params.beta_mu - beta)
-
 
         return jnp.array([dS, dI, dR, dH, new_H, d_beta])
 
@@ -75,7 +74,7 @@ class OUModel(Transition):
         Returns:
             A NDArray of stochastic increments.
         """
-        S, I, R, H, new_H, beta, ll_var = state  # unpack the state variables
+        S, I, R, H, new_H, beta = state  # unpack the state variables
 
         # Generate random noise
         noise = random.normal(key, shape=(4,))

@@ -5,8 +5,8 @@ import numpy as np
 from jax import Array, float0
 from jax import numpy as jnp
 from jax import random as random
-from jax._src.basearray import ArrayLike
 from jax.scipy.stats import norm as norm
+from jax.typing import ArrayLike
 
 from src.particle_filter.global_settings import GlobalSettings
 from src.particle_filter.transition import Transition
@@ -74,7 +74,7 @@ class ParticleCloud:
         Returns:
             Initial state vector.
         """
-        key1, key2, key3 = random.split(key, 3)
+        key1, key2 = random.split(key, 2)
         population = self.settings.population
 
         # state = [S, I, R, H, new_H, beta, ll_var]
@@ -87,9 +87,11 @@ class ParticleCloud:
         state[1] += infected_seed
         state[0] -= infected_seed
 
-        # Initialize beta and ll_var based on priors
+        # Initialize beta based on prior
         beta_prior = self.settings.beta_prior
-        initial_beta = random.uniform(key=key2, minval=beta_prior[0], maxval=beta_prior[1])
+        initial_beta = random.uniform(
+            key=key2, minval=beta_prior[0], maxval=beta_prior[1]
+        )
         state[5] = initial_beta
 
         return jnp.array(state)
@@ -152,7 +154,9 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
-        weight = norm.logpdf(x=reported_data, loc=particle_estimate, scale=self.settings.ll_variance)
+        weight = norm.logpdf(
+            x=reported_data, loc=particle_estimate, scale=self.settings.ll_variance
+        )
         return float(weight)
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
