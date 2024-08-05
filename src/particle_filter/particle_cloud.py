@@ -6,6 +6,7 @@ from jax import Array, float0
 from jax import numpy as jnp
 from jax import random as random
 from jax.scipy.stats import nbinom as nbinom
+from jax.scipy.stats import norm as normal
 from jax.typing import ArrayLike
 
 from src.particle_filter.global_settings import GlobalSettings
@@ -90,7 +91,7 @@ class ParticleCloud:
         # Initialize beta based on prior
         beta_prior = self.settings.beta_prior
         initial_beta = random.uniform(
-            key=key2, minval=beta_prior[0], maxval=beta_prior[1]
+            key=key2, shape=(), dtype=float, minval=beta_prior[0], maxval=beta_prior[1]
         )
         state[5] = initial_beta
 
@@ -127,16 +128,14 @@ class ParticleCloud:
         Returns:
             None. We update the instance states directly.
         """
-        # Map each particle's state and beta to the update_single_particle function.
-        # We iterate over the 0th axes of states and betas.
-        # Thus, we pass our function the state vector for each particle at
-        # time t. And we pass the beta value for each particle at time t.
+        # Map each particle's previous state to the update_single_particle function.
+        # We iterate over the 0th axes of states.
+        # Thus, we pass our function the state vector for each particle at t - 1.
         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None))(
             self.states[:, :, t - 1], t
         )
 
         self.states = self.states.at[:, :, t].set(new_states)
-        self.betas = self.betas.at[:, t].set(self.betas[:, t - 1])
 
         new_hosp_estimates = self.states[:, 4, t].copy()
         self.hosp_estimates = new_hosp_estimates
@@ -154,13 +153,23 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
+        particle_estimate = round(particle_estimate)
+
+        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=10)
+        """ 
         weight = nbinom.logpmf(
             k=reported_data,
             loc=particle_estimate,
-            n=self.settings.likelihood_n,
+            n=self.settings.likelihood_r,
             p=self.settings.likelihood_p,
+        ) """
+        return float(weight)
+
+    def compute_all_weights_vmap(self, reported_data: int | float, t: int) -> None:
+        new_weights = jax.vmap(self._compute_single_weight, in_axes=(None, 0, None))(
+            reported_data, self.hosp_estimates, t
         )
-        return weight
+        self.weights = self.weights.at[:, t].set(new_weights)
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
         """Update the weights for every particle.
@@ -176,7 +185,6 @@ class ParticleCloud:
         new_weights = jnp.zeros(self.settings.num_particles)
 
         for p in range(self.settings.num_particles):
-            variance = self.states[p, 6, t]
             hosp_estimate = self.hosp_estimates[p]
             new_weight = self._compute_single_weight(
                 reported_data, float(hosp_estimate)
@@ -190,7 +198,6 @@ class ParticleCloud:
 
         Args:
             t: current time step
-
 
         Returns:
             None. Directly updates the instance weights.
@@ -214,17 +221,20 @@ class ParticleCloud:
 
         i = 0
         for j in range(self.settings.num_particles):
-            r_log = np.log(u + (1 / self.settings.num_particles) * j)
-            while r_log > cdf_log[i]:
+            r_log = jnp.log(u + (1 / self.settings.num_particles) * j)
+
+            # Ensure that we do not go out of bounds
+            while i < len(cdf_log) - 1 and r_log > cdf_log[i]:
                 i += 1
             resampling_indices = resampling_indices.at[j].set(i)
 
         self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
-        self.betas = self.betas.at[:, t].set(self.betas[resampling_indices, t])
 
     def compute_marginal_likelihood(self):
-        """Computes the marginal likelihood, to be used by MCMC."""
-        return jnp.sum(self.weights[:, -1])
+        """Returns the marginal likelihood, to be used by MCMC."""
+        sums = jacobian(self.weights[:, -1])
+        return sums[-1]
+
 
 def jacobian(input_array: ArrayLike) -> Array:
     """

@@ -30,6 +30,7 @@ class Transition(ABC):
         Returns:
             A NDArray of numerical derivatives of the state.
         """
+        self.params.update_all(key=3)
         S, I, R, H, new_H, beta = state  # unpack the state variables
         N = S + I + R + H  # compute the total population
 

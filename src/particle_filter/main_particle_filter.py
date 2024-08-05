@@ -28,7 +28,7 @@ class ParticleFilterAlgo:
         Returns:
 
         """
-        config_path = os.path.join(paths.PF_DIR, 'config.toml')
+        config_path = os.path.join(paths.PF_DIR, "config.toml")
         particles = ParticleCloud(
             self.settings, transition=OUModel(config_file=config_path)
         )
@@ -56,6 +56,7 @@ class ParticleFilterAlgo:
             particles.resample(t=t)
 
         marginal_likelihood = particles.compute_marginal_likelihood()
-        output_handler = OutputHandler(self.settings, self.settings.runtime)
-        output_handler.output_average_betas(all_betas=particles.betas)
-        return particles.betas, marginal_likelihood
+        # output_handler = OutputHandler(self.settings, self.settings.runtime)
+        # output_handler.output_average_betas(all_betas=particles.betas)
+        betas = particles.states[:, 5, -1]
+        return betas, marginal_likelihood, particles.states

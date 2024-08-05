@@ -1,6 +1,8 @@
 # config.toml
 [mcmc_params]
-
+num_iterations = 1000
+initial_r = 10
+initial_p = 0.5
 
 [filter_params]
 num_particles = 100
@@ -24,7 +26,7 @@ dW_volatility = {value = 0.1, estimate = false}
 # Params for the beta OU process
 beta_theta = {value = 0.1, is_fixed = true}
 beta_mu = {value = 0.2, is_fixed = true}
-beta_sigma = {dist = "normal", loc = 0.01, scale = 0.005, is_fixed = false}
+beta_sigma = {value=0.01, is_fixed = true}
 
 
 [logging]
