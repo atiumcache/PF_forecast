@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from jax.typing import ArrayLike
 from jax import Array
 from tqdm import tqdm
@@ -13,10 +15,10 @@ import paths
 
 
 class ParticleFilterAlgo:
-    def __init__(self, settings: GlobalSettings) -> Tuple[Array, float]:
+    def __init__(self, settings: GlobalSettings) -> None:
         self.settings = settings
 
-    def run(self, observation_data: ArrayLike) -> None:
+    def run(self, observation_data: ArrayLike) -> Tuple[Array, float]:
         """Main logic for running the particle filter.
 
         Args:
