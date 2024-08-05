@@ -31,13 +31,7 @@ def initialize_particle_filter(
         seed_size=config["filter_params"]["seed_size"],
     )
 
-    # Initializing ModelParameters automatically grabs
-    # params from the config.toml file.
-    model_parameters = ModelParameters()
-
-    pf_algo = ParticleFilterAlgo(
-        settings=global_settings, model_params=model_parameters
-    )
+    pf_algo = ParticleFilterAlgo(settings=global_settings)
     return pf_algo
 
 

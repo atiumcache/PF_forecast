@@ -1,18 +1,20 @@
 from jax.typing import ArrayLike
+from jax import Array
 from tqdm import tqdm
+import os
 
 from src.particle_filter.global_settings import GlobalSettings
 from src.particle_filter.observation_data import ObservationData
 from src.particle_filter.output_handler import OutputHandler
 from src.particle_filter.parameters import ModelParameters
 from src.particle_filter.particle_cloud import ParticleCloud
-from src.particle_filter.transition import GaussianNoiseModel
+from src.particle_filter.transition import OUModel
+import paths
 
 
 class ParticleFilterAlgo:
-    def __init__(self, settings: GlobalSettings, model_params: ModelParameters) -> None:
+    def __init__(self, settings: GlobalSettings) -> Tuple[Array, float]:
         self.settings = settings
-        self.model_params = model_params
 
     def run(self, observation_data: ArrayLike) -> None:
         """Main logic for running the particle filter.
@@ -22,10 +24,11 @@ class ParticleFilterAlgo:
                 Must be an array of length runtime.
 
         Returns:
-            None. Output data is saved to a CSV file.
+
         """
+        config_path = os.path.join(paths.PF_DIR, 'config.toml')
         particles = ParticleCloud(
-            self.settings, transition=GaussianNoiseModel(model_params=self.model_params)
+            self.settings, transition=OUModel(config_file=config_path)
         )
 
         # Initialize an object that stores the hospitalization data.
@@ -49,7 +52,8 @@ class ParticleFilterAlgo:
             particles.compute_all_weights(reported_data=case_report, t=t)
             particles.normalize_weights(t=t)
             particles.resample(t=t)
-            particles.perturb_betas(t=t)
 
+        marginal_likelihood = particles.compute_marginal_likelihood()
         output_handler = OutputHandler(self.settings, self.settings.runtime)
         output_handler.output_average_betas(all_betas=particles.betas)
+        return particles.betas, marginal_likelihood

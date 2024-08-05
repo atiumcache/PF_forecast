@@ -1,4 +1,6 @@
 # config.toml
+[mcmc_params]
+
 
 [filter_params]
 num_particles = 100

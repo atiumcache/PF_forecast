@@ -222,6 +222,9 @@ class ParticleCloud:
         self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
         self.betas = self.betas.at[:, t].set(self.betas[resampling_indices, t])
 
+    def compute_marginal_likelihood(self):
+        """Computes the marginal likelihood, to be used by MCMC."""
+        return jnp.sum(self.weights[:, -1])
 
 def jacobian(input_array: ArrayLike) -> Array:
     """

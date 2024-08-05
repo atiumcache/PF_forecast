@@ -65,7 +65,7 @@ class OUModel(Transition):
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
         """The stochastic component of the SDE model.
         Utilizes Wiener process for state variables (S, I, R, H).
-        Utilizes OU processes for time-variant parameters.
+        Utilizes OU processes for time-variant parameters (beta).
 
         Args:
             state: A NDArray holding the current state of the system.
@@ -92,5 +92,5 @@ class OUModel(Transition):
         d_beta = self.params.beta_sigma * jnp.sqrt(dt) * dW_beta
 
         # Note that new_H is derived from I, so we do not
-        # perturb new_H --- dI already accounts for that.
+        # perturb new_H --- perturbations to I already account for that.
         return jnp.array([dS, dI, dR, dH, 0, d_beta])
