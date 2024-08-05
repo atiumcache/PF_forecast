@@ -24,7 +24,8 @@ class GlobalSettings:
     location_code: str
     final_date: str
     runtime: int
-    ll_variance: float
+    likelihood_n: float
+    likelihood_p: float
     dt: float = field(default_factory=lambda: 1.0)
     beta_prior: Tuple[float, float] = field(default_factory=lambda: (0.10, 0.25))
     ll_var_prior: Tuple[float, float] = field(default_factory=lambda: (0.01, 0.1))

@@ -5,7 +5,7 @@ import numpy as np
 from jax import Array, float0
 from jax import numpy as jnp
 from jax import random as random
-from jax.scipy.stats import norm as norm
+from jax.scipy.stats import nbinom as nbinom
 from jax.typing import ArrayLike
 
 from src.particle_filter.global_settings import GlobalSettings
@@ -154,10 +154,13 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
-        weight = norm.logpdf(
-            x=reported_data, loc=particle_estimate, scale=self.settings.ll_variance
+        weight = nbinom.logpmf(
+            k=reported_data,
+            loc=particle_estimate,
+            n=self.settings.likelihood_n,
+            p=self.settings.likelihood_p,
         )
-        return float(weight)
+        return weight
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
         """Update the weights for every particle.
