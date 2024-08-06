@@ -11,8 +11,6 @@ def initialize_particle_filter(
     location_code: str,
     target_date: str,
     runtime: int,
-    likelihood_r: float,
-    likelihood_p: float,
 ) -> ParticleFilterAlgo:
     """Initializes a ParticleFilterAlgo object."""
 
@@ -26,8 +24,6 @@ def initialize_particle_filter(
         runtime=runtime,
         dt=config["filter_params"]["dt"],
         beta_prior=tuple(config["filter_params"]["beta_prior"]),
-        likelihood_r=likelihood_r,
-        likelihood_p=likelihood_p,
         seed_size=config["filter_params"]["seed_size"],
     )
 

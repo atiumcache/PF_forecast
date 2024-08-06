@@ -44,7 +44,6 @@ class Transition(ABC):
             - (1 / self.params.L) * R
         )
         dH = new_H - (1 / self.params.hosp * H)
-        new_H = round(new_H)
 
         # OU process for beta
         d_beta = self.params.beta_theta * (self.params.beta_mu - beta)

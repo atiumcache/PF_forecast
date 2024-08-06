@@ -144,7 +144,7 @@ class ParticleCloud:
 
         self.states = self.states.at[:, :, t].set(new_states)
 
-        new_hosp_estimates = self.states[:, 4, t].copy()
+        new_hosp_estimates = self.states[:, 4, t] - self.states[:, 4, t]
         self.hosp_estimates = new_hosp_estimates
 
     def _compute_single_weight(
