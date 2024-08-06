@@ -5,10 +5,10 @@ initial_r = 10
 initial_p = 0.5
 
 [filter_params]
-num_particles = 100
+num_particles = 250
 dt = 1.0
 seed_size = 0.05
-beta_prior = [0.1, 0.3]
+beta_prior = [0.05, 0.35]
 infected_seed_size = 0.01
 
 [model_params]
@@ -24,7 +24,7 @@ D = {value = 10, estimate = false}
 dW_volatility = {value = 0.1, estimate = false}
 
 # Params for the beta OU process
-beta_theta = {value = 0.1, is_fixed = true}
+beta_theta = {value = 0.01, is_fixed = true}
 beta_mu = {value = 0.2, is_fixed = true}
 beta_sigma = {value=0.01, is_fixed = true}
 

@@ -62,6 +62,13 @@ class ParticleCloud:
         self.states = self.states.at[:, :, 0].set(initial_states)
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
         self.hosp_estimates = jnp.zeros(self.settings.num_particles)
+        self.all_resamples = jnp.zeros(
+            (
+                self.settings.num_particles,
+                self.settings.num_particles,
+                self.settings.runtime,
+            )
+        )
 
     def _get_initial_state(self, key: KeyArray) -> Array:
         """Gets an initial state for one particle.
@@ -155,7 +162,7 @@ class ParticleCloud:
         """
         particle_estimate = round(particle_estimate)
 
-        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=10)
+        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=100)
         """ 
         weight = nbinom.logpmf(
             k=reported_data,
@@ -228,6 +235,7 @@ class ParticleCloud:
                 i += 1
             resampling_indices = resampling_indices.at[j].set(i)
 
+        self.all_resamples = self.all_resamples.at[:, :, t].set(resampling_indices)
         self.states = self.states.at[:, :, t].set(self.states[resampling_indices, :, t])
 
     def compute_marginal_likelihood(self):

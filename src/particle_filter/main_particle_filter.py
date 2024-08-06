@@ -59,4 +59,4 @@ class ParticleFilterAlgo:
         # output_handler = OutputHandler(self.settings, self.settings.runtime)
         # output_handler.output_average_betas(all_betas=particles.betas)
         betas = particles.states[:, 5, -1]
-        return betas, marginal_likelihood, particles.states
+        return betas, marginal_likelihood, particles.states, particles.all_resamples,particles.weights
