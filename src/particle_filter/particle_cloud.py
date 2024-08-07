@@ -61,7 +61,7 @@ class ParticleCloud:
 
         self.states = self.states.at[:, :, 0].set(initial_states)
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
-        self.hosp_estimates = jnp.zeros(self.settings.num_particles)
+        self.hosp_estimates = jnp.zeros((self.settings.num_particles, self.settings.runtime))
         self.all_resamples = jnp.zeros(
             (
                 self.settings.num_particles,
@@ -144,11 +144,11 @@ class ParticleCloud:
 
         self.states = self.states.at[:, :, t].set(new_states)
 
-        new_hosp_estimates = self.states[:, 4, t] - self.states[:, 4, t]
-        self.hosp_estimates = new_hosp_estimates
+        new_hosp_estimates = self.states[:, 4, t] - self.states[:, 4, t - 1]
+        self.hosp_estimates = self.hosp_estimates.at[:, t].set(new_hosp_estimates)
 
     def _compute_single_weight(
-        self, reported_data: int, particle_estimate: float | int
+        self, reported_data: int, particle_estimate: float | int, scale: float
     ) -> float:
         """Computes the un-normalized weight of a single particle.
         Helper function for compute_all_weights.
@@ -162,21 +162,15 @@ class ParticleCloud:
         """
         particle_estimate = round(particle_estimate)
 
-        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=100)
+        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=50)
         """ 
         weight = nbinom.logpmf(
             k=reported_data,
             loc=particle_estimate,
             n=self.settings.likelihood_r,
-            p=self.settings.likelihood_p,
+            p=self.settings.likelihood_p-1,
         ) """
         return float(weight)
-
-    def compute_all_weights_vmap(self, reported_data: int | float, t: int) -> None:
-        new_weights = jax.vmap(self._compute_single_weight, in_axes=(None, 0, None))(
-            reported_data, self.hosp_estimates, t
-        )
-        self.weights = self.weights.at[:, t].set(new_weights)
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
         """Update the weights for every particle.
@@ -190,11 +184,13 @@ class ParticleCloud:
             None. Updates the instance weights directly.
         """
         new_weights = jnp.zeros(self.settings.num_particles)
+        avg_hosp_estimate = sum(self.hosp_estimates[:, t]) / self.settings.num_particles
+        normal_scale = avg_hosp_estimate / 10
 
         for p in range(self.settings.num_particles):
-            hosp_estimate = self.hosp_estimates[p]
+            hosp_estimate = self.hosp_estimates[p, t]
             new_weight = self._compute_single_weight(
-                reported_data, float(hosp_estimate)
+                reported_data, float(hosp_estimate), normal_scale
             )
             new_weights = new_weights.at[p].set(new_weight)
         self.weights = self.weights.at[:, t].set(new_weights)

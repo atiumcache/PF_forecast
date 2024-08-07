@@ -58,4 +58,4 @@ class ParticleFilterAlgo:
         marginal_likelihood = particles.compute_marginal_likelihood()
         # output_handler = OutputHandler(self.settings, self.settings.runtime)
         # output_handler.output_average_betas(all_betas=particles.betas)
-        return marginal_likelihood, particles.states, particles.all_resamples, particles.weights
+        return particles.hosp_estimates, particles.states, particles.all_resamples, particles.weights
