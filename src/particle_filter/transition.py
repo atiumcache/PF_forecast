@@ -54,6 +54,10 @@ class Transition(ABC):
         Must be defined by each concrete implementation of the Transition class."""
         raise NotImplementedError
 
+    @abstractmethod
+    def update_beta(self):
+        raise NotImplementedError("Subclasses must implement.")
+
 
 class OUModel(Transition):
     def __init__(self, config_file: str):
@@ -62,7 +66,6 @@ class OUModel(Transition):
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
         """The stochastic component of the SDE model.
         Utilizes Wiener process for state variables (S, I, R, H).
-        Utilizes OU processes for time-variant parameters (beta).
 
         Args:
             state: A NDArray holding the current state of the system.
@@ -85,10 +88,23 @@ class OUModel(Transition):
         dH = self.params.dW_volatility * dW[3] * H
         new_H = self.params.dW_volatility * dW[4] * (1 / self.params.D) * self.params.gamma * I
 
-        # Stochastic component for beta
-        dW_beta = random.normal(key, shape=())  # single Wiener process for beta
-        d_beta = self.params.beta_sigma * jnp.sqrt(dt) * dW_beta
-
         # Note that new_H is derived from I, so we do not
         # perturb new_H --- perturbations to I already account for that.
-        return jnp.array([dS, dI, dR, dH, new_H, d_beta])
+        return jnp.array([dS, dI, dR, dH, new_H, 0])
+
+    def update_beta(self, beta: float, dt: float, t: int, key: KeyArray) -> Array:
+        """OU Process update for beta.
+        
+        Args:
+            state: A NDArray holding the current state of the system.
+            dt: A float value representing the time step.
+            key: A PRNGKey for random number generation.
+
+        Returns:
+            A NDArray of stochastic increments.
+        """
+        dW = random.normal(key, shape=())  # single Wiener process for beta
+        d_beta = self.params.beta_sigma * jnp.sqrt(dt) * dW
+        d_beta += self.params.beta_theta * (self.params.beta_mu - beta) * dt
+        
+        return d_beta

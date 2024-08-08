@@ -86,7 +86,7 @@ class ParticleCloud:
         key1, key2 = random.split(key, 2)
         population = self.settings.population
 
-        # state = [S, I, R, H, new_H, beta, ll_var]
+        # state = [S, I, R, H, new_H, beta]
         state = [population, 0, 0, 0, 0, 0]
 
         # Infect a portion of S compartment
@@ -141,6 +141,25 @@ class ParticleCloud:
         state = self.enforce_population_constraint(state)
         return state
 
+    def update_betas(self, t: int) -> None:
+        """Updates the beta parameter of each particle at time t.
+
+        Args:
+            t: current time step
+
+        Returns:
+            None. Update is performed in place.
+        """
+        betas = self.states[:, 5, t - 1]
+        self.key, *subkeys = random.split(self.key, num=self.settings.num_particles + 1)
+        subkeys = jnp.stack(subkeys)
+
+        updates = jax.vmap(self.model.update_beta, in_axes=(0, None, None, 0))(
+            betas, self.settings.dt, t, subkeys
+        )
+        betas += updates
+        self.states = self.states.at[:, 5, t].set(betas)
+
     def update_all_particles(self, t: int) -> None:
         """Propagate all particle state vectors forward one time step.
 
@@ -153,6 +172,8 @@ class ParticleCloud:
         # Map each particle's previous state to the update_single_particle function.
         # We iterate over the 0th axes of states.
         # Thus, we pass our function the state vector for each particle at t - 1.
+        self.update_betas(t)
+
         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None))(
             self.states[:, :, t - 1], t
         )
