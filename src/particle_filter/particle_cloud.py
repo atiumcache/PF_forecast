@@ -153,7 +153,6 @@ class ParticleCloud:
         betas = self.states[:, 5, t - 1]
         self.key, *subkeys = random.split(self.key, num=self.settings.num_particles + 1)
         subkeys = jnp.stack(subkeys)
-
         updates = jax.vmap(self.model.update_beta, in_axes=(0, None, None, 0))(
             betas, self.settings.dt, t, subkeys
         )
@@ -169,9 +168,6 @@ class ParticleCloud:
         Returns:
             None. We update the instance states directly.
         """
-        # Map each particle's previous state to the update_single_particle function.
-        # We iterate over the 0th axes of states.
-        # Thus, we pass our function the state vector for each particle at t - 1.
         self.update_betas(t)
 
         new_states = jax.vmap(self._update_single_particle, in_axes=(0, None))(
@@ -219,7 +215,7 @@ class ParticleCloud:
         """
         new_weights = jnp.zeros(self.settings.num_particles)
         avg_hosp_estimate = sum(self.hosp_estimates[:, t]) / self.settings.num_particles
-        normal_scale = max(avg_hosp_estimate / 5, 0.1)
+        normal_scale = max(avg_hosp_estimate / 40, 0.1)
 
         for p in range(self.settings.num_particles):
             hosp_estimate = self.hosp_estimates[p, t]
