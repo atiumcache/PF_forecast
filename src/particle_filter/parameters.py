@@ -17,7 +17,8 @@ class Parameter:
         if self.is_fixed:
             return self.value
         elif self.dist == "normal":
-            return norm(loc=self.loc, scale=self.scale).rvs(random_state=key)
+            self.value = norm(loc=self.value, scale=self.scale).rvs()
+            return self.value
         else:
             raise ValueError(f"Unsupported distribution: {self.dist}")
 
@@ -35,6 +36,7 @@ class ModelParameters:
         for key, value in model_params.items():
             if "dist" in value:
                 params[key] = Parameter(
+                    value=value['loc'],
                     dist=value["dist"],
                     loc=value.get("loc"),
                     scale=value.get("scale"),

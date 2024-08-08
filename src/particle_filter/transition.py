@@ -45,10 +45,7 @@ class Transition(ABC):
         )
         dH = new_H - (1 / self.params.hosp * H)
 
-        # OU process for beta
-        d_beta = self.params.beta_theta * (self.params.beta_mu - beta)
-
-        return jnp.array([dS, dI, dR, dH, new_H, d_beta])
+        return jnp.array([dS, dI, dR, dH, new_H, 0])
 
     @abstractmethod
     def sto_component(self, state: ArrayLike, dt: float, key: KeyArray) -> Array:
@@ -78,7 +75,7 @@ class OUModel(Transition):
         S, I, R, H, new_H, beta = state  # unpack the state variables
 
         # Generate random noise
-        noise = random.normal(key, shape=(4,))
+        noise = random.normal(key, shape=(5,))
         dW = jnp.sqrt(dt) * noise
 
         # Wiener process for each state variable
@@ -86,6 +83,7 @@ class OUModel(Transition):
         dI = self.params.dW_volatility * dW[1] * I
         dR = self.params.dW_volatility * dW[2] * R
         dH = self.params.dW_volatility * dW[3] * H
+        new_H = self.params.dW_volatility * dW[4] * (1 / self.params.D) * self.params.gamma * I
 
         # Stochastic component for beta
         dW_beta = random.normal(key, shape=())  # single Wiener process for beta
@@ -93,4 +91,4 @@ class OUModel(Transition):
 
         # Note that new_H is derived from I, so we do not
         # perturb new_H --- perturbations to I already account for that.
-        return jnp.array([dS, dI, dR, dH, 0, d_beta])
+        return jnp.array([dS, dI, dR, dH, new_H, d_beta])

@@ -5,6 +5,7 @@ import numpy as np
 from jax import Array, float0
 from jax import numpy as jnp
 from jax import random as random
+from jax import random
 from jax.scipy.stats import nbinom as nbinom
 from jax.scipy.stats import norm as normal
 from jax.typing import ArrayLike
@@ -104,6 +105,19 @@ class ParticleCloud:
 
         return jnp.array(state)
 
+    def enforce_population_constraint(self, state):
+        S, I, R, H, new_H, beta = state
+        total_population = S + I + R + H
+        scale = self.settings.population / total_population
+
+        # Scale all compartments to ensure the sum equals N
+        S *= scale
+        I *= scale
+        R *= scale
+        H *= scale
+
+        return jnp.array([S, I, R, H, new_H, beta])
+
     def _update_single_particle(self, state: ArrayLike, t: int) -> Array:
         """For a single particle, step the state forward 1 discrete time step.
 
@@ -124,6 +138,7 @@ class ParticleCloud:
             self.key, subkey = random.split(self.key)
             sto_update = self.model.sto_component(state, self.settings.dt, subkey)
             state += det_update + sto_update
+        state = self.enforce_population_constraint(state)
         return state
 
     def update_all_particles(self, t: int) -> None:
@@ -160,9 +175,7 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
-        particle_estimate = round(particle_estimate)
-
-        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=50)
+        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=scale)
         """ 
         weight = nbinom.logpmf(
             k=reported_data,
@@ -185,7 +198,7 @@ class ParticleCloud:
         """
         new_weights = jnp.zeros(self.settings.num_particles)
         avg_hosp_estimate = sum(self.hosp_estimates[:, t]) / self.settings.num_particles
-        normal_scale = avg_hosp_estimate / 10
+        normal_scale = max(avg_hosp_estimate / 5, 0.1)
 
         for p in range(self.settings.num_particles):
             hosp_estimate = self.hosp_estimates[p, t]
@@ -221,13 +234,11 @@ class ParticleCloud:
         cdf_log = jacobian(self.weights[:, t])
 
         u = np.random.uniform(0, 1 / self.settings.num_particles)
-
         i = 0
         for j in range(self.settings.num_particles):
-            r_log = jnp.log(u + (1 / self.settings.num_particles) * j)
+            u_j = jnp.log(u + (j / self.settings.num_particles))
 
-            # Ensure that we do not go out of bounds
-            while i < len(cdf_log) - 1 and r_log > cdf_log[i]:
+            while i < self.settings.num_particles and u_j > cdf_log[i]:
                 i += 1
             resampling_indices = resampling_indices.at[j].set(i)
 
@@ -239,6 +250,12 @@ class ParticleCloud:
         sums = jacobian(self.weights[:, -1])
         return sums[-1]
 
+    def perturb_beta(self, t: int):
+        betas = self.states[:, 5, t]
+        self.key, subkey = random.split(self.key)
+        perturbations = random.normal(key=subkey, shape=(self.settings.num_particles), dtype=float)
+        betas += perturbations * 0.005
+        self.states = self.states.at[:, 5, t].set(betas)
 
 def jacobian(input_array: ArrayLike) -> Array:
     """
@@ -256,7 +273,7 @@ def jacobian(input_array: ArrayLike) -> Array:
     delta = delta.at[0].set(input_array[0])
     for i in range(1, n):
         delta_i = max(input_array[i], delta[i - 1]) + jnp.log(
-            1 + jnp.exp(-1 * jnp.abs(input_array[i] - delta[i - 1]))
+            1 + jnp.exp(-1 * jnp.abs(delta[i - 1] - input_array[i]))
         )
         delta = delta.at[i].set(delta_i)
     return delta
@@ -271,6 +288,6 @@ def log_norm(log_weights: ArrayLike) -> Array:
     last element is the sum of all inputs. Thus, the normalization
     factor is this last element.
     """
-    normalized = jacobian(log_weights)[-1]
-    log_weights -= normalized
+    normalization_factor = jacobian(log_weights)[-1]
+    log_weights -= normalization_factor
     return log_weights
