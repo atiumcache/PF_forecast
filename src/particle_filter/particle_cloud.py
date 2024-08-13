@@ -38,31 +38,22 @@ class ParticleCloud:
         states[:, 4, t] will return all particles' new_H counts at time t.
     """
 
-    def __init__(self, settings: GlobalSettings, transition: Transition):
+    def __init__(
+        self, settings: GlobalSettings, transition: Transition, logger
+    ) -> None:
         self.settings = settings
         self.model = transition
+        self.logger = logger
 
         seed = 43
         self.key = random.PRNGKey(seed)
 
-        self.key, *initial_state_keys = random.split(
-            self.key, self.settings.num_particles + 1
-        )
-        initial_states = jnp.array(
-            [self._get_initial_state(k) for k in initial_state_keys]
-        )
+        self.set_initial_states()
 
-        self.states = jnp.zeros(
-            (
-                self.settings.num_particles,
-                initial_states.shape[-1],
-                self.settings.runtime,
-            )
-        )
-
-        self.states = self.states.at[:, :, 0].set(initial_states)
         self.weights = jnp.zeros((self.settings.num_particles, self.settings.runtime))
-        self.hosp_estimates = jnp.zeros((self.settings.num_particles, self.settings.runtime))
+        self.hosp_estimates = jnp.zeros(
+            (self.settings.num_particles, self.settings.runtime)
+        )
         self.all_resamples = jnp.zeros(
             (
                 self.settings.num_particles,
@@ -70,6 +61,28 @@ class ParticleCloud:
                 self.settings.runtime,
             )
         )
+
+    def set_initial_states(self) -> None:
+        """
+        Sets the initial states of the particles,
+        according to priors given in `config.toml`.
+        Modifies the instance variables in place.
+        Takes no args. Returns None.
+        """
+        self.key, *initial_state_keys = random.split(
+            self.key, self.settings.num_particles + 1
+        )
+        initial_states = jnp.array(
+            [self._get_initial_state(k) for k in initial_state_keys]
+        )
+        self.states = jnp.zeros(
+            (
+                self.settings.num_particles,
+                initial_states.shape[-1],
+                self.settings.runtime,
+            )
+        )
+        self.states = self.states.at[:, :, 0].set(initial_states)
 
     def _get_initial_state(self, key: KeyArray) -> Array:
         """Gets an initial state for one particle.
@@ -105,7 +118,20 @@ class ParticleCloud:
 
         return jnp.array(state)
 
-    def enforce_population_constraint(self, state):
+    def enforce_population_constraint(self, state) -> Array:
+        """Scales each compartment (S,I,R,H) to ensure that
+        the compartments sum to N, the total population.
+
+        This is necessary because the stochastic system causes the sum of
+        the compartments to drift away from N.
+
+        Args:
+            state: The state vector for some particle.
+
+        Returns:
+            State vector where the S,I,R,H compartments
+                sum to the total population N.
+        """
         S, I, R, H, new_H, beta = state
         total_population = S + I + R + H
         scale = self.settings.population / total_population
@@ -180,7 +206,11 @@ class ParticleCloud:
         self.hosp_estimates = self.hosp_estimates.at[:, t].set(new_hosp_estimates)
 
     def _compute_single_weight(
-        self, reported_data: int, particle_estimate: float | int, scale: float
+        self,
+        reported_data: int,
+        particle_estimate: float | int,
+        std_dev: float,
+        dist: str,
     ) -> float:
         """Computes the un-normalized weight of a single particle.
         Helper function for compute_all_weights.
@@ -192,15 +222,29 @@ class ParticleCloud:
         Returns:
             An un-normalized weight for a single particle.
         """
-        weight = normal.logpdf(x=reported_data, loc=particle_estimate, scale=scale)
-        """ 
-        weight = nbinom.logpmf(
-            k=reported_data,
-            loc=particle_estimate,
-            n=self.settings.likelihood_r,
-            p=self.settings.likelihood_p-1,
-        ) """
-        return float(weight)
+        if dist == "normal":
+            weight = normal.logpdf(
+                x=reported_data, loc=particle_estimate, scale=std_dev
+            )
+        elif dist == "nbinom":
+            epsilon = 0.005
+            sigma2 = std_dev**2
+            if sigma2 <= particle_estimate:
+                # If this case, then r will be negative.
+                # So, we set to some positive constant.
+                r = 1
+            else:
+                r = (particle_estimate**2) / (sigma2 - particle_estimate)
+            weight = nbinom.logpmf(
+                k=reported_data,
+                n=r,
+                p=r / (r + particle_estimate + epsilon),
+            )
+        else:
+            raise ValueError(
+                f'Unrecognized dist: {dist}. Options are "normal", "nbinom"'
+            )
+        return weight.item()
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
         """Update the weights for every particle.
@@ -214,13 +258,14 @@ class ParticleCloud:
             None. Updates the instance weights directly.
         """
         new_weights = jnp.zeros(self.settings.num_particles)
+
         avg_hosp_estimate = sum(self.hosp_estimates[:, t]) / self.settings.num_particles
-        normal_scale = max(avg_hosp_estimate / 40, 0.1)
+        std_dev = max(avg_hosp_estimate / 20, 0.1)
 
         for p in range(self.settings.num_particles):
             hosp_estimate = self.hosp_estimates[p, t]
             new_weight = self._compute_single_weight(
-                reported_data, float(hosp_estimate), normal_scale
+                reported_data, float(hosp_estimate), std_dev, "nbinom"
             )
             new_weights = new_weights.at[p].set(new_weight)
         self.weights = self.weights.at[:, t].set(new_weights)
@@ -249,8 +294,16 @@ class ParticleCloud:
         """
         resampling_indices = jnp.zeros(self.settings.num_particles, dtype=int)
         cdf_log = jacobian(self.weights[:, t])
+        self.key, subkey = random.split(self.key)
 
-        u = np.random.uniform(0, 1 / self.settings.num_particles)
+        u = random.uniform(
+            key=subkey,
+            shape=(),
+            dtype=float,
+            minval=0,
+            maxval=1 / self.settings.num_particles,
+        ).item()
+
         i = 0
         for j in range(self.settings.num_particles):
             u_j = jnp.log(u + (j / self.settings.num_particles))
@@ -268,11 +321,15 @@ class ParticleCloud:
         return sums[-1]
 
     def perturb_beta(self, t: int):
+        """Adds stochastic perturbations to each particle's beta value."""
         betas = self.states[:, 5, t]
         self.key, subkey = random.split(self.key)
-        perturbations = random.normal(key=subkey, shape=(self.settings.num_particles), dtype=float)
+        perturbations = random.normal(
+            key=subkey, shape=(self.settings.num_particles), dtype=float
+        )
         betas += perturbations * 0.005
         self.states = self.states.at[:, 5, t].set(betas)
+
 
 def jacobian(input_array: ArrayLike) -> Array:
     """
@@ -304,6 +361,13 @@ def log_norm(log_weights: ArrayLike) -> Array:
     The Jacobian outputs an array of partial sums, where the
     last element is the sum of all inputs. Thus, the normalization
     factor is this last element.
+
+    Args:
+        log_weights: An array of length num_particles.
+            Contains the log-weight for each particle.
+
+    Returns:
+        Array. Array[p] is the normalized log weight for particle p.
     """
     normalization_factor = jacobian(log_weights)[-1]
     log_weights -= normalization_factor

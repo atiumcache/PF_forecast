@@ -5,12 +5,10 @@ initial_r = 10
 initial_p = 0.5
 
 [filter_params]
-num_particles = 1000
+num_particles = 500
 dt = 1.0
 seed_size = 0.03
 beta_prior = [0.10, 0.3]
-gamma_prior = [0.04, 0.08]
-infected_seed_size = 0.1
 
 [model_params]
 gamma = {value = 0.06, is_fixed = true}
@@ -23,13 +21,12 @@ R = {value = 50.0, is_fixed = true}
 hosp = {value = 10, is_fixed = true}
 L = {value = 90, is_fixed = true}
 D = {value = 10, is_fixed = true}
-dW_volatility = {value = 0.008, is_fixed = true}
+dW_volatility = {value = 0.01, is_fixed = true}
 
 # Params for the beta OU process
-beta_theta = {value = 0.05, is_fixed = true}
-beta_mu = {value = 0.15, is_fixed = true}
-beta_sigma = {value=0.005, is_fixed = true}
-
+beta_theta = {value = 0.5, is_fixed = true}
+beta_mu = {value = 0.25, is_fixed = true}
+beta_sigma = {value=0.01, is_fixed = true}
 
 [logging]
-level = "DEBUG"
+level = "INFO"

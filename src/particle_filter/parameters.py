@@ -36,7 +36,7 @@ class ModelParameters:
         for key, value in model_params.items():
             if "dist" in value:
                 params[key] = Parameter(
-                    value=value['loc'],
+                    value=value["loc"],
                     dist=value["dist"],
                     loc=value.get("loc"),
                     scale=value.get("scale"),
