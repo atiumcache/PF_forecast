@@ -17,6 +17,7 @@ import paths
 class ParticleFilterAlgo:
     def __init__(self, settings: GlobalSettings) -> None:
         self.settings = settings
+        self.likelihoods = []
 
     def run(self, observation_data: ArrayLike) -> Tuple[Array, float]:
         """Main logic for running the particle filter.
@@ -49,7 +50,6 @@ class ParticleFilterAlgo:
         for t in tqdm(
             range(self.settings.runtime), desc="Running Particle Filter", colour="green"
         ):
-
             # If t = 0, then we just initialized the particles. Thus, no update.
             if t != 0:
                 particles.update_all_particles(t)
@@ -63,12 +63,7 @@ class ParticleFilterAlgo:
 
         # output_handler = OutputHandler(self.settings, self.settings.runtime)
         # output_handler.output_average_betas(all_betas=particles.betas)
-        return (
-            particles.hosp_estimates,
-            particles.states,
-            particles.all_resamples,
-            particles.weights,
-        )
+        return (particles.likelihoods, particles.hosp_estimates, particles.states)
 
     def log_config_file(self, config_file_path):
         """Logs the contents of the config.toml file."""

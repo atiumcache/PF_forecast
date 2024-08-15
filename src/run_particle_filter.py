@@ -10,7 +10,7 @@ import pandas as pd
 
 from src.helpers import get_data_since_week_26
 from src.location import Location
-from src.particle_filter.initialize import initialize_particle_filter
+from src.particle_filter.initialize_filter import initialize_particle_filter
 
 
 def main(location_code: str, target_date: str, num_particles: int) -> None:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict, Any
 
 import jax
 import numpy as np
@@ -39,11 +40,13 @@ class ParticleCloud:
     """
 
     def __init__(
-        self, settings: GlobalSettings, transition: Transition, logger
+        self, settings: GlobalSettings, transition: Transition, logger, theta: Dict[str, Any]
     ) -> None:
         self.settings = settings
         self.model = transition
         self.logger = logger
+
+        self._apply_mcmc_params(theta=theta)
 
         seed = 43
         self.key = random.PRNGKey(seed)
@@ -61,6 +64,7 @@ class ParticleCloud:
                 self.settings.runtime,
             )
         )
+        self.likelihoods = jnp.zeros(self.settings.runtime)
 
     def set_initial_states(self) -> None:
         """
@@ -83,6 +87,29 @@ class ParticleCloud:
             )
         )
         self.states = self.states.at[:, :, 0].set(initial_states)
+
+    def _apply_mcmc_params(self, theta: Dict[str, Any]):
+        """
+        Overrides default params with MCMC proposals.
+
+        Args:
+            theta: a dictionary {param_name: value}, passed
+                into the PF from MCMC.
+
+        Returns:
+            None: Instance parameters are updated directly.
+        """
+        for key, value in theta.items():
+            if hasattr(self.model.params, 'update_param'):
+                try:
+                    self.model.params.update_param(key, value)
+                except AttributeError:
+                    if key in self.settings.__dict__.keys():
+                        setattr(self.settings, key, value)
+                    else:
+                        raise ValueError(f"Initial_theta has an unrecognized parameter: {key}.")
+            else:
+                raise ValueError(f"Model does not support parameter updates.")
 
     def _get_initial_state(self, key: KeyArray) -> Array:
         """Gets an initial state for one particle.
@@ -247,7 +274,9 @@ class ParticleCloud:
         return weight.item()
 
     def compute_all_weights(self, reported_data: int | float, t: int) -> None:
-        """Update the weights for every particle.
+        """
+        Update the weights for every particle. Saves the Monte Carlo
+        likelihood estimate for the weights.
 
         Args:
             reported_data: Reported new hospitalization case counts at
@@ -269,6 +298,20 @@ class ParticleCloud:
             )
             new_weights = new_weights.at[p].set(new_weight)
         self.weights = self.weights.at[:, t].set(new_weights)
+        self.save_likelihood(new_weights, t)
+
+    def save_likelihood(self, weights: jnp.ndarray, t: int) -> None:
+        """Saves the Monte Carlo estimate of the likelihood at time t.
+
+        Args:
+            weights: the particle weights at current time step.
+            t: current time step.
+
+        Returns:
+            None: This method updates the instance likelihoods directly.
+        """
+        likelihood = jacobian(weights)[-1] - jnp.log(self.settings.num_particles)
+        self.likelihoods = self.likelihoods.at[t].set(likelihood)
 
     def normalize_weights(self, t: int) -> None:
         """Normalize the weights using the Jacobian algorithm.

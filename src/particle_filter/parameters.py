@@ -24,7 +24,7 @@ class Parameter:
 
 
 class ModelParameters:
-    def __init__(self, config_file):
+    def __init__(self, config_file: str):
         self._params = self.load_from_toml(config_file)
 
     def load_from_toml(self, config_file):
@@ -66,3 +66,11 @@ class ModelParameters:
             self._params[name].value = value
         else:
             raise AttributeError(f"Parameter {name} does not exist.")
+
+    def update_param(self, key, value):
+        """Update a parameter (key) with a new value."""
+        if key in self._params:
+            self._params[key].value = value
+        else:
+            raise AttributeError(f"Parameter {key} does not exist.")
+
